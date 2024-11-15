@@ -1,6 +1,6 @@
 # RESI functions
 import numpy as np
-import scipy as sp
+#import scipy as sp
 import matplotlib.pyplot as plt
 import pandas as pd
 import math
@@ -8,7 +8,7 @@ import h5py
 from pathlib import Path
 import copy
 import matplotlib as mpl
-import scipy.io as sio
+#import scipy.io as sio
 from scipy.optimize import curve_fit
 import shutil
 
@@ -68,18 +68,32 @@ def locs_lt_to_picasso(localizations_file, photons_file, drift_file, offset, fit
             counter +=1
     localizations['lifetime'] = lifetime
     localizations['lt_fit_photons'] = lt_fit_photons
+    dataframe_to_picasso(localizations, localizations_file)
+    print(len(localizations), 'localizations tagged with lifetime')
+    
+def dataframe_to_picasso(dataframe, filename):
+    '''
+
+    Parameters
+    ----------
+    dataframe : dataframe in picasso format (with all necessary columns)
+    filename : name with which the file will be saved
+    
+    DO: takes a dataframe and saves it to picasso format
+    The corresponding yaml file has to be in the same directory and will be copied
+    '''
     path = str(Path.cwd())
-    labels = list(localizations.keys())
-    df_picasso = localizations.reindex(columns=labels, fill_value=1)
+    labels = list(dataframe.keys())
+    df_picasso = dataframe.reindex(columns=labels, fill_value=1)
     locs = df_picasso.to_records(index = False)
     # Saving data
-    yaml_old = (path + '/' + localizations_file[:-4] + 'yaml')
+    yaml_old = (path + '/' + filename[:-4] + 'yaml')
     yaml_new = (yaml_old[:-5] + '_lt.yaml')
     shutil.copyfile(yaml_old, yaml_new) 
-    hf = h5py.File(path + '/' + localizations_file[:-5] +'_lt.hdf5', 'w')
+    hf = h5py.File(path + '/' + filename[:-5] +'_lt.hdf5', 'w')
     hf.create_dataset('locs', data=locs)
     hf.close()
-    print(len(localizations), 'localizations tagged with lifetime')
+    print('dataframe succesfully saved in picasso format.')
 
 def locs_lt_to_dataframe(localizations_file, photons_file, drift_file, fitting='avg', bsl=5, int_time=200):
     '''
