@@ -2,7 +2,10 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,python,jupyternotebooks
 
 #Ignore project files
+
+#photons_index.hdf5 files (too big)
 both_4xoffset_index.hdf5
+photons.hdf5
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
