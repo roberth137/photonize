@@ -14,8 +14,8 @@ import shutil
 
 
 def locs_lt_to_picasso(localizations_file, photons_file, 
-                       drift_file, offset, fitting='avg', 
-                       box_side_length=5, integration_time=200):
+                       drift_file, offset, box_side_length=5,
+                       integration_time=200, fitting='avg'):
     '''
     tagging list of picked localizations with lifetime 
     and returning as picasso files
@@ -66,6 +66,18 @@ def locs_lt_to_picasso(localizations_file, photons_file,
     localizations['lt_photons'] = lt_photons
     dataframe_to_picasso(localizations, localizations_file)
     print(len(localizations), 'localizations tagged with lifetime')
+    
+def photons_of_pick_locs(localizations_file, photons_file,
+                         drift_file, offset, box_side_length, 
+                         integration_time):
+    localizations = pd.read_hdf(localizations_file, key='locs')
+    photons = pd.read_hdf(photons_file, key='photons')
+    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
+    drift = drift[::offset]
+    pick_photons = get_pick_photons(localizations, photons, drift, 
+                                    offset, box_side_length, 
+                                    integration_time)
+    return pick_photons
     
     
     
