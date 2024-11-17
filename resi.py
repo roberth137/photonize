@@ -138,6 +138,8 @@ def get_pick_photons(
         &(phot_cr_und.x < (max_x-0.5+(box_side_length/2))) 
         &(phot_cr_und.y > (min_y-0.5-(box_side_length/2))) 
         &(phot_cr_und.y < (max_y-0.5+(box_side_length/2)))]
+    print('number of cropped-undrifted-cropped photons: ', 
+          len(phot_cr_und_cr))
     return phot_cr_und_cr
     
     
@@ -230,8 +232,8 @@ def undrift(photons_index, drift_file, offset, integration_time=200):
         frame = frames[i]
         drift_x_array[i] = drift_x[frame]
         drift_y_array[i] = drift_y[frame]
-        if i == 0: print('start undrifting')
-        elif i %10000000 == 0: print('10mio undrifted')
+        #if i == 0: print('start undrifting')
+        #elif i %10000000 == 0: print('10mio undrifted')
     #apply drift 
     undrifted_x -= drift_x_array
     undrifted_y -= drift_y_array
