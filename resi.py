@@ -117,7 +117,7 @@ def locs_lt_avg_pos(localizations_file, photons_file,
                                        box_side_length, integration_time))
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            x, y = avg_of_roi(phot_loc)
+            x, y = avg_of_roi(one_loc, phot_loc, box_side_length)
             x_position[i] = x
             y_position[i] = y
             lifetime[i] = avg_lifetime_sergi_40(phot_loc, 
@@ -128,11 +128,11 @@ def locs_lt_avg_pos(localizations_file, photons_file,
     localizations['y'] = y_position
     localizations['lifetime'] = lifetime
     localizations['lt_photons'] = lt_photons
-    dataframe_to_picasso(localizations, localizations_file, '_lt_avgPos')
+    dataframe_to_picasso(localizations, localizations_file, '_lt_avgPos_noBg')
     print(len(localizations), 'localizations tagged with lifetime and'
           ' fitted with avg x,y position.') 
     
-def avg_of_roi(phot_locs):
+def avg_of_roi(localization, phot_locs, box_side_length):
     '''
     Parameters
     ----------
@@ -143,8 +143,13 @@ def avg_of_roi(phot_locs):
     - avg y position
 
     '''
-    number_phot = len(phot_locs)
-    return np.sum(phot_locs.x)/number_phot, np.sum(phot_locs.y)/number_phot
+    fit_area = (box_side_length/2)**2
+    #background = localization.background
+    number_phot = (len(phot_locs)-fit_area*localization.bg)
+    bg = localization.bg*fit_area
+    x_pos = (np.sum(phot_locs.x) - bg*localization.x)/number_phot
+    y_pos = (np.sum(phot_locs.y) - bg*localization.y)/number_phot
+    return x_pos, y_pos
     
     
 def photons_of_picked_area(localizations_file, photons_file,
@@ -347,8 +352,6 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     radius_2 = ((0.5*box_side_length)**2)
     photons_loc_circle_fov = photons_loc[
         photons_loc.distance < radius_2]
-    print('photons square: ', len(photons_loc),
-          'photons circle: ', len(photons_loc_circle_fov))
     return photons_loc_circle_fov
     
 
