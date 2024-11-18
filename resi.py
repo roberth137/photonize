@@ -115,12 +115,15 @@ def locs_lt_avg_pos(localizations_file, photons_file,
             phot_loc = photons_of_one_localization(one_loc, 
                                    pick_photons,offset, 
                                    box_side_length, integration_time)
+            
             x_distance = (phot_loc['x'].to_numpy() - one_loc.x)
             y_distance = (phot_loc['y'].to_numpy() - one_loc.y)
-            phot_loc['distance'] = np.sqrt(np.square(x_distance) 
+            total_distance = np.sqrt(np.square(x_distance) 
                                         + np.square(y_distance))
+            print('total_distance dimensions: ', total_distance.shape)
+            phot_loc['distance'] = total_distance
             phot_loc_circle_fov = phot_loc[
-                phot_loc.distance < box_side_length]
+                phot_loc.distance < 0.5*box_side_length]
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
             x, y = avg_of_roi(phot_loc_circle_fov)
@@ -149,7 +152,8 @@ def avg_of_roi(phot_locs):
     - avg y position
 
     '''
-    return np.sum(phot_locs.x), np.sum(phot_locs.y)
+    number_phot = len(phot_locs)
+    return np.sum(phot_locs.x)/number_phot, np.sum(phot_locs.y)/number_phot
     
     
 def photons_of_picked_area(localizations_file, photons_file,
