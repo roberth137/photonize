@@ -112,21 +112,12 @@ def locs_lt_avg_pos(localizations_file, photons_file,
             if i == 0: print('fitting lifetime of ', len(locs_group),
                              ' localizations.') 
             one_loc = locs_group.iloc[i-counter]
-            phot_loc = photons_of_one_localization(one_loc, 
-                                   pick_photons,offset, 
-                                   box_side_length, integration_time)
-            
-            x_distance = (phot_loc['x'].to_numpy() - one_loc.x)
-            y_distance = (phot_loc['y'].to_numpy() - one_loc.y)
-            total_distance = np.sqrt(np.square(x_distance) 
-                                        + np.square(y_distance))
-            print('total_distance dimensions: ', total_distance.shape)
-            phot_loc['distance'] = total_distance
-            phot_loc_circle_fov = phot_loc[
-                phot_loc.distance < 0.5*box_side_length]
+            phot_loc = pd.DataFrame(data=photons_of_one_localization
+                                    (one_loc, pick_photons,offset, 
+                                       box_side_length, integration_time))
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            x, y = avg_of_roi(phot_loc_circle_fov)
+            x, y = avg_of_roi(phot_loc)
             x_position[i] = x
             y_position[i] = y
             lifetime[i] = avg_lifetime_sergi_40(phot_loc, 
@@ -337,17 +328,28 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     OUT:
     - photons (dataframe format)
     '''
-    x_min = (localization.x-(box_side_length/2))
-    x_max = x_min + box_side_length
-    y_min = (localization.y-(box_side_length/2))
-    y_max = y_min + box_side_length
+    x_pos = localization.x
+    y_pos = localization.y
     ms_min = ((localization.frame/offset)*integration_time)
     ms_max = ms_min + integration_time
-    photons_loc = pick_photons[
-        (pick_photons.x>x_min)&(pick_photons.x<x_max)
-        &(pick_photons.y>y_min)&(pick_photons.y<y_max)
-        &(pick_photons.ms>ms_min)&(pick_photons.ms<ms_max)]
-    return photons_loc
+    # Pick photons with squared FOV
+    photons_loc = pd.DataFrame(data = pick_photons[
+        (pick_photons.x>x_pos-(box_side_length/2))
+        &(pick_photons.x<x_pos+(box_side_length/2))
+        &(pick_photons.y>y_pos-(box_side_length/2))
+        &(pick_photons.y<y_pos+(box_side_length/2))
+        &(pick_photons.ms>ms_min)&(pick_photons.ms<ms_max)])
+    # Only keep circular FOV
+    x_distance = (photons_loc['x'].to_numpy() - x_pos)
+    y_distance = (photons_loc['y'].to_numpy() - y_pos)
+    total_distance_2 = np.square(x_distance) + np.square(y_distance)
+    photons_loc['distance'] = total_distance_2
+    radius_2 = ((0.5*box_side_length)**2)
+    photons_loc_circle_fov = photons_loc[
+        photons_loc.distance < radius_2]
+    print('photons square: ', len(photons_loc),
+          'photons circle: ', len(photons_loc_circle_fov))
+    return photons_loc_circle_fov
     
 
 def undrift(photons_index, drift_file, offset, integration_time=200):
