@@ -34,8 +34,7 @@ def locs_lt_to_picasso(localizations_file, photons_file,
     photons = pd.read_hdf(photons_file, key='photons')
     print(len(photons), ' photons and ', total_localizations,
           'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
-    drift = drift[::offset]     
+    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y']) 
     lifetime = np.ones(len(localizations))
     lt_photons = np.ones(len(localizations), dtype=int)
     counter = 0
@@ -90,8 +89,7 @@ def locs_lt_avg_pos(localizations_file, photons_file,
     photons = pd.read_hdf(photons_file, key='photons')
     print(len(photons), ' photons and ', total_localizations,
           'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
-    drift = drift[::offset]     
+    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])    
     lifetime = np.ones(len(localizations))
     lt_photons = np.ones(len(localizations), dtype=int)
     x_position = np.ones(len(localizations))
@@ -137,14 +135,18 @@ def avg_of_roi(localization, phot_locs, box_side_length):
     Parameters
     ----------
     phot_locs : photons of one localization as pd dataframe
+    
     Returns
     -------
-    - avg x position
-    - avg y position
+    - x position
+    - y position
+    
+    Position is calculated by adding up all photons in the circular
+    surrounding of the localization. 
+    Background gets subtracted
 
     '''
     fit_area = (box_side_length/2)**2
-    #background = localization.background
     number_phot = (len(phot_locs)-fit_area*localization.bg)
     bg = localization.bg*fit_area
     x_pos = (np.sum(phot_locs.x) - bg*localization.x)/number_phot
@@ -347,19 +349,19 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     # Only keep circular FOV
     x_distance = (photons_loc['x'].to_numpy() - x_pos)
     y_distance = (photons_loc['y'].to_numpy() - y_pos)
-    total_distance_2 = np.square(x_distance) + np.square(y_distance)
-    photons_loc['distance'] = total_distance_2
-    radius_2 = ((0.5*box_side_length)**2)
+    total_distance_sq = np.square(x_distance) + np.square(y_distance)
+    photons_loc['distance'] = total_distance_sq
+    radius_sq = ((0.5*box_side_length)**2)
     photons_loc_circle_fov = photons_loc[
-        photons_loc.distance < radius_2]
+        photons_loc.distance < radius_sq]
     return photons_loc_circle_fov
     
 
-def undrift(photons_index, drift_file, offset, integration_time=200):
+def undrift(photons, drift, offset, integration_time=200):
     '''
     IN: 
-    - photon_index - list of all photons (x, y, dt, ms) as pandas dataframe
-    - drift_file - picasso generated
+    - photon_index - list of all photons (x, y, dt, ms) as pd dataframe
+    - drift_file - picasso generated as pd DataFrame
     - integration_time
     OUT: 
     undrifted photons_index as dataframe
@@ -375,18 +377,17 @@ def undrift(photons_index, drift_file, offset, integration_time=200):
     
     '''
     # create frame array
-    #frame_arr = np.ones(len(photons_index))
-    ms_index = np.copy(photons_index.ms)
-    frames = np.floor(ms_index/(integration_time)).astype(int)
-    #create numpy arrays to speed up 
-    num_phot = len(photons_index)
-    undrifted_x = np.copy(photons_index.x)
-    undrifted_y = np.copy(photons_index.y) 
-    drift_x = np.copy(drift_file.x)
-    drift_y = np.copy(drift_file.y)
-    drift_x_array = np.ones(num_phot)
-    drift_y_array = np.ones(num_phot)
-    for i in range(num_phot):
+    ms_index = np.copy(photons.ms)
+    frames = np.floor((offset*ms_index)/integration_time).astype(int)
+    drift_x = np.copy(drift.x)
+    drift_y = np.copy(drift.y)
+    #create numpy arrays to speed up
+    number_photons = len(photons)
+    undrifted_x = np.copy(photons.x)
+    undrifted_y = np.copy(photons.y)
+    drift_x_array = np.ones(number_photons)
+    drift_y_array = np.ones(number_photons)
+    for i in range(number_photons):
         frame = frames[i]
         drift_x_array[i] = drift_x[frame]
         drift_y_array[i] = drift_y[frame]
@@ -397,8 +398,7 @@ def undrift(photons_index, drift_file, offset, integration_time=200):
     undrifted_x += (0.53125-drift_x_array)
     undrifted_y += (0.53125-drift_y_array)
     #create and return new dataframe 
-    photons_index_undrifted = pd.DataFrame({'x': undrifted_x, 
-        'y': undrifted_y, 'dt': photons_index.dt, 'ms': photons_index.ms})
-    return photons_index_undrifted
-
+    photons_undrifted = pd.DataFrame({'x': undrifted_x, 
+        'y': undrifted_y, 'dt': photons.dt, 'ms': photons.ms})
+    return photons_undrifted
 
