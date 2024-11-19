@@ -147,7 +147,7 @@ def dataframe_to_picasso(dataframe, filename, extension='_lt'):
     hf = h5py.File(path + '/' + filename[:-5] + extension +'.hdf5', 'w')
     hf.create_dataset('locs', data=locs)
     hf.close()
-    print('dataframe succesfully saved in picasso format.')
+    print('\ndataframe succesfully saved in picasso format.')
 
 
 
