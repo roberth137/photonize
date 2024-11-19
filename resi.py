@@ -291,20 +291,6 @@ def avg_lifetime_sergi_40(loc_photons, peak, offset=50):
     counts_bgsub = counts - background
     return np.sum(np.multiply(counts_bgsub[(peak+50):2000], np.arange(1,(2000-(peak+49)))))/np.sum(counts_bgsub[(peak+50):2000])
 
-'''
-def min_max_box(localizations, box_side_length=0):
-    '''
-'''
-    IN: -list of localizations as pandas dataframe
-    OUT: -  min_x, max_x, min_y, max_y
-    '''
-'''
-    min_x = min(localizations.x)-(box_side_length/2)
-    max_x = max(localizations.x)+(box_side_length/2)
-    min_y = min(localizations.y)-(box_side_length/2)
-    max_y = max(localizations.y)+(box_side_length/2)
-    return min_x, max_x, min_y, max_y
-'''
 
 def loc_boundaries(localization, offset, 
                             box_side_length, integration_time):
@@ -327,28 +313,8 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     OUT:
     - photons (dataframe format)
     '''
-    #x_pos = localization.x
-    #y_pos = localization.y
-    #ms_min = ((localization.frame/offset)*integration_time)
-    #ms_max = ms_min + integration_time
-    #x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
-    #    localization, offset, box_side_length, integration_time)
-    # Pick photons with squared FOV
     photons_cylinder = core.crop_cylinder(localization,
             pick_photons, offset, box_side_length, integration_time)
     
-    #photons_loc = pd.DataFrame(
-    #    data = )
-        
-    # Only keep circular FOV
-    '''
-    x_distance = (photons_loc['x'].to_numpy() - x_pos)
-    y_distance = (photons_loc['y'].to_numpy() - y_pos)
-    total_distance_sq = np.square(x_distance) + np.square(y_distance)
-    photons_loc['distance'] = total_distance_sq
-    radius_sq = ((0.5*box_side_length)**2)
-    photons_loc_circle_fov = photons_loc[
-        photons_loc.distance < radius_sq]
-    '''
     return photons_cylinder
     

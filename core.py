@@ -73,9 +73,6 @@ def crop_cylinder(localization, photons, offset,
 
     '''
     
-    #x_pos = localization.x
-    #y_pos = localization.y
-    
     x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
         localization, offset, box_side_length, integration_time)
     
@@ -84,7 +81,6 @@ def crop_cylinder(localization, photons, offset,
                                     x_min, x_max, 
                                     y_min, y_max, 
                                     ms_min, ms_max))
-    #print('type of cropped photons: ', type(photons_cropped))
     
     x_distance = (photons_cropped['x'].to_numpy() - localization.x)
     y_distance = (photons_cropped['y'].to_numpy() - localization.y)
