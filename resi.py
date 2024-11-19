@@ -264,26 +264,53 @@ def get_pick_photons(
     of the pick +- box_side_length/2
     '''
     # set dimensions of the region and crop photons 
-    # -0.5 because position 0 on camera means pixel 1 
+    # -0.53125 because: -> see undrift (pixel conversion)
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
     min_x, max_x, min_y, max_y = get_min_max(locs_group)
-    phot_crop = photons[(photons.x > (min_x-0.53125-(box_side_length/2)-dr_x))
-                        &(photons.x < (max_x-0.53125+(box_side_length/2)+dr_x))
-                        &(photons.y > (min_y-0.53125-(box_side_length/2)-dr_y))
-                        &(photons.y < (max_y-0.53125+(box_side_length/2)+dr_y))]
-    print('number of cropped photons: ', len(phot_crop))
+    phot_cr = crop_photons(photons,
+                          (min_x-0.53125-(box_side_length/2)-dr_x),
+                          (max_x-0.53125+(box_side_length/2)+dr_x),
+                          (min_y-0.53125-(box_side_length/2)-dr_y),
+                          (max_y-0.53125+(box_side_length/2)+dr_y))
+    print('number of cropped photons: ', len(phot_cr))
     # undrift photons 
-    phot_cr_und = core.undrift(phot_crop, drift, offset, integration_time)
+    phot_cr_und = core.undrift(phot_cr, drift, offset, integration_time)
     # crop photons again after drift 
-    phot_cr_und_cr = phot_cr_und[
-        (phot_cr_und.x > (min_x-(box_side_length/2))) 
-        &(phot_cr_und.x < (max_x+(box_side_length/2))) 
-        &(phot_cr_und.y > (min_y-(box_side_length/2))) 
-        &(phot_cr_und.y < (max_y+(box_side_length/2)))]
+    phot_cr_und_cr = crop_photons(phot_cr_und, 
+                                  (min_x-(box_side_length/2)),
+                                  (max_x+(box_side_length/2)),
+                                  (min_y-(box_side_length/2)),
+                                  (max_y+(box_side_length/2)))
     print('number of cropped-undrifted-cropped photons: ', 
           len(phot_cr_und_cr))
     return phot_cr_und_cr
     
+def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0, 
+                 y_max=float('inf'), ms_min=0, ms_max=float('inf')):
+    '''
+    Parameters
+    ----------
+    photons : photons as pd dataframe
+    x_min :
+    x_max :
+    y_min :
+    y_max :
+    ms_min : optional The default is None.
+    ms_max : optional The default is None.
+
+    Returns
+    -------
+    cropped photons as pd dataframe
+
+    '''
+    photons_cropped = photons[
+        (photons.x>=x_min)
+        &(photons.x<=x_max)
+        &(photons.y>=y_min)
+        &(photons.y<=y_max)
+        &(photons.ms>=ms_min)
+        &(photons.ms<=ms_max)]
+    return photons_cropped 
     
     
 def dataframe_to_picasso(dataframe, filename, extension='_lt'):
@@ -357,50 +384,3 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
         photons_loc.distance < radius_sq]
     return photons_loc_circle_fov
     
-'''
-def undrift(photons, drift, offset, integration_time=200):
-'''
-'''
-    IN: 
-    - photon_index - list of all photons (x, y, dt, ms) as pd dataframe
-    - drift_file - picasso generated as pd DataFrame
-    - integration_time
-    OUT: 
-    undrifted photons_index as dataframe
-    
-    
-    Note: drift array is subtracted from locs to get undrifted coordinates
-    0.53125 is added to coordinates to convert coordinates 
-    from camera pixels (LINCAM) to TIFfile to picasso coordinates.
-    
-    Formula: Picasso_coord = LIN_coord + 0.5 + (1/(2*Binning))
-    
-    For 16x Binning: P_c = L_c + 0.5 +(1/(2*16)) = L_c + 0.53125
-'''
-'''
-    # create frame array
-    ms_index = np.copy(photons.ms)
-    frames = np.floor((offset*ms_index)/integration_time).astype(int)
-    drift_x = np.copy(drift.x)
-    drift_y = np.copy(drift.y)
-    #create numpy arrays to speed up
-    number_photons = len(photons)
-    undrifted_x = np.copy(photons.x)
-    undrifted_y = np.copy(photons.y)
-    drift_x_array = np.ones(number_photons)
-    drift_y_array = np.ones(number_photons)
-    for i in range(number_photons):
-        frame = frames[i]
-        drift_x_array[i] = drift_x[frame]
-        drift_y_array[i] = drift_y[frame]
-        #if i == 0: print('start undrifting')
-        #elif i %10000000 == 0: print('10mio undrifted')
-    #apply drift and shift of 0.53125 to photons -> synchron in position 
-    #with Localizations
-    undrifted_x += (0.53125-drift_x_array)
-    undrifted_y += (0.53125-drift_y_array)
-    #create and return new dataframe 
-    photons_undrifted = pd.DataFrame({'x': undrifted_x, 
-        'y': undrifted_y, 'dt': photons.dt, 'ms': photons.ms})
-    return photons_undrifted
-'''
