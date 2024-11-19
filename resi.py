@@ -327,24 +327,21 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     OUT:
     - photons (dataframe format)
     '''
-    x_pos = localization.x
-    y_pos = localization.y
+    #x_pos = localization.x
+    #y_pos = localization.y
     #ms_min = ((localization.frame/offset)*integration_time)
     #ms_max = ms_min + integration_time
-    x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
-        localization, offset, box_side_length, integration_time)
+    #x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
+    #    localization, offset, box_side_length, integration_time)
     # Pick photons with squared FOV
-    photons_loc = pd.DataFrame(
-        data = core.crop_photons(
-                pick_photons, x_min, x_max, y_min, y_max, ms_min, ms_max))
-                               
-#                              pick_photons[
-#        (pick_photons.x>x_pos-(box_side_length/2))
-#        &(pick_photons.x<x_pos+(box_side_length/2))
-#        &(pick_photons.y>y_pos-(box_side_length/2))
-#        &(pick_photons.y<y_pos+(box_side_length/2))
-#        &(pick_photons.ms>ms_min)&(pick_photons.ms<ms_max)])
+    photons_cylinder = core.crop_cylinder(localization,
+            pick_photons, offset, box_side_length, integration_time)
+    
+    #photons_loc = pd.DataFrame(
+    #    data = )
+        
     # Only keep circular FOV
+    '''
     x_distance = (photons_loc['x'].to_numpy() - x_pos)
     y_distance = (photons_loc['y'].to_numpy() - y_pos)
     total_distance_sq = np.square(x_distance) + np.square(y_distance)
@@ -352,5 +349,6 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     radius_sq = ((0.5*box_side_length)**2)
     photons_loc_circle_fov = photons_loc[
         photons_loc.distance < radius_sq]
-    return photons_loc_circle_fov
+    '''
+    return photons_cylinder
     
