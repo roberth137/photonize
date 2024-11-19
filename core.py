@@ -32,14 +32,9 @@ def min_max_box(localizations, box_side_length=0):
 def loc_boundaries(localization, offset, 
                             box_side_length, integration_time):
     '''
-    Returns boundaries of a single localization (pd Series) 
-    for photons filtering as a rectangular box 
+    Returns boundaries in x, y, ms of a single localization (pd Series) 
+    as a rectangular box
     
-    dimensions: 
-        -x
-        -y
-        -ms
-
     '''
     
     x_min = localization.x - (box_side_length/2)

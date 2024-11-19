@@ -1,18 +1,17 @@
 # RESI functions
 import numpy as np
+import pandas as pd
+import core
 #import scipy as sp
 #import matplotlib.pyplot as plt
-import pandas as pd
 #import math
-import h5py
-from pathlib import Path
+#import h5py
+#from pathlib import Path
 #import copy
 #import matplotlib as mpl
 #import scipy.io as sio
 #from scipy.optimize import curve_fit
-import shutil
-import core
-
+#import shutil
 
 def locs_lt_to_picasso(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,
@@ -112,7 +111,7 @@ def locs_lt_avg_pos(localizations_file, photons_file,
             if i == 0: print('fitting lifetime of ', len(locs_group),
                              ' localizations.') 
             one_loc = locs_group.iloc[i-counter]
-            phot_loc = pd.DataFrame(data=photons_of_one_localization
+            phot_loc = pd.DataFrame(data=core.crop_cylinder
                                     (one_loc, pick_photons,offset, 
                                        box_side_length, integration_time))
             if i % 200 == 0:print('200 fitted. Number of photons',
@@ -132,6 +131,7 @@ def locs_lt_avg_pos(localizations_file, photons_file,
         localizations, localizations_file, '_lt_avgPos_noBg')
     print(len(localizations), 'localizations tagged with lifetime and'
           ' fitted with avg x,y position.') 
+    
     
 def avg_of_roi(localization, phot_locs, box_side_length):
     '''
@@ -301,6 +301,7 @@ def loc_boundaries(localization, offset,
     ms_min = (localization.frame/offset) * integration_time
     ms_max = ms_min + integration_time
     return x_min, x_max, y_min, y_max, ms_min, ms_max
+
 
 def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, integration_time=200):
     '''
