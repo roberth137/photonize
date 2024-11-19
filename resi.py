@@ -64,7 +64,8 @@ def locs_lt_to_picasso(localizations_file, photons_file,
         counter += len(locs_group)
     localizations['lifetime'] = lifetime
     localizations['lt_photons'] = lt_photons
-    dataframe_to_picasso(localizations, localizations_file)
+    core.dataframe_to_picasso(
+        localizations, localizations_file)
     print(len(localizations), 'localizations tagged with lifetime')
     
 
@@ -127,7 +128,8 @@ def locs_lt_avg_pos(localizations_file, photons_file,
     localizations['y'] = y_position
     localizations['lifetime'] = lifetime
     localizations['lt_photons'] = lt_photons
-    dataframe_to_picasso(localizations, localizations_file, '_lt_avgPos_noBg')
+    core.dataframe_to_picasso(
+        localizations, localizations_file, '_lt_avgPos_noBg')
     print(len(localizations), 'localizations tagged with lifetime and'
           ' fitted with avg x,y position.') 
     
@@ -267,7 +269,7 @@ def get_pick_photons(
     # -0.53125 because: -> see undrift (pixel conversion)
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
     min_x, max_x, min_y, max_y = get_min_max(locs_group)
-    phot_cr = crop_photons(photons,
+    phot_cr = core.crop_photons(photons,
                           (min_x-0.53125-(box_side_length/2)-dr_x),
                           (max_x-0.53125+(box_side_length/2)+dr_x),
                           (min_y-0.53125-(box_side_length/2)-dr_y),
@@ -276,7 +278,7 @@ def get_pick_photons(
     # undrift photons 
     phot_cr_und = core.undrift(phot_cr, drift, offset, integration_time)
     # crop photons again after drift 
-    phot_cr_und_cr = crop_photons(phot_cr_und, 
+    phot_cr_und_cr = core.crop_photons(phot_cr_und, 
                                   (min_x-(box_side_length/2)),
                                   (max_x+(box_side_length/2)),
                                   (min_y-(box_side_length/2)),
@@ -284,58 +286,6 @@ def get_pick_photons(
     print('number of cropped-undrifted-cropped photons: ', 
           len(phot_cr_und_cr))
     return phot_cr_und_cr
-    
-def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0, 
-                 y_max=float('inf'), ms_min=0, ms_max=float('inf')):
-    '''
-    Parameters
-    ----------
-    photons : photons as pd dataframe
-    x_min :
-    x_max :
-    y_min :
-    y_max :
-    ms_min : optional The default is None.
-    ms_max : optional The default is None.
-
-    Returns
-    -------
-    cropped photons as pd dataframe
-
-    '''
-    photons_cropped = photons[
-        (photons.x>=x_min)
-        &(photons.x<=x_max)
-        &(photons.y>=y_min)
-        &(photons.y<=y_max)
-        &(photons.ms>=ms_min)
-        &(photons.ms<=ms_max)]
-    return photons_cropped 
-    
-    
-def dataframe_to_picasso(dataframe, filename, extension='_lt'):
-    '''
-
-    Parameters
-    ----------
-    dataframe : dataframe in picasso format (with all necessary columns)
-    filename : name with which the file will be saved
-    
-    DO: takes a dataframe and saves it to picasso format
-    The corresponding yaml file has to be in the same directory and will be copied
-    '''
-    path = str(Path.cwd())
-    labels = list(dataframe.keys())
-    df_picasso = dataframe.reindex(columns=labels, fill_value=1)
-    locs = df_picasso.to_records(index = False)
-    # Saving data
-    yaml_old = (path + '/' + filename[:-4] + 'yaml')
-    yaml_new = (yaml_old[:-5] + extension + '.yaml')
-    shutil.copyfile(yaml_old, yaml_new) 
-    hf = h5py.File(path + '/' + filename[:-5] + extension +'.hdf5', 'w')
-    hf.create_dataset('locs', data=locs)
-    hf.close()
-    print('dataframe succesfully saved in picasso format.')
 
     
 def avg_lifetime_sergi_40(loc_photons, peak, offset=50):
