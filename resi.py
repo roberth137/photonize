@@ -268,21 +268,18 @@ def get_pick_photons(
     # set dimensions of the region and crop photons 
     # -0.53125 because: -> see undrift (pixel conversion)
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
-    min_x, max_x, min_y, max_y = get_min_max(locs_group)
+    min_x, max_x, min_y, max_y = core.min_max_box(locs_group, box_side_length)
     phot_cr = core.crop_photons(photons,
-                          (min_x-0.53125-(box_side_length/2)-dr_x),
-                          (max_x-0.53125+(box_side_length/2)+dr_x),
-                          (min_y-0.53125-(box_side_length/2)-dr_y),
-                          (max_y-0.53125+(box_side_length/2)+dr_y))
+                          (min_x-0.53125-dr_x),
+                          (max_x-0.53125+dr_x),
+                          (min_y-0.53125-dr_y),
+                          (max_y-0.53125+dr_y))
     print('number of cropped photons: ', len(phot_cr))
     # undrift photons 
     phot_cr_und = core.undrift(phot_cr, drift, offset, integration_time)
     # crop photons again after drift 
     phot_cr_und_cr = core.crop_photons(phot_cr_und, 
-                                  (min_x-(box_side_length/2)),
-                                  (max_x+(box_side_length/2)),
-                                  (min_y-(box_side_length/2)),
-                                  (max_y+(box_side_length/2)))
+                                       min_x, max_x, min_y, max_y)
     print('number of cropped-undrifted-cropped photons: ', 
           len(phot_cr_und_cr))
     return phot_cr_und_cr
@@ -294,13 +291,30 @@ def avg_lifetime_sergi_40(loc_photons, peak, offset=50):
     counts_bgsub = counts - background
     return np.sum(np.multiply(counts_bgsub[(peak+50):2000], np.arange(1,(2000-(peak+49)))))/np.sum(counts_bgsub[(peak+50):2000])
 
-
-def get_min_max(localizations):
+'''
+def min_max_box(localizations, box_side_length=0):
     '''
-    IN: -list of localizations/driftfile as pandas dataframe
+'''
+    IN: -list of localizations as pandas dataframe
     OUT: -  min_x, max_x, min_y, max_y
     '''
-    return min(localizations.x), max(localizations.x), min(localizations.y), max(localizations.y)
+'''
+    min_x = min(localizations.x)-(box_side_length/2)
+    max_x = max(localizations.x)+(box_side_length/2)
+    min_y = min(localizations.y)-(box_side_length/2)
+    max_y = max(localizations.y)+(box_side_length/2)
+    return min_x, max_x, min_y, max_y
+'''
+
+def loc_boundaries(localization, offset, 
+                            box_side_length, integration_time):
+    x_min = localization.x - (box_side_length/2)
+    x_max = x_min + box_side_length
+    y_min = localization.y - (box_side_length/2)
+    y_max = y_min + box_side_length
+    ms_min = (localization.frame/offset) * integration_time
+    ms_max = ms_min + integration_time
+    return x_min, x_max, y_min, y_max, ms_min, ms_max
 
 def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, integration_time=200):
     '''
@@ -315,15 +329,21 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     '''
     x_pos = localization.x
     y_pos = localization.y
-    ms_min = ((localization.frame/offset)*integration_time)
-    ms_max = ms_min + integration_time
+    #ms_min = ((localization.frame/offset)*integration_time)
+    #ms_max = ms_min + integration_time
+    x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
+        localization, offset, box_side_length, integration_time)
     # Pick photons with squared FOV
-    photons_loc = pd.DataFrame(data = pick_photons[
-        (pick_photons.x>x_pos-(box_side_length/2))
-        &(pick_photons.x<x_pos+(box_side_length/2))
-        &(pick_photons.y>y_pos-(box_side_length/2))
-        &(pick_photons.y<y_pos+(box_side_length/2))
-        &(pick_photons.ms>ms_min)&(pick_photons.ms<ms_max)])
+    photons_loc = pd.DataFrame(
+        data = core.crop_photons(
+                pick_photons, x_min, x_max, y_min, y_max, ms_min, ms_max))
+                               
+#                              pick_photons[
+#        (pick_photons.x>x_pos-(box_side_length/2))
+#        &(pick_photons.x<x_pos+(box_side_length/2))
+#        &(pick_photons.y>y_pos-(box_side_length/2))
+#        &(pick_photons.y<y_pos+(box_side_length/2))
+#        &(pick_photons.ms>ms_min)&(pick_photons.ms<ms_max)])
     # Only keep circular FOV
     x_distance = (photons_loc['x'].to_numpy() - x_pos)
     y_distance = (photons_loc['y'].to_numpy() - y_pos)

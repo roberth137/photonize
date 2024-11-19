@@ -12,29 +12,18 @@ import h5py
 from pathlib import Path
 import shutil
 
-def dataframe_to_picasso(dataframe, filename, extension='_lt'):
+def min_max_box(localizations, box_side_length=0):
     '''
+    IN: -list of localizations as pandas dataframe
+    OUT: -  min_x, max_x, min_y, max_y
+    '''
+    min_x = min(localizations.x)-(box_side_length/2)
+    max_x = max(localizations.x)+(box_side_length/2)
+    min_y = min(localizations.y)-(box_side_length/2)
+    max_y = max(localizations.y)+(box_side_length/2)
+    return min_x, max_x, min_y, max_y
 
-    Parameters
-    ----------
-    dataframe : dataframe in picasso format (with all necessary columns)
-    filename : name with which the file will be saved
-    
-    DO: takes a dataframe and saves it to picasso format
-    The corresponding yaml file has to be in the same directory and will be copied
-    '''
-    path = str(Path.cwd())
-    labels = list(dataframe.keys())
-    df_picasso = dataframe.reindex(columns=labels, fill_value=1)
-    locs = df_picasso.to_records(index = False)
-    # Saving data
-    yaml_old = (path + '/' + filename[:-4] + 'yaml')
-    yaml_new = (yaml_old[:-5] + extension + '.yaml')
-    shutil.copyfile(yaml_old, yaml_new) 
-    hf = h5py.File(path + '/' + filename[:-5] + extension +'.hdf5', 'w')
-    hf.create_dataset('locs', data=locs)
-    hf.close()
-    print('dataframe succesfully saved in picasso format.')
+
 
 def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0, 
                  y_max=float('inf'), ms_min=0, ms_max=float('inf')):
@@ -62,6 +51,30 @@ def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0,
         &(photons.ms>=ms_min)
         &(photons.ms<=ms_max)]
     return photons_cropped 
+
+def dataframe_to_picasso(dataframe, filename, extension='_lt'):
+    '''
+
+    Parameters
+    ----------
+    dataframe : dataframe in picasso format (with all necessary columns)
+    filename : name with which the file will be saved
+    
+    DO: takes a dataframe and saves it to picasso format
+    The corresponding yaml file has to be in the same directory and will be copied
+    '''
+    path = str(Path.cwd())
+    labels = list(dataframe.keys())
+    df_picasso = dataframe.reindex(columns=labels, fill_value=1)
+    locs = df_picasso.to_records(index = False)
+    # Saving data
+    yaml_old = (path + '/' + filename[:-4] + 'yaml')
+    yaml_new = (yaml_old[:-5] + extension + '.yaml')
+    shutil.copyfile(yaml_old, yaml_new) 
+    hf = h5py.File(path + '/' + filename[:-5] + extension +'.hdf5', 'w')
+    hf.create_dataset('locs', data=locs)
+    hf.close()
+    print('dataframe succesfully saved in picasso format.')
 
 def undrift(photons, drift, offset, integration_time=200):
     '''
