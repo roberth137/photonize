@@ -36,56 +36,19 @@ class binding_event:
         
 def connect_locs(localizations_file):
     localizations = pd.read_hdf(localizations_file, key='locs')
-    #localizations = localizations[:20]
-    #grouped_locs = localizations.copy
-    #create event array 
     event = np.zeros(len(localizations), dtype=int)
     event_counter = 0
     
-    #deleted = False
-    #num_deleted = 0
-    
-    #num_locs_before = len(localizations)
-    
-    #loop over all localizations:
-    for i in np.arange(len(localizations), dtype=int):
-        
-        print('\n\n--------------- NEW LOOP ---------------')
-        print('loop number: ', i, ' of ', len(localizations)-1, ' starting...\n')
-        #print('deleted localizations: ', num_deleted, '\n')
-        
-        #if deleted:
-        #    num_deleted += 1
-        #    deleted = False
-            
-        #position_counter = i - num_deleted
-        
-        if i == len(localizations)-1: print('last round')
-        print('current event array: ', event[i-2:i+5])
-        #has_follower = False
-        
-        print('loop number: ', i, ' starting...')
-        #print('setting position: ', position_counter , '\n')
+    for i in np.arange(len(localizations), dtype=int):        
         
         if event[i] == 0: #not connected to previous event -> new event
             event_counter +=1 
-            print('--------NEW EVENT:-------- ', event_counter)
-            #new_event = True 
             event[i] = event_counter
-            print('event number: ', event[i])
-            
-        else:
-            print('position ', i, ' already set with value: ', event[i], '\n') 
-        
-        frame = localizations.frame.iloc[i]
-        print('Current frame: ', frame)
-        print('collecting localizations in next frame...')
+                    
         frame = localizations.frame.iloc[i]
         locs_next_frame = localizations[(localizations.frame == frame+1)]
         
-        
         if len(locs_next_frame) == 0:
-            print('\nno localization in frame ', frame+1)
             pass
         
         else: has_follower, follower_index = return_nearby(
@@ -93,29 +56,7 @@ def connect_locs(localizations_file):
         
         if has_follower: 
             event[follower_index] = event[i] #set to same event
-            print('follower index is: ', follower_index)
-            print('connected to previous. new event_arr: ', event[i-2:i+5])
-            #new_event = False
             
-        #print('new event: ', new_event)
-            
-        #if new_event and not has_follower:
-        #    print('new event: ', new_event, '. has follower: ', has_follower)
-        #    new_event = False
-        #    print('length of localizations: ', len(localizations))
-        #    print('--------POP--------')
-        #    localizations = localizations.drop(index=i)
-        #    print('length of localizations: ', len(localizations))
-        #    np.delete(event, i)
-        #    print('deleted standalone localization.')
-        #    deleted = True
-        #else: print('no follower nearby')
-                
-        print('--------------- END LOOP ---------------')
-        
-        
-    #print('number of localizations before: ', num_locs_before)
-    print('number of localizations now: ', len(localizations))
     locs_event_tagged = pd.DataFrame({'frame': localizations.frame,
                                  'x': localizations.x, 
                                  'y': localizations.y, 
@@ -129,6 +70,7 @@ def connect_locs(localizations_file):
                                  'group': localizations.group,
                                  'sx': localizations.sx,
                                  'sy': localizations.sy})
+    
     filtered_locs = filter_unique_events(locs_event_tagged)
     core.dataframe_to_picasso(filtered_locs, localizations_file, '_eve')
     
@@ -186,24 +128,24 @@ def return_nearby(localization, locs_next_frame):
     
     radius_sq = max_distance**2
     
-    print('max_distance:', radius_sq)
-    print(locs_next.distance)
+    #print('max_distance:', radius_sq)
+    #print(locs_next.distance)
     
     loc = locs_next[
         locs_next.distance < radius_sq]
     
     
     if len(loc) == 1:
-        print('similar loc in next frame.')
+        #print('similar loc in next frame.')
         has_next = True
         return has_next, loc.index.values
     
     elif len(loc) > 1:
-        print('too many locs')
+        #print('too many locs')
         return has_next, float('nan')
     
     else:
-        print('Number of locs in next frame were: ', len(locs_next), 
-              'no similar loc in next frame.')
+        #print('Number of locs in next frame were: ', len(locs_next), 
+        #      'no similar loc in next frame.')
         return has_next, float('nan')
         
