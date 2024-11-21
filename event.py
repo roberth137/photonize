@@ -13,6 +13,110 @@ import pandas as pd
 import numpy as np
 import core
 
+class Event:
+    def __init__(self, number, x, y, photons, lifetime, 
+                 start_frame, end_frame, lpx, lpy, duration, frame, bg):
+        self.number = number
+        self.x = x
+        self.y = y
+        self.photons = photons
+        self.lifetime = lifetime
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.lpx = lpx
+        self.lpy = lpy
+        self.duration = duration
+        self.frame = frame
+        self.bg = bg
+
+    def __repr__(self):
+        return (f'Event(number= {self.number}, x={self.x}, y={self.y}, '
+                f'photons={self.photons}, lifetime={self.lifetime},'
+                f'start_frame={self.start_frame}, end_frame={self.end_frame},'
+                f'lpx={self.lpx}, lpy={self.lpy}, '
+                f'duration={self.duration}, frame={self.frame}, '
+                f'bg={self.bg})')
+
+def create_events_from_localizations(localizations):
+    '''
+    Converts a DataFrame of localizations into a list of Event objects.
+
+    Returns:
+        list of Event: List of Event objects.
+    '''
+    # Validate required columns
+    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'event',
+                        'lifetime', 'lpx', 'lpy', }
+    if not required_columns.issubset(localizations.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_columns}")
+
+    # Group localizations by 'event_number'
+    grouped = localizations.groupby('event')
+
+    events = []
+    for event, group in grouped:
+        # Compute event properties
+        first = group.iloc[0]
+        last = group.iloc[-1]
+        
+        number = first.event
+        x = avg_photon_weighted(group, 'x')  # Average position (x)
+        y = avg_photon_weighted(group, 'y')  # Average position (y)
+        photons = max(group['photons'])  # Total photons
+        lifetime = avg_photon_weighted(group, 'lifetime')
+        lpx = avg_photon_weighted(group, 'lpx')
+        lpy = avg_photon_weighted(group, 'lpy')
+        start_frame = first.frame # Earliest frame in the group
+        end_frame = last.frame  # Latest frame in the group
+        bg = avg_photon_weighted(group, 'bg')  # Average background
+        duration = (end_frame-start_frame+1) 
+        frame = (end_frame-start_frame)/2 
+
+        # Create the Event object
+        event = Event(
+            number=number,
+            x=x,
+            y=y,
+            photons=photons,
+            lifetime=lifetime,
+            start_frame=start_frame,
+            end_frame=end_frame,
+            lpx=lpx,
+            lpy=lpy,
+            bg=bg,
+            duration=duration,
+            frame=frame
+        )
+        events.append(event)
+
+    return events
+
+
+
+# Example usage
+#if __name__ == "__main__":
+#    # Example DataFrame
+#    data = {
+#        'frame': [1, 2, 2, 3, 3, 4],
+#        'x': [10, 11, 12, 20, 21, 22],
+#        'y': [15, 16, 16, 25, 26, 26],
+#        'number_photons': [100, 120, 130, 200, 210, 220],
+#        'background': [5, 5, 5, 10, 10, 10],
+#        'event_number': [1, 1, 1, 2, 2, 2]
+#    }
+#    localizations_df = pd.DataFrame(data)
+
+    # Create events from localizations
+#events = create_events_from_localizations(localizations)
+
+    # Print events
+    #for event in events:
+     #   print(event)
+        
+        
+        
+#########################33333333#########################        
+
 class binding_event:
     def __init__(self,
                  x,
@@ -64,6 +168,7 @@ def event_average(localizations_file):
         'lpy': avg_photon_weighted(locs_event, 'lpy'),
         'bg': avg_photon_weighted(locs_event, 'bg'),
         'ellipticity': avg_photon_weighted(locs_event, 'ellipticity'),
+        'net_gradient': avg_photon_weighted(locs_event, 'net_gradient'),
         'sx': avg_photon_weighted(locs_event, 'sx'),
         'sy': avg_photon_weighted(locs_event, 'sy')}
         new_event_df = pd.DataFrame([new_event])
@@ -146,6 +251,7 @@ def connect_locs(localizations_file):
                                  'lpy': localizations.lpy,
                                  'bg': localizations.bg,
                                  'ellipticity': localizations.ellipticity,
+                                 'net_gradient': localizations.net_gradient,
                                  'group': localizations.group,
                                  'sx': localizations.sx,
                                  'sy': localizations.sy})
