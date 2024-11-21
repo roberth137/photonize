@@ -39,7 +39,7 @@ def locs_lt_to_picasso(localizations_file, photons_file,
     lt_photons = np.ones(len(localizations), dtype=int)
     counter = 0
     # iterating over every pick in file
-    for g in range((localizations['group'].iloc[-1])+1):
+    for g in set(localizations['group']):
         locs_group = localizations[(localizations.group == g)]
         print(len(locs_group), 'localizations in current group.')
         pick_photons = get_pick_photons(locs_group, photons, 

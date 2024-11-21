@@ -32,8 +32,50 @@ class binding_event:
         self.num_photons = num_photons
         self.bg = bg
         
+def event_average(localizations_file):
+    '''
+    
+
+    Parameters
+    ----------
+    localizations_file : localizations_file, tagged with event
+
+    Returns
+    -------
+    localizations file with each row the average of events
+
+    '''
+    localizations = pd.read_hdf(localizations_file, key='locs')
+    for e in set(localizations.event):
+        locs_event = localizations[localizations.event == e]
         
         
+        
+def avg_photon_weighted(localizations, column):
+    '''
+
+    Parameters
+    ----------
+    localizations : localizations where one column should be averaged over 
+    with photons weight 
+    column : column to be averaged, e.g. 'x' or 'lifetime'
+
+    Returns
+    -------
+    average : sum over i: value[i]*photons[i]/total_photons
+
+    '''
+    column_sum = 0 
+    total_photons = 0
+    for i in np.arange(len(localizations)): 
+        loc_photons = localizations.loc[i, 'photons']
+        column_sum += (localizations.loc[i, column] * loc_photons)
+        total_photons += loc_photons
+    average = column_sum/total_photons
+    print('average value is: ', average)
+    return average
+        
+
 def connect_locs(localizations_file):
     localizations = pd.read_hdf(localizations_file, key='locs')
     event = np.zeros(len(localizations), dtype=int)
@@ -71,8 +113,8 @@ def connect_locs(localizations_file):
                                  'sx': localizations.sx,
                                  'sy': localizations.sy})
     
-    filtered_locs = filter_unique_events(locs_event_tagged)
-    core.dataframe_to_picasso(filtered_locs, localizations_file, '_eve')
+    #filtered_locs = filter_unique_events(locs_event_tagged)
+    core.dataframe_to_picasso(locs_event_tagged, localizations_file, '_eve')
     
         
 def filter_unique_events(localizations):
