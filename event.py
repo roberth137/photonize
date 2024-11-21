@@ -34,8 +34,6 @@ class binding_event:
         
 def event_average(localizations_file):
     '''
-    
-
     Parameters
     ----------
     localizations_file : localizations_file, tagged with event
@@ -46,8 +44,46 @@ def event_average(localizations_file):
 
     '''
     localizations = pd.read_hdf(localizations_file, key='locs')
+    averaged = pd.DataFrame()#{'frame':'','x':'','y':'', 'photons':'',
+                             #'event':'','lifetime':'','lpx':'','lpy':'',
+                             #'bg':'','ellipticity':'','group':'',
+                             #'sx':'','sy':''})
     for e in set(localizations.event):
+        #print('averaging event; ', e)
         locs_event = localizations[localizations.event == e]
+        duration_frames = len(locs_event)
+        #print(locs_event)
+        new_event = {'frame': int(np.floor(avg_photon_weighted(locs_event, 'frame'))),
+        'x': avg_photon_weighted(locs_event, 'x'),
+        'y': avg_photon_weighted(locs_event, 'y'),
+        'photons': max(locs_event['photons']),
+        'event': e,
+        'lifetime': avg_photon_weighted(locs_event, 'lifetime'),
+        'duration_fr': duration_frames,
+        'lpx': avg_photon_weighted(locs_event, 'lpx'),
+        'lpy': avg_photon_weighted(locs_event, 'lpy'),
+        'bg': avg_photon_weighted(locs_event, 'bg'),
+        'ellipticity': avg_photon_weighted(locs_event, 'ellipticity'),
+        'sx': avg_photon_weighted(locs_event, 'sx'),
+        'sy': avg_photon_weighted(locs_event, 'sy')}
+        new_event_df = pd.DataFrame([new_event])
+
+        averaged = pd.concat([averaged, new_event_df])
+        '''
+            {'frame': avg_photon_weighted(locs_event, 'frame'),
+            'x': avg_photon_weighted(locs_event, 'x'),
+            'y': avg_photon_weighted(locs_event, 'y'),
+            'photons': max(locs_event['photons']),
+            'lifetime': avg_photon_weighted(locs_event, 'lifetime'),
+            'lpx': avg_photon_weighted(locs_event, 'lpx'),
+            'lpy': avg_photon_weighted(locs_event, 'lpy'),
+            'bg': avg_photon_weighted(locs_event, 'bg'),
+            'ellipticity': avg_photon_weighted(locs_event, 'ellipticity'),
+            'sx': avg_photon_weighted(locs_event, 'sx'),
+            'sy': avg_photon_weighted(locs_event, 'sy')}])
+        '''
+        #print(averaged)
+    core.dataframe_to_picasso(averaged, localizations_file, 'event_averaged')
         
         
         
@@ -65,14 +101,15 @@ def avg_photon_weighted(localizations, column):
     average : sum over i: value[i]*photons[i]/total_photons
 
     '''
+    localizations = localizations.reset_index(drop=True)
     column_sum = 0 
     total_photons = 0
-    for i in np.arange(len(localizations)): 
+    for i in np.arange(len(localizations), dtype=int): 
         loc_photons = localizations.loc[i, 'photons']
         column_sum += (localizations.loc[i, column] * loc_photons)
         total_photons += loc_photons
     average = column_sum/total_photons
-    print('average value is: ', average)
+    #print('average value is: ', average)
     return average
         
 
