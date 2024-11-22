@@ -286,10 +286,52 @@ def get_pick_photons(
 
     
 def avg_lifetime_sergi_40(loc_photons, peak, offset=50):
+    '''
+    Fit lifetimes of individual localizations with 40mhz laser frequency
+    Parameters
+    ----------
+    loc_photons : all photons from one localization 
+    peak : position of the maximum of arrival times for this pick of 
+    localizations, calibrated from calibrate_peak()
+    offset : the offset from the peak where arrival times are considered
+    for fitting the lifetime.The default is 50.
+
+    Returns
+    -------
+    average arrival time of photons, in units of arrival time bin size.
+    Usually 10ps 
+
+    '''
     counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,2500))
     background = np.sum(counts[-300:])/300
     counts_bgsub = counts - background
     return np.sum(np.multiply(counts_bgsub[(peak+50):2000], np.arange(1,(2000-(peak+49)))))/np.sum(counts_bgsub[(peak+50):2000])
+
+def avg_lifetime_sergi_80(loc_photons, peak, offset=50):
+    '''
+    Fit lifetimes of individual localizations with 80mhz laser frequency
+    Parameters
+    ----------
+    loc_photons : all photons from one localization 
+    peak : position of the maximum of arrival times for this pick of 
+    localizations, calibrated from calibrate_peak()
+    offset : the offset from the peak where arrival times are considered
+    for fitting the lifetime.The default is 50.
+
+    Returns
+    -------
+    average arrival time of photons, in units of arrival time bin size.
+    Usually 10ps 
+
+    '''
+    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,1250))
+    background = np.sum(counts[-100:])/100
+    counts_bgsub = counts - background
+    weights = np.arange(1,(1250-(peak+49)))
+    considered_bgsub = counts_bgsub[(peak+50):1250]
+    lifetime = np.sum(np.multiply(considered_bgsub, weights))/np.sum(considered_bgsub)
+    return lifetime
+
 
 
 def loc_boundaries(localization, offset, 
