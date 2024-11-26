@@ -100,9 +100,9 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
         pick_photons = get_pick_photons(locs_group, photons, 
                                         drift, offset,
                                         box_side_length, integration_time)
-        peak_arrival_time = calibrate_peak(locs_group, pick_photons, 
-                                           offset, box_side_length, 
-                                           integration_time)
+        #peak_arrival_time = calibrate_peak(locs_group, pick_photons, 
+                                           #offset, box_side_length, 
+                                           #integration_time)
         # iterating over every localization in pick
         for i in range(counter, counter+len(locs_group)):
             if i == 0: print('fitting lifetime of ', len(locs_group),
@@ -112,8 +112,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
                                    box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            lifetime[i] = avg_lifetime_sergi_80(phot_loc, 
-                                                      peak_arrival_time)
+            lifetime[i] = avg_lifetime_sergi_80(phot_loc, 80, 0)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
     localizations['lifetime'] = lifetime
@@ -362,7 +361,7 @@ def avg_lifetime_sergi_40(loc_photons, peak, offset=50):
     counts_bgsub = counts - background
     return np.sum(np.multiply(counts_bgsub[(peak+50):2000], np.arange(1,(2000-(peak+49)))))/np.sum(counts_bgsub[(peak+50):2000])
 
-def avg_lifetime_sergi_80(loc_photons, peak, offset=50):
+def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     '''
     Fit lifetimes of individual localizations with 80mhz laser frequency
     Parameters
@@ -380,10 +379,10 @@ def avg_lifetime_sergi_80(loc_photons, peak, offset=50):
 
     '''
     counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,1250))
-    background = np.sum(counts[-100:])/100
+    background = np.sum(counts[-300:])/300
     counts_bgsub = counts - background
-    weights = np.arange(1,(1250-(peak+50)))
-    considered_bgsub = counts_bgsub[(peak+50):1250]
+    weights = np.arange(1,(1250-(peak+dt_offset)))
+    considered_bgsub = counts_bgsub[(peak+dt_offset):1250]
     lifetime = np.sum(np.multiply(considered_bgsub, weights))/np.sum(considered_bgsub)
     return lifetime
 
