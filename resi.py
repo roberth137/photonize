@@ -204,7 +204,7 @@ def avg_of_roi(localization, phot_locs, box_side_length):
     Background gets subtracted
 
     '''
-    fit_area = (box_side_length/2)**2
+    fit_area = np.pi*(box_side_length/2)**2
     number_phot = (len(phot_locs)-fit_area*localization.bg)
     bg = localization.bg*fit_area
     x_pos = (np.sum(phot_locs.x) - bg*localization.x)/number_phot
