@@ -173,6 +173,10 @@ def undrift(photons, drift, offset, integration_time=200):
     # create frame array
     ms_index = np.copy(photons.ms)
     frames = np.floor((offset*ms_index)/integration_time).astype(int)
+    ## REMOVE after fixed in matlab
+    for i in range(len(frames)):
+        if frames[i] >179979:
+            frames[i] = 179979
     drift_x = np.copy(drift.x)
     drift_y = np.copy(drift.y)
     
@@ -182,7 +186,8 @@ def undrift(photons, drift, offset, integration_time=200):
     undrifted_y = np.copy(photons.y)
     drift_x_array = np.ones(number_photons)
     drift_y_array = np.ones(number_photons)
-    
+    print('length of drift_x: ', len(drift_x))
+    print('max frame: ', max(frames))
     for i in range(number_photons):
         frame = frames[i]
         drift_x_array[i] = drift_x[frame]
