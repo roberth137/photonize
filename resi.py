@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import core
+import get_photons
 #import scipy as sp
 #import matplotlib.pyplot as plt
 #import math
@@ -42,7 +43,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
     for g in set(localizations['group']):
         locs_group = localizations[(localizations.group == g)]
         print(len(locs_group), 'localizations in current group.')
-        pick_photons = get_pick_photons(locs_group, photons, 
+        pick_photons = get_photons.crop_undrift_crop(locs_group, photons, 
                                         drift, offset,
                                         box_side_length, integration_time)
         peak_arrival_time = calibrate_peak(locs_group, pick_photons, 
@@ -52,9 +53,10 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
         for i in range(counter, counter+len(locs_group)):
             if i == 0: print('fitting lifetime of ', len(locs_group),
                              ' localizations.') 
-            phot_loc = photons_of_one_localization(locs_group.iloc[i-counter], 
-                                   pick_photons,offset, 
-                                   box_side_length, integration_time)
+            phot_loc = get_photons.photons_of_one_localization(
+                    locs_group.iloc[i-counter], 
+                    pick_photons,offset, 
+                    box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
             lifetime[i] = avg_lifetime_sergi_40(phot_loc, 
@@ -210,12 +212,12 @@ def avg_of_roi(localization, phot_locs, box_side_length):
     y_pos = (np.sum(phot_locs.y) - bg*localization.y)/number_phot
     return x_pos, y_pos
     
-    
+'''
 def photons_of_picked_area(localizations_file, photons_file,
                          drift_file, offset, box_side_length, 
                          integration_time):
     '''
-
+'''
     Parameters
     ----------
     localizations_file : picasso .hdf5 of picked localizations
@@ -230,7 +232,9 @@ def photons_of_picked_area(localizations_file, photons_file,
     pick_photons : photons in the area of all picked localizations
     over the whole imaging time 
 
-    '''
+    
+
+'''
     localizations = pd.read_hdf(localizations_file, key='locs')
     photons = pd.read_hdf(photons_file, key='photons')
     drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
@@ -239,12 +243,16 @@ def photons_of_picked_area(localizations_file, photons_file,
                                     offset, box_side_length, 
                                     integration_time)
     return pick_photons
+
+
     
+'''
 def photons_of_many_picked_localizations(
         localizations_file, photons_file,
         drift_file, offset, box_side_length, 
         integration_time):
     '''
+'''
     Parameters
     ----------
     localizations_file : picasso .hdf5 of picked localizations
@@ -260,6 +268,7 @@ def photons_of_many_picked_localizations(
     some may be multiple in case of offset 
 
     '''
+'''
     localizations = pd.read_hdf(localizations_file, key='locs')
     photons = pd.read_hdf(photons_file, key='photons')
     drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
@@ -276,7 +285,7 @@ def photons_of_many_picked_localizations(
                                   ignore_index=True)
     print('number of photons corresponding to locs: ', len(photons_locs))
     return photons_locs
-    
+'''    
     
     
 def calibrate_peak(locs_group, pick_photons, offset,
@@ -293,11 +302,11 @@ def calibrate_peak(locs_group, pick_photons, offset,
     '''
     group_photons = pd.DataFrame()
     for i in range(len(locs_group)):
-        phot_loc = photons_of_one_localization(locs_group.iloc[i], pick_photons, offset, 
+        phot_loc = get_photons.photons_of_one_localization(locs_group.iloc[i], pick_photons, offset, 
                                box_side_length, integration_time)
         group_photons = pd.concat([group_photons, phot_loc], 
                                   ignore_index=True)
-    counts, bins = np.histogram(pick_photons.dt, bins=np.arange(0, 2500))
+    counts, bins = np.histogram(group_photons.dt, bins=np.arange(0, 2500))
     return np.argmax(counts)
     
 
@@ -398,9 +407,10 @@ def loc_boundaries(localization, offset,
     ms_max = ms_min + integration_time
     return x_min, x_max, y_min, y_max, ms_min, ms_max
 
-
+'''
 def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, integration_time=200):
     '''
+'''
     Returns photons of localization
     IN: 
     - localization (picasso format)
@@ -410,8 +420,16 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     OUT:
     - photons (dataframe format)
     '''
+'''
     photons_cylinder = core.crop_cylinder(localization,
             pick_photons, offset, box_side_length, integration_time)
     
     return photons_cylinder
+    '''
+    
+    
+    
+    
+    
+    
     
