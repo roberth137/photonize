@@ -14,37 +14,10 @@ import numpy as np
 import core
 import tag_events
 import event_bounds
-import importlib
+#import importlib
 
 
 #importlib.reload(tag_events)
-
-
-
-class Event:
-    def __init__(self, number, x, y, photons, lifetime, 
-                 start_frame, end_frame, lpx, lpy, duration, frame, bg):
-        self.number = number
-        self.x = x
-        self.y = y
-        self.photons = photons
-        self.lifetime = lifetime
-        self.start_frame = start_frame
-        self.end_frame = end_frame
-        self.lpx = lpx
-        self.lpy = lpy
-        self.duration = duration
-        self.frame = frame
-        self.bg = bg
-
-    def __repr__(self):
-        return (f'Event(number= {self.number}, x={self.x}, y={self.y}, '
-                f'photons={self.photons}, lifetime={self.lifetime},'
-                f'start_frame={self.start_frame}, end_frame={self.end_frame},'
-                f'lpx={self.lpx}, lpy={self.lpy}, '
-                f'duration={self.duration}, frame={self.frame}, '
-                f'bg={self.bg})')
-    
     
     
 
@@ -98,12 +71,102 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
                  'end_frame': last['frame'],
                  'bg': avg_photon_weighted(group, 'bg')
                  }
-        event = pd.Series(event_data)
+        event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
     return events
 
+   
+
+def locs_to_events_to_picasso(localizations_file, 
+                              offset, box_side_length, int_time):
+    '''
+    Converts a DataFrame of localizations into a list of Event objects.
+
+    Returns:
+        list of Event: List of Event objects.
+    '''
+    localizations = pd.read_hdf(localizations_file, key='locs')
+    # Validate required columns
+    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
+    if not required_columns.issubset(localizations.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_columns}")
+
+    # Tag localizations with event number and group them
+    localizations_eve = tag_events.connect_locs(localizations)
+    grouped = localizations_eve.groupby('event')
+
+    events = pd.DataFrame()
+    
+    for event, group in grouped:
+        group = group.reset_index(drop=True)
+        #print('_____________________________________________________START')
+        #print('calculating event number: ', event)
+        # Compute event properties
+        first = group.iloc[0]
+        last = group.iloc[-1]
         
+        
+        #print('group photons values: \n', group['photons'])
+        #print('max phot index: ',group['photons'].idxmax())
+        #print('len group', len(group))
+        
+        
+        peak_event = group.iloc[group['photons'].idxmax()]
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            group, offset, int_time)
+        #print('peak event is: ', '\n', peak_event)
+        
+        event_data = {'frame': peak_event['frame'],
+                 'event': first['event'], 
+                 'x': avg_photon_weighted(group, 'x'),
+                 'y': avg_photon_weighted(group, 'y'),
+                 'photons': peak_event['photons'],
+                 'start_ms': start_ms,
+                 'end_ms': end_ms,
+                 'lpx': avg_photon_weighted(group, 'lpx'),
+                 'lpy': avg_photon_weighted(group, 'lpy'),
+                 'num frames': (last['frame']-first['frame'])+1,
+                 'start_frame': first['frame'],
+                 'end_frame': last['frame'],
+                 'bg': avg_photon_weighted(group, 'bg')
+                 }
+        event = pd.DataFrame(event_data, index=[0])
+        events = pd.concat([events, event], 
+                                  ignore_index=True)
+    core.dataframe_to_picasso(events, localizations_file, 
+                              extension='_eve')
+    return events
+
+
+'''
+class Event:
+    def __init__(self, number, x, y, photons, lifetime, 
+                 start_frame, end_frame, lpx, lpy, duration, frame, bg):
+        self.number = number
+        self.x = x
+        self.y = y
+        self.photons = photons
+        self.lifetime = lifetime
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.lpx = lpx
+        self.lpy = lpy
+        self.duration = duration
+        self.frame = frame
+        self.bg = bg
+
+    def __repr__(self):
+        return (f'Event(number= {self.number}, x={self.x}, y={self.y}, '
+                f'photons={self.photons}, lifetime={self.lifetime},'
+                f'start_frame={self.start_frame}, end_frame={self.end_frame},'
+                f'lpx={self.lpx}, lpy={self.lpy}, '
+                f'duration={self.duration}, frame={self.frame}, '
+                f'bg={self.bg})')
+'''    
+
+
+     
 '''
         frame = peak_event['frame']
         event = first['event']

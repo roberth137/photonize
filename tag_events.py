@@ -33,8 +33,9 @@ def connect_locs(localizations):
         
         if has_follower: 
             event[follower_index] = event[i] #set to same event
-            
-    localizations = localizations.drop('event', axis=1)   
+    
+    if 'event' in localizations.columns:
+        localizations = localizations.drop('event', axis=1)   
     
     localizations.insert(4, 'event', event)
     #filtered_locs = filter_unique_events(locs_event_tagged)

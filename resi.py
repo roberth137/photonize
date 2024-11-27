@@ -70,6 +70,72 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
     print(len(localizations), 'localizations tagged with lifetime')
     
     
+def events_lt_avg_pos(event_file, photons_file, 
+                       drift_file, offset, radius=5,
+                       integration_time=200, fitting='avg'):
+    '''
+    tagging list of picked localizations with lifetime 
+    and returning as picasso files
+    IN:
+    - list of picked localizations (picasso hdf5 file with 'group' column)
+    - list of photons (hdf5 file)
+    - drift (txt file)
+    - offset (how many offsetted frames)
+    OUT: 
+    - picasso hdf5 file tagged with lifetime 
+    - yaml file 
+    '''
+    #read in files
+    events = pd.read_hdf(event_file, key='locs')
+    total_events = len(events)
+    photons = pd.read_hdf(photons_file, key='photons')
+    
+    print(len(photons), ' photons and ', total_events,
+          'localization read in')
+    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
+    
+    lifetime = np.ones(len(events))
+    lt_photons = np.ones(len(events), dtype=int)
+    x_position = np.ones(len(events))
+    y_position = np.ones(len(events))
+    counter = 0
+    # iterating over every pick in file
+    for g in range(1):#set(events['event']):
+        #locs_group = localizations[(localizations.group == g)]
+        #print(len(locs_group), 'localizations in current group.')
+        pick_photons = get_pick_photons(events, photons, 
+                                        drift, offset,
+                                        box_side_length=radius, integration_time=integration_time)
+        peak_arrival_time = calibrate_peak(events, pick_photons, 
+                                           offset, box_side_length=radius, 
+                                           integration_time=integration_time)
+        
+        # iterating over every localization in pick
+        for i in range(counter, counter+len(events)):
+            #if i == 0: print('fitting lifetime of ', len(locs_group),
+            #                 ' localizations.') 
+            my_event = events.iloc[i-counter]
+            phot_event = pd.DataFrame(data=core.crop_event
+                                    (my_event, pick_photons, radius))
+            if i % 200 == 0:print('200 fitted. Number of photons',
+                                  ' in last fit: ', len(phot_event))
+            x, y = avg_of_roi(my_event, phot_event, radius)
+            x_position[i] = x
+            y_position[i] = y
+            lifetime[i] = avg_lifetime_sergi_40(phot_event, 
+                                                      peak_arrival_time)
+            lt_photons[i] = len(phot_event)
+        counter += len(events)
+    events['x'] = x_position
+    events['y'] = y_position
+    events['lifetime'] = lifetime
+    events['lt_photons'] = lt_photons
+    core.dataframe_to_picasso(
+        events, event_file, '_lt_avgPos_noBg')
+    print(len(events), 'events tagged with lifetime and'
+          ' fitted with avg x,y position.') 
+    
+    
 def locs_lt_to_picasso_80(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,
                        integration_time=200, fitting='avg'):
@@ -109,7 +175,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
         for i in range(counter, counter+len(locs_group)):
             if i == 0: print('fitting lifetime of ', len(locs_group),
                              ' localizations.') 
-            phot_loc = photons_of_one_localization(locs_group.iloc[i-counter], 
+            phot_loc = get_photons.photons_of_one_localization(locs_group.iloc[i-counter], 
                                    pick_photons,offset, 
                                    box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
@@ -212,6 +278,9 @@ def avg_of_roi(localization, phot_locs, box_side_length):
     y_pos = (np.sum(phot_locs.y) - bg*localization.y)/number_phot
     return x_pos, y_pos
     
+
+
+
 '''
 def photons_of_picked_area(localizations_file, photons_file,
                          drift_file, offset, box_side_length, 
@@ -231,9 +300,7 @@ def photons_of_picked_area(localizations_file, photons_file,
     -------
     pick_photons : photons in the area of all picked localizations
     over the whole imaging time 
-
-    
-
+    '''
 '''
     localizations = pd.read_hdf(localizations_file, key='locs')
     photons = pd.read_hdf(photons_file, key='photons')
@@ -245,7 +312,8 @@ def photons_of_picked_area(localizations_file, photons_file,
     return pick_photons
 
 
-    
+   '''
+   
 '''
 def photons_of_many_picked_localizations(
         localizations_file, photons_file,
