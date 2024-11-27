@@ -102,20 +102,23 @@ def return_nearby(localization, locs_next_frame):
     #print('max_distance:', radius_sq)
     #print(locs_next.distance)
     
-    loc = locs_next[
+    adjacent = locs_next[
         locs_next.distance < radius_sq]
     
     
-    if len(loc) == 1:
+    
+    if len(adjacent) == 1:
         #print('similar loc in next frame.')
         has_next = True
-        return has_next, loc.index.values
+        return has_next, adjacent.index.values
     
-    elif len(loc) > 1:
+    elif len(adjacent) > 1:
         print('too many locs')
-        print('max_distance: ', max_distance)
-        print(loc)
-        return has_next, float('nan')
+        #print('max_distance: ', max_distance)
+        print(adjacent)
+        #print('\n-----returning smallest element: ')
+        #print(adjacent.loc[adjacent['distance'].idxmin()])
+        return has_next, adjacent['distance'].idxmin()
     
     else:
         #print('Number of locs in next frame were: ', len(locs_next), 
