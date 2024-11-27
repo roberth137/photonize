@@ -12,7 +12,37 @@ import pandas as pd
 import numpy as np
 import core
 
-def connect_locs(localizations_file):
+def connect_locs(localizations):
+    #localizations = pd.read_hdf(localizations_file, key='locs')
+    event = np.zeros(len(localizations), dtype=int)
+    event_counter = 0
+    
+    for i in np.arange(len(localizations), dtype=int): 
+        has_follower = False
+        
+        if event[i] == 0: #not connected to previous event -> new event
+            event_counter +=1 
+            event[i] = event_counter
+                    
+        frame = localizations.frame.iloc[i]
+        locs_next_frame = localizations[(localizations.frame == frame+1)]
+        
+        if len(locs_next_frame) != 0:
+            has_follower, follower_index = return_nearby(
+                localizations.iloc[i], locs_next_frame)
+        
+        if has_follower: 
+            event[follower_index] = event[i] #set to same event
+            
+    localizations = localizations.drop('event', axis=1)   
+    
+    localizations.insert(4, 'event', event)
+    #filtered_locs = filter_unique_events(locs_event_tagged)
+    return localizations
+    
+
+
+def connect_locs_to_picasso(localizations_file):
     localizations = pd.read_hdf(localizations_file, key='locs')
     event = np.zeros(len(localizations), dtype=int)
     event_counter = 0

@@ -49,7 +49,7 @@ def get_ms_bounds(locs_event, offset, int_time):
     print('start_ms event', start_ms_event)
     print('end_ms_event: ', end_ms_event)
     
-    return start_ms_event, end_ms_event
+    return np.floor(start_ms_event), np.ceil(end_ms_event)
 
 
 

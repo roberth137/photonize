@@ -12,6 +12,14 @@ It should be used only with filtered localizations
 import pandas as pd
 import numpy as np
 import core
+import tag_events
+import event_bounds
+import importlib
+
+
+#importlib.reload(tag_events)
+
+
 
 class Event:
     def __init__(self, number, x, y, photons, lifetime, 
@@ -36,8 +44,11 @@ class Event:
                 f'lpx={self.lpx}, lpy={self.lpy}, '
                 f'duration={self.duration}, frame={self.frame}, '
                 f'bg={self.bg})')
+    
+    
+    
 
-def create_events_from_localizations(localizations):
+def locs_to_events(localizations, offset, box_side_length, int_time):
     '''
     Converts a DataFrame of localizations into a list of Event objects.
 
@@ -45,52 +56,88 @@ def create_events_from_localizations(localizations):
         list of Event: List of Event objects.
     '''
     # Validate required columns
-    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'event',
-                        'lifetime', 'lpx', 'lpy', }
+    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
     if not required_columns.issubset(localizations.columns):
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
-    # Group localizations by 'event_number'
-    grouped = localizations.groupby('event')
+    # Tag localizations with event number and group them
+    localizations_eve = tag_events.connect_locs(localizations)
+    grouped = localizations_eve.groupby('event')
 
-    events = []
+    events = pd.DataFrame()
+    
     for event, group in grouped:
         # Compute event properties
         first = group.iloc[0]
         last = group.iloc[-1]
+        peak_event = group.iloc[group['photons'].idxmax()]
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            group, offset, int_time)
+        print(peak_event)
         
-        number = first.event
-        x = avg_photon_weighted(group, 'x')  # Average position (x)
-        y = avg_photon_weighted(group, 'y')  # Average position (y)
-        photons = max(group['photons'])  # Total photons
-        lifetime = avg_photon_weighted(group, 'lifetime')
-        lpx = avg_photon_weighted(group, 'lpx')
-        lpy = avg_photon_weighted(group, 'lpy')
-        start_frame = first.frame # Earliest frame in the group
-        end_frame = last.frame  # Latest frame in the group
-        bg = avg_photon_weighted(group, 'bg')  # Average background
-        duration = (end_frame-start_frame+1) 
-        frame = (end_frame-start_frame)/2 
-
-        # Create the Event object
-        event = Event(
-            number=number,
-            x=x,
-            y=y,
-            photons=photons,
-            lifetime=lifetime,
-            start_frame=start_frame,
-            end_frame=end_frame,
-            lpx=lpx,
-            lpy=lpy,
-            bg=bg,
-            duration=duration,
-            frame=frame
-        )
-        events.append(event)
-
+        event = pd.Series()
+        event = {'frame': peak_event['frame'],
+                 'event': first['event'], 
+                 'x': avg_photon_weighted(group, 'x'),
+                 'y': avg_photon_weighted(group, 'y'),
+                 'photons': peak_event['photons'],
+                 'start_ms': start_ms,
+                 'end_ms': end_ms,
+                 'lpx': avg_photon_weighted(group, 'lpx'),
+                 'lpy': avg_photon_weighted(group, 'lpy'),
+                 'start_frame': first['frame'],
+                 'end_frame': last['frame'],
+                 'bg': avg_photon_weighted(group, 'bg')
+                 }
+        events = pd.concat([events, event], 
+                                  ignore_index=True)
     return events
 
+        
+'''
+        frame = peak_event['frame']
+        event = first['event']
+        x = avg_photon_weighted(group, 'x')  # Average position (x)
+        y = avg_photon_weighted(group, 'y')  # Average position (y)
+        photons = peak_event['photons']
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            group, offset, int_time)
+        lpx = avg_photon_weighted(group, 'lpx')
+        lpy = avg_photon_weighted(group, 'lpy')
+        start_frame = first['frame'] # Earliest frame in the group
+        end_frame = last['frame']  # Latest frame in the group
+        bg = avg_photon_weighted(group, 'bg')
+  '''      
+        #first = group.iloc[0]
+        #last = group.iloc[-1]
+        
+        #number = first.event
+        #photons = max(group['photons'])  # Total photons
+        #lifetime = avg_photon_weighted(group, 'lifetime')
+        #lpx = avg_photon_weighted(group, 'lpx')
+        #lpy = avg_photon_weighted(group, 'lpy')
+        #start_frame = first.frame # Earliest frame in the group
+        #end_frame = last.frame  # Latest frame in the group
+        #bg = avg_photon_weighted(group, 'bg')  # Average background
+        #duration = (end_frame-start_frame+1) 
+        #frame = (end_frame-start_frame)/2 
+
+        # Create the Event object
+        #event = Event(
+        #    number=number,
+        #    x=x,
+        #    y=y,
+        #    photons=photons,
+        #    lifetime=lifetime,
+        #    start_frame=start_frame,
+        #    end_frame=end_frame,
+        #    lpx=lpx,
+        #    lpy=lpy,
+        #    bg=bg,
+        #    duration=duration,
+        #    frame=frame
+        #)
+        #events.append(event)
 
 
 # Example usage
