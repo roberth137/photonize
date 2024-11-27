@@ -31,10 +31,10 @@ def get_ms_bounds(locs_event, offset, int_time):
     max_photons = max(locs_event['photons'])
     num_locs = len(locs_event)
     
-    print('num_locs: ', num_locs)
+    #print('num_locs: ', num_locs)
     
     #print(first_loc)
-    print('max_photons: ', max_photons)
+    #print('max_photons: ', max_photons)
     
     start_ms_first = (first_loc['frame']/offset) * int_time
     #print('start_ms first: ', start_ms_first)
@@ -42,12 +42,13 @@ def get_ms_bounds(locs_event, offset, int_time):
     
     on_fraction_first = (first_loc['photons']/max_photons)
     on_fraction_last = (last_loc['photons']/max_photons)
-    print('on_ fraction: ', on_fraction_first)
+    #print('on_ fraction: ', on_fraction_first)
     
     start_ms_event = start_ms_first + (1 - on_fraction_first) * int_time
     end_ms_event = start_ms_last + on_fraction_last * int_time
-    print('start_ms event', start_ms_event)
-    print('end_ms_event: ', end_ms_event)
+    #print('start_ms event', start_ms_event)
+    #print('end_ms_event: ', end_ms_event)
+    #print('on time in ms: ', (end_ms_event - start_ms_event))
     
     return np.floor(start_ms_event), np.ceil(end_ms_event)
 

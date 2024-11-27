@@ -67,16 +67,25 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
     events = pd.DataFrame()
     
     for event, group in grouped:
+        group = group.reset_index(drop=True)
+        #print('_____________________________________________________START')
+        #print('calculating event number: ', event)
         # Compute event properties
         first = group.iloc[0]
         last = group.iloc[-1]
+        
+        
+        #print('group photons values: \n', group['photons'])
+        #print('max phot index: ',group['photons'].idxmax())
+        #print('len group', len(group))
+        
+        
         peak_event = group.iloc[group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             group, offset, int_time)
-        print(peak_event)
+        #print('peak event is: ', '\n', peak_event)
         
-        event = pd.Series()
-        event = {'frame': peak_event['frame'],
+        event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
                  'x': avg_photon_weighted(group, 'x'),
                  'y': avg_photon_weighted(group, 'y'),
@@ -89,6 +98,7 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
                  'end_frame': last['frame'],
                  'bg': avg_photon_weighted(group, 'bg')
                  }
+        event = pd.Series(event_data)
         events = pd.concat([events, event], 
                                   ignore_index=True)
     return events

@@ -69,31 +69,7 @@ def connect_locs_to_picasso(localizations_file):
     core.dataframe_to_picasso(localizations, localizations_file, '_eve')
     
     
-def filter_unique_events(localizations):
-    """Filters a DataFrame, removing localizations 
-    that are not connected to other events.
     
-    Args:
-      localizations: The DataFrame to filter.
-      event_column: The name of the column containing the events to filter.
-    
-    Returns:
-      A new DataFrame with the filtered rows.
-    """
-    
-    # Extract unique event values and their counts
-    event_counts = localizations['event'].value_counts()
-    
-    # Identify events that occur only once
-    unique_events = event_counts[event_counts == 1].index
-    
-    # Filter out rows with unique events
-    filtered_locs = localizations[~localizations['event'].isin(unique_events)]
-    
-    print('removed ', (len(localizations)-len(filtered_locs)), 'localizations.')
-    return filtered_locs
-
-
 def return_nearby(localization, locs_next_frame):
     '''
 
@@ -137,12 +113,43 @@ def return_nearby(localization, locs_next_frame):
     
     elif len(loc) > 1:
         print('too many locs')
+        print('max_distance: ', max_distance)
+        print(loc)
         return has_next, float('nan')
     
     else:
         #print('Number of locs in next frame were: ', len(locs_next), 
         #      'no similar loc in next frame.')
         return has_next, float('nan')
+    
+    
+    
+def filter_unique_events(localizations):
+    """Filters a DataFrame, removing localizations 
+    that are not connected to other events.
+    
+    Args:
+      localizations: The DataFrame to filter.
+      event_column: The name of the column containing the events to filter.
+    
+    Returns:
+      A new DataFrame with the filtered rows.
+    """
+    
+    # Extract unique event values and their counts
+    event_counts = localizations['event'].value_counts()
+    
+    # Identify events that occur only once
+    unique_events = event_counts[event_counts == 1].index
+    
+    # Filter out rows with unique events
+    filtered_locs = localizations[~localizations['event'].isin(unique_events)]
+    
+    print('removed ', (len(localizations)-len(filtered_locs)), 'localizations.')
+    return filtered_locs
+
+
+
     
     
     
