@@ -74,7 +74,7 @@ def events_lt_avg_pos(event_file, photons_file,
                        drift_file, offset, radius=5,
                        integration_time=200, fitting='avg'):
     '''
-    tagging list of picked localizations with lifetime 
+    tagging list of events with lifetime and avg of roi position
     and returning as picasso files
     IN:
     - list of picked localizations (picasso hdf5 file with 'group' column)
