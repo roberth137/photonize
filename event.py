@@ -69,7 +69,9 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
                  'lpy': avg_photon_weighted(group, 'lpy'),
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': avg_photon_weighted(group, 'bg')
+                 'bg': avg_photon_weighted(group, 'bg'),
+                 'sx': avg_photon_weighted(group, 'sx'),
+                 'sy': avg_photon_weighted(group, 'sy')
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
@@ -129,7 +131,9 @@ def locs_to_events_to_picasso(localizations_file,
                  'num frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': avg_photon_weighted(group, 'bg')
+                 'bg': avg_photon_weighted(group, 'bg'),
+                 'sx': avg_photon_weighted(group, 'sx'),
+                 'sy': avg_photon_weighted(group, 'sy')
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
