@@ -21,7 +21,7 @@ import event_bounds
     
     
 
-def locs_to_events(localizations, offset, box_side_length, int_time):
+def locs_to_events(localizations_file, offset, box_side_length, int_time):
     '''
     Converts a DataFrame of localizations into a list of Event objects.
 
@@ -29,6 +29,7 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
         list of Event: List of Event objects.
     '''
     # Validate required columns
+    localizations = pd.read_hdf(localizations_file, key='locs')
     required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
     if not required_columns.issubset(localizations.columns):
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
@@ -71,7 +72,9 @@ def locs_to_events(localizations, offset, box_side_length, int_time):
                  'end_frame': last['frame'],
                  'bg': avg_photon_weighted(group, 'bg'),
                  'sx': avg_photon_weighted(group, 'sx'),
-                 'sy': avg_photon_weighted(group, 'sy')
+                 'sy': avg_photon_weighted(group, 'sy'),
+                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(group, 'ellipticity')
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
@@ -128,12 +131,14 @@ def locs_to_events_to_picasso(localizations_file,
                  'end_ms': end_ms,
                  'lpx': avg_photon_weighted(group, 'lpx'),
                  'lpy': avg_photon_weighted(group, 'lpy'),
-                 'num frames': (last['frame']-first['frame'])+1,
+                 'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
                  'bg': avg_photon_weighted(group, 'bg'),
                  'sx': avg_photon_weighted(group, 'sx'),
-                 'sy': avg_photon_weighted(group, 'sy')
+                 'sy': avg_photon_weighted(group, 'sy'),
+                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(group, 'ellipticity')
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
