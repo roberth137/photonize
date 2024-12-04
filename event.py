@@ -14,6 +14,7 @@ import numpy as np
 import core
 import tag_events
 import event_bounds
+import helper
 #import importlib
 
 
@@ -29,7 +30,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         list of Event: List of Event objects.
     '''
     # Validate required columns
-    localizations = pd.read_hdf(localizations_file, key='locs')
+    localizations = helper.process_input(localizations_file, 
+                                         dataset='locs')
     required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
     if not required_columns.issubset(localizations.columns):
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
@@ -40,13 +42,13 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
 
     events = pd.DataFrame()
     
-    for event, group in grouped:
-        group = group.reset_index(drop=True)
+    for event, eve_group in grouped:
+        eve_group = eve_group.reset_index(drop=True)
         #print('_____________________________________________________START')
         #print('calculating event number: ', event)
         # Compute event properties
-        first = group.iloc[0]
-        last = group.iloc[-1]
+        first = eve_group.iloc[0]
+        last = eve_group.iloc[-1]
         
         
         #print('group photons values: \n', group['photons'])
@@ -54,31 +56,35 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         #print('len group', len(group))
         
         
-        peak_event = group.iloc[group['photons'].idxmax()]
+        peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
-            group, offset, int_time)
+            eve_group, offset, int_time)
         #print('peak event is: ', '\n', peak_event)
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
-                 'x': avg_photon_weighted(group, 'x'),
-                 'y': avg_photon_weighted(group, 'y'),
+                 'x': avg_photon_weighted(eve_group, 'x'),
+                 'y': avg_photon_weighted(eve_group, 'y'),
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'lpx': avg_photon_weighted(group, 'lpx'),
-                 'lpy': avg_photon_weighted(group, 'lpy'),
+                 'lpx': avg_photon_weighted(eve_group, 'lpx'),
+                 'lpy': avg_photon_weighted(eve_group, 'lpy'),
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': avg_photon_weighted(group, 'bg'),
-                 'sx': avg_photon_weighted(group, 'sx'),
-                 'sy': avg_photon_weighted(group, 'sy'),
-                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
-                 'ellipticity': avg_photon_weighted(group, 'ellipticity')
+                 'bg': avg_photon_weighted(eve_group, 'bg'),
+                 'sx': avg_photon_weighted(eve_group, 'sx'),
+                 'sy': avg_photon_weighted(eve_group, 'sy'),
+                 'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(eve_group, 'ellipticity'),
+                 'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
+    print('Linked ', len(localizations), ' locs to ', 
+          len(events), 'events.')
+    print('_______________________________________________')
     return events
 
    

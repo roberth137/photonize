@@ -114,9 +114,9 @@ def return_nearby(localization, locs_next_frame):
         return has_next, adjacent.index.values
     
     elif len(adjacent) > 1:
-        print('too many locs')
+        #print('too many locs')
         #print('max_distance: ', max_distance)
-        print(adjacent)
+        #print(adjacent)
         #print('\n-----returning smallest element: ')
         #print(adjacent.loc[adjacent['distance'].idxmin()])
         return has_next, adjacent['distance'].idxmin()
