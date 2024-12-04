@@ -94,7 +94,7 @@ def crop_event(event, photons, radius):
     if len(photons_cylinder) < 30: 
         print('\nlow photon count for crop_event: ')
         print('len(pick_photons) : ', len(photons_cylinder))
-        print('\nthis is the event: ', event)
+        print('\nthis is the event: \n', event)
     
     return photons_cylinder
 

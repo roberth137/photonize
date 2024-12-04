@@ -80,6 +80,7 @@ def events_lt_avg_pos(event_file, photons_file,
     for g in set(events['group']):
         print('\n____________NEW GROUP________________')
         print(set(events['group']), '\n')
+        print('this is group: ', g)
         
         
         events_group = events[(events.group == g)]
@@ -104,14 +105,14 @@ def events_lt_avg_pos(event_file, photons_file,
         
         # iterating over every event in pick
         for i in range(counter, counter+len(events_group)):
-            if i == 0: 
+            if (i-counter) == 0: 
                 print('fitting lifetime of ', len(events_group),
                              ' events.') 
                 i_values = range(counter, counter+len(events_group))
                 print('i counter in range: ', i_values, '\n')
                 
                 
-            my_event = events.iloc[i-counter]
+            my_event = events.iloc[i]
             
             phot_event = pd.DataFrame(data=core.crop_event
                                     (my_event, pick_photons, radius))
@@ -123,12 +124,7 @@ def events_lt_avg_pos(event_file, photons_file,
                                   ' in phot_event: ', len(phot_event))
             
             x, y = fitting.avg_of_roi(my_event, phot_event, radius)
-            #lifetime = fitting.avg_lifetime_sergi_40(phot_event, 
-            #                                         peak_arrival_time)
-            #if isinstance(lifetime, np.ndarray):
-            #    lifetime[i] = lifetime
-            #else:
-            #    print("lifetime is not an array, cannot assign to it.")
+            
             x_position[i] = x
             y_position[i] = y
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event, 

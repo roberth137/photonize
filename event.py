@@ -82,6 +82,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
+        
     print('Linked ', len(localizations), ' locs to ', 
           len(events), 'events.')
     print('_______________________________________________')
@@ -144,13 +145,14 @@ def locs_to_events_to_picasso(localizations_file,
                  'sx': avg_photon_weighted(group, 'sx'),
                  'sy': avg_photon_weighted(group, 'sy'),
                  'net_gradient': avg_photon_weighted(group, 'net_gradient'),
-                 'ellipticity': avg_photon_weighted(group, 'ellipticity')
+                 'ellipticity': avg_photon_weighted(group, 'ellipticity'),
+                 'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
     core.dataframe_to_picasso(events, localizations_file, 
-                              extension='_eve')
+                              extension='_locs_connected')
     return events
 
 
