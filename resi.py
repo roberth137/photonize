@@ -64,7 +64,8 @@ def events_lt_avg_pos(event_file, photons_file,
     photons = helper.process_input(photons_file, dataset='photons')
     
     print(len(photons), ' photons and ', total_events,
-          'localization read in')
+          'events read in')
+    print('starting events_lt_avg_pos function.')
     #drift = drift_file #pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
     drift = helper.process_input(drift_file, dataset='drift')
     
@@ -76,26 +77,33 @@ def events_lt_avg_pos(event_file, photons_file,
     # iterating over every pick in file
     for g in set(events['group']):
         print('____________NEW GROUP________________')
-        print(set(events['group']))
+        print(set(events['group']), '\n')
         events_group = events[(events.group == g)]
         #print(len(locs_group), 'localizations in current group.')
+        print('__get_pick_photons___')
         pick_photons = get_pick_photons(events_group, photons, 
                                         drift, offset,
                                         box_side_length=radius, 
                                         integration_time=int_time)
-        print('number of picked photons: ', len(pick_photons))
+        print('number of picked photons: ', len(pick_photons),'\n')
+        print('__calibrate_peak__')
         peak_arrival_time = calibrate_peak(events_group, pick_photons, 
                                            offset, box_side_length=radius, 
                                            integration_time=int_time)
         
         # iterating over every event in pick
         for i in range(counter, counter+len(events_group)):
-            if i == 0: print('fitting lifetime of ', len(events_group),
-                             ' localizations.') 
+            if i == 0: 
+                print('fitting lifetime of ', len(events_group),
+                             ' events.') 
+                i_values = range(counter, counter+len(events_group))
+                print('i counter in range: ', i_values, '\n')
             my_event = events.iloc[i-counter]
             phot_event = pd.DataFrame(data=core.crop_event
                                     (my_event, pick_photons, radius))
-            if i % 200 == 0:print('200 fitted. Number of photons',
+            if i  == 0:print('FIRST fitted. Number of photons',
+                                  ' in last fit: ', len(phot_event))
+            elif i % 200 == 0:print('2000 fitted. Number of photons',
                                   ' in last fit: ', len(phot_event))
             x, y = fitting.avg_of_roi(my_event, phot_event, radius)
             x_position[i] = x
