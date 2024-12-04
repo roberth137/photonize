@@ -12,7 +12,152 @@ It should be used only with filtered localizations
 import pandas as pd
 import numpy as np
 import core
+import tag_events
+import event_bounds
+import helper
+#import importlib
 
+
+#importlib.reload(tag_events)
+    
+    
+
+def locs_to_events(localizations_file, offset, box_side_length, int_time):
+    '''
+    Converts a DataFrame of localizations into a list of Event objects.
+
+    Returns:
+        list of Event: List of Event objects.
+    '''
+    # Validate required columns
+    localizations = helper.process_input(localizations_file, 
+                                         dataset='locs')
+    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
+    if not required_columns.issubset(localizations.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_columns}")
+
+    # Tag localizations with event number and group them
+    localizations_eve = tag_events.connect_locs(localizations)
+    grouped = localizations_eve.groupby('event')
+
+    events = pd.DataFrame()
+    
+    for event, eve_group in grouped:
+        eve_group = eve_group.reset_index(drop=True)
+        #print('_____________________________________________________START')
+        #print('calculating event number: ', event)
+        # Compute event properties
+        first = eve_group.iloc[0]
+        last = eve_group.iloc[-1]
+        
+        
+        #print('group photons values: \n', group['photons'])
+        #print('max phot index: ',group['photons'].idxmax())
+        #print('len group', len(group))
+        
+        
+        peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            eve_group, offset, int_time)
+        #print('peak event is: ', '\n', peak_event)
+        
+        event_data = {'frame': peak_event['frame'],
+                 'event': first['event'], 
+                 'x': avg_photon_weighted(eve_group, 'x'),
+                 'y': avg_photon_weighted(eve_group, 'y'),
+                 'photons': peak_event['photons'],
+                 'start_ms': start_ms,
+                 'end_ms': end_ms,
+                 'lpx': avg_photon_weighted(eve_group, 'lpx'),
+                 'lpy': avg_photon_weighted(eve_group, 'lpy'),
+                 'num_frames': (last['frame']-first['frame'])+1,
+                 'start_frame': first['frame'],
+                 'end_frame': last['frame'],
+                 'bg': avg_photon_weighted(eve_group, 'bg'),
+                 'sx': avg_photon_weighted(eve_group, 'sx'),
+                 'sy': avg_photon_weighted(eve_group, 'sy'),
+                 'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(eve_group, 'ellipticity'),
+                 'group': first['group']
+                 }
+        event = pd.DataFrame(event_data, index=[0])
+        events = pd.concat([events, event], 
+                                  ignore_index=True)
+        
+    print('Linked ', len(localizations), ' locs to ', 
+          len(events), 'events.')
+    print('_______________________________________________')
+    return events
+
+   
+
+def locs_to_events_to_picasso(localizations_file, 
+                              offset, box_side_length, int_time):
+    '''
+    Converts a DataFrame of localizations into a list of Event objects.
+
+    Returns:
+        list of Event: List of Event objects.
+    '''
+    localizations = pd.read_hdf(localizations_file, key='locs')
+    # Validate required columns
+    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
+    if not required_columns.issubset(localizations.columns):
+        raise ValueError(f"DataFrame must contain columns: {required_columns}")
+
+    # Tag localizations with event number and group them
+    localizations_eve = tag_events.connect_locs(localizations)
+    grouped = localizations_eve.groupby('event')
+
+    events = pd.DataFrame()
+    
+    for event, group in grouped:
+        group = group.reset_index(drop=True)
+        #print('_____________________________________________________START')
+        #print('calculating event number: ', event)
+        # Compute event properties
+        first = group.iloc[0]
+        last = group.iloc[-1]
+        
+        
+        #print('group photons values: \n', group['photons'])
+        #print('max phot index: ',group['photons'].idxmax())
+        #print('len group', len(group))
+        
+        
+        peak_event = group.iloc[group['photons'].idxmax()]
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            group, offset, int_time)
+        #print('peak event is: ', '\n', peak_event)
+        
+        event_data = {'frame': peak_event['frame'],
+                 'event': first['event'], 
+                 'x': avg_photon_weighted(group, 'x'),
+                 'y': avg_photon_weighted(group, 'y'),
+                 'photons': peak_event['photons'],
+                 'start_ms': start_ms,
+                 'end_ms': end_ms,
+                 'lpx': avg_photon_weighted(group, 'lpx'),
+                 'lpy': avg_photon_weighted(group, 'lpy'),
+                 'num_frames': (last['frame']-first['frame'])+1,
+                 'start_frame': first['frame'],
+                 'end_frame': last['frame'],
+                 'bg': avg_photon_weighted(group, 'bg'),
+                 'sx': avg_photon_weighted(group, 'sx'),
+                 'sy': avg_photon_weighted(group, 'sy'),
+                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(group, 'ellipticity'),
+                 'group': first['group']
+                 }
+        event = pd.DataFrame(event_data, index=[0])
+        events = pd.concat([events, event], 
+                                  ignore_index=True)
+    core.dataframe_to_picasso(events, localizations_file, 
+                              extension='_locs_connected')
+    return events
+
+
+'''
 class Event:
     def __init__(self, number, x, y, photons, lifetime, 
                  start_frame, end_frame, lpx, lpy, duration, frame, bg):
@@ -36,61 +181,54 @@ class Event:
                 f'lpx={self.lpx}, lpy={self.lpy}, '
                 f'duration={self.duration}, frame={self.frame}, '
                 f'bg={self.bg})')
+'''    
 
-def create_events_from_localizations(localizations):
-    '''
-    Converts a DataFrame of localizations into a list of Event objects.
 
-    Returns:
-        list of Event: List of Event objects.
-    '''
-    # Validate required columns
-    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'event',
-                        'lifetime', 'lpx', 'lpy', }
-    if not required_columns.issubset(localizations.columns):
-        raise ValueError(f"DataFrame must contain columns: {required_columns}")
-
-    # Group localizations by 'event_number'
-    grouped = localizations.groupby('event')
-
-    events = []
-    for event, group in grouped:
-        # Compute event properties
-        first = group.iloc[0]
-        last = group.iloc[-1]
-        
-        number = first.event
+     
+'''
+        frame = peak_event['frame']
+        event = first['event']
         x = avg_photon_weighted(group, 'x')  # Average position (x)
         y = avg_photon_weighted(group, 'y')  # Average position (y)
-        photons = max(group['photons'])  # Total photons
-        lifetime = avg_photon_weighted(group, 'lifetime')
+        photons = peak_event['photons']
+        start_ms, end_ms = event_bounds.get_ms_bounds(
+            group, offset, int_time)
         lpx = avg_photon_weighted(group, 'lpx')
         lpy = avg_photon_weighted(group, 'lpy')
-        start_frame = first.frame # Earliest frame in the group
-        end_frame = last.frame  # Latest frame in the group
-        bg = avg_photon_weighted(group, 'bg')  # Average background
-        duration = (end_frame-start_frame+1) 
-        frame = (end_frame-start_frame)/2 
+        start_frame = first['frame'] # Earliest frame in the group
+        end_frame = last['frame']  # Latest frame in the group
+        bg = avg_photon_weighted(group, 'bg')
+  '''      
+        #first = group.iloc[0]
+        #last = group.iloc[-1]
+        
+        #number = first.event
+        #photons = max(group['photons'])  # Total photons
+        #lifetime = avg_photon_weighted(group, 'lifetime')
+        #lpx = avg_photon_weighted(group, 'lpx')
+        #lpy = avg_photon_weighted(group, 'lpy')
+        #start_frame = first.frame # Earliest frame in the group
+        #end_frame = last.frame  # Latest frame in the group
+        #bg = avg_photon_weighted(group, 'bg')  # Average background
+        #duration = (end_frame-start_frame+1) 
+        #frame = (end_frame-start_frame)/2 
 
         # Create the Event object
-        event = Event(
-            number=number,
-            x=x,
-            y=y,
-            photons=photons,
-            lifetime=lifetime,
-            start_frame=start_frame,
-            end_frame=end_frame,
-            lpx=lpx,
-            lpy=lpy,
-            bg=bg,
-            duration=duration,
-            frame=frame
-        )
-        events.append(event)
-
-    return events
-
+        #event = Event(
+        #    number=number,
+        #    x=x,
+        #    y=y,
+        #    photons=photons,
+        #    lifetime=lifetime,
+        #    start_frame=start_frame,
+        #    end_frame=end_frame,
+        #    lpx=lpx,
+        #    lpy=lpy,
+        #    bg=bg,
+        #    duration=duration,
+        #    frame=frame
+        #)
+        #events.append(event)
 
 
 # Example usage
@@ -218,119 +356,6 @@ def avg_photon_weighted(localizations, column):
     return average
         
 
-def connect_locs(localizations_file):
-    localizations = pd.read_hdf(localizations_file, key='locs')
-    event = np.zeros(len(localizations), dtype=int)
-    event_counter = 0
-    
-    for i in np.arange(len(localizations), dtype=int):        
-        
-        if event[i] == 0: #not connected to previous event -> new event
-            event_counter +=1 
-            event[i] = event_counter
-                    
-        frame = localizations.frame.iloc[i]
-        locs_next_frame = localizations[(localizations.frame == frame+1)]
-        
-        if len(locs_next_frame) == 0:
-            pass
-        
-        else: has_follower, follower_index = return_nearby(
-            localizations.iloc[i], locs_next_frame)
-        
-        if has_follower: 
-            event[follower_index] = event[i] #set to same event
-            
-    locs_event_tagged = pd.DataFrame({'frame': localizations.frame,
-                                 'x': localizations.x, 
-                                 'y': localizations.y, 
-                                 'photons': localizations.photons, 
-                                 'event': event,
-                                 'lifetime': localizations.lifetime,
-                                 'lpx': localizations.lpx,
-                                 'lpy': localizations.lpy,
-                                 'bg': localizations.bg,
-                                 'ellipticity': localizations.ellipticity,
-                                 'net_gradient': localizations.net_gradient,
-                                 'group': localizations.group,
-                                 'sx': localizations.sx,
-                                 'sy': localizations.sy})
-    
-    #filtered_locs = filter_unique_events(locs_event_tagged)
-    core.dataframe_to_picasso(locs_event_tagged, localizations_file, '_eve')
-    
-        
-def filter_unique_events(localizations):
-    """Filters a DataFrame, removing localizations 
-    that are not connected to other events.
-    
-    Args:
-      localizations: The DataFrame to filter.
-      event_column: The name of the column containing the events to filter.
-    
-    Returns:
-      A new DataFrame with the filtered rows.
-    """
-    
-    # Extract unique event values and their counts
-    event_counts = localizations['event'].value_counts()
-    
-    # Identify events that occur only once
-    unique_events = event_counts[event_counts == 1].index
-    
-    # Filter out rows with unique events
-    filtered_locs = localizations[~localizations['event'].isin(unique_events)]
-    
-    print('removed ', (len(localizations)-len(filtered_locs)), 'localizations.')
-    return filtered_locs
-
-def return_nearby(localization, locs_next_frame):
-    '''
-
-    Parameters
-    ----------
-    localization : one localization
-    locs_next_frame : all locs in next frame
-
-    Returns
-    -------
-    If the localization has a successor in the next frame
-
-    '''
-    
-    has_next = False
-    
-    locs_next = locs_next_frame.copy()
-    
-    max_distance = (localization.lpx+localization.lpy)
-    
-    x_distance = (locs_next['x'].to_numpy() - localization.x)
-    y_distance = (locs_next['y'].to_numpy() - localization.y)
-    
-    total_distance_sq = np.square(x_distance) + np.square(y_distance)
-
-    locs_next['distance'] = total_distance_sq
-    
-    radius_sq = max_distance**2
-    
-    #print('max_distance:', radius_sq)
-    #print(locs_next.distance)
-    
-    loc = locs_next[
-        locs_next.distance < radius_sq]
     
     
-    if len(loc) == 1:
-        #print('similar loc in next frame.')
-        has_next = True
-        return has_next, loc.index.values
-    
-    elif len(loc) > 1:
-        #print('too many locs')
-        return has_next, float('nan')
-    
-    else:
-        #print('Number of locs in next frame were: ', len(locs_next), 
-        #      'no similar loc in next frame.')
-        return has_next, float('nan')
         
