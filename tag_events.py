@@ -25,7 +25,9 @@ def connect_locs(localizations):
             event[i] = event_counter
                     
         frame = localizations.frame.iloc[i]
-        locs_next_frame = localizations[(localizations.frame == frame+1)]
+        group = localizations.group.iloc[i]
+        locs_next_frame = localizations[(localizations.frame == frame+1)
+                                        &(localizations.group == group)]
         
         if len(locs_next_frame) != 0:
             has_follower, follower_index = return_nearby(
