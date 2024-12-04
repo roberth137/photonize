@@ -70,6 +70,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                  'end_ms': end_ms,
                  'lpx': avg_photon_weighted(eve_group, 'lpx'),
                  'lpy': avg_photon_weighted(eve_group, 'lpy'),
+                 'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
                  'bg': avg_photon_weighted(eve_group, 'bg'),
