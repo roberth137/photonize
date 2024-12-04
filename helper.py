@@ -18,7 +18,7 @@ def process_input(input_data, dataset):
     Returns:
         pd.DataFrame: The resulting DataFrame from the input.
     """
-    if isinstance(input_data, str) and input_data.endswith('.hdf5'):
+    if isinstance(input_data, str) and input_data.endswith(('.hdf5', '.txt')):
         # Attempt to read the HDF5 file
         try:
             if dataset == 'locs':
@@ -26,7 +26,7 @@ def process_input(input_data, dataset):
             elif dataset == 'photons':
                 data = pd.read_hdf(input_data, key=dataset)
             elif dataset == 'drift':
-                data = pd.read_hdf(input_data, key=dataset)
+                data = pd.read_csv(input_data, delimiter=' ',names =['x','y']) 
             return data
         
             #if dataset == 'photons':
@@ -37,4 +37,4 @@ def process_input(input_data, dataset):
     elif isinstance(input_data, pd.DataFrame):
         return input_data
     else:
-        raise TypeError("Input must be a string ending with '.hdf5' or a pandas DataFrame.")
+        raise TypeError("Input must be a string ending with '.txt', '.hdf5' or a pandas DataFrame.")

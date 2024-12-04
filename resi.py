@@ -6,71 +6,6 @@ import get_photons
 import helper
 import event
 import fitting
-#import scipy as sp
-#import matplotlib.pyplot as plt
-#import math
-#import h5py
-#from pathlib import Path
-#import copy
-#import matplotlib as mpl
-#import scipy.io as sio
-#from scipy.optimize import curve_fit
-#import shutil
-
-def locs_lt_to_picasso_40(localizations_file, photons_file, 
-                       drift_file, offset, box_side_length=5,
-                       integration_time=200):
-    '''
-    tagging list of picked localizations with lifetime (40mhz pulsed)
-    and returning as picasso files
-    IN:
-    - list of picked localizations (picasso hdf5 file with 'group' column)
-    - list of photons (hdf5 file)
-    - drift (txt file)
-    - offset (how many offsetted frames)
-    OUT: 
-    - picasso hdf5 file tagged with lifetime 
-    - yaml file 
-    '''
-    #read in files
-    localizations = pd.read_hdf(localizations_file, key='locs')
-    total_localizations = len(localizations)
-    photons = pd.read_hdf(photons_file, key='photons')
-    print(len(photons), ' photons and ', total_localizations,
-          'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y']) 
-    lifetime = np.ones(len(localizations))
-    lt_photons = np.ones(len(localizations), dtype=int)
-    counter = 0
-    # iterating over every pick in file
-    for g in set(localizations['group']):
-        locs_group = localizations[(localizations.group == g)]
-        print(len(locs_group), 'localizations in current group.')
-        pick_photons = get_photons.crop_undrift_crop(locs_group, photons, 
-                                        drift, offset,
-                                        box_side_length, integration_time)
-        peak_arrival_time = calibrate_peak(locs_group, pick_photons, 
-                                           offset, box_side_length, 
-                                           integration_time)
-        # iterating over every localization in pick
-        for i in range(counter, counter+len(locs_group)):
-            if i == 0: print('fitting lifetime of ', len(locs_group),
-                             ' localizations.') 
-            phot_loc = get_photons.photons_of_one_localization(
-                    locs_group.iloc[i-counter], 
-                    pick_photons,offset, 
-                    box_side_length, integration_time)
-            if i % 200 == 0:print('200 fitted. Number of photons',
-                                  ' in last fit: ', len(phot_loc))
-            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc, 
-                                                      peak_arrival_time)
-            lt_photons[i] = len(phot_loc)
-        counter += len(locs_group)
-    localizations['lifetime'] = lifetime
-    localizations['lt_photons'] = lt_photons
-    core.dataframe_to_picasso(
-        localizations, localizations_file)
-    print(len(localizations), 'localizations tagged with lifetime')
     
     
 def event_analysis(localizations_file, photons_file, drift_file, offset,
@@ -82,17 +17,21 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     '''
     localizations = helper.process_input(localizations_file, 
                                          dataset='locs')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y']) 
+    
+    photons = helper.process_input(photons_file, dataset='photons')
+    
+    drift = helper.process_input(drift_file, dataset='drift')
+    #drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y']) 
     # first localizations to events 
     events = event.locs_to_events(localizations, offset, 
                                   box_side_length = radius, 
                                   int_time = int_time)
     # then events to average positions
     
-    photons = helper.process_input(photons_file, dataset='photons')
+    #photons = helper.process_input(photons_file, dataset='photons')
     #print(len(photons), ' photons and ', total_events,
     #      'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
+    #drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
     
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
                       int_time=int_time)
@@ -126,7 +65,8 @@ def events_lt_avg_pos(event_file, photons_file,
     
     print(len(photons), ' photons and ', total_events,
           'localization read in')
-    drift = drift_file #pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
+    #drift = drift_file #pd.read_csv(drift_file, delimiter=' ',names =['x','y'])  
+    drift = helper.process_input(drift_file, dataset='drift')
     
     lifetime = np.ones(len(events))
     lt_photons = np.ones(len(events), dtype=int)
@@ -200,7 +140,7 @@ def locs_lt_avg_pos(localizations_file, photons_file,
     photons = pd.read_hdf(photons_file, key='photons')
     print(len(photons), ' photons and ', total_localizations,
           'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])    
+    drift = helper.process_input(drift_file, dataset='drift')
     lifetime = np.ones(len(localizations))
     lt_photons = np.ones(len(localizations), dtype=int)
     x_position = np.ones(len(localizations))
@@ -265,7 +205,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
     photons = pd.read_hdf(photons_file, key='photons')
     print(len(photons), ' photons and ', total_localizations,
           'localization read in')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y']) 
+    drift = helper.process_input(drift_file, dataset='drift')
     lifetime = np.ones(len(localizations))
     lt_photons = np.ones(len(localizations), dtype=int)
     counter = 0
@@ -371,29 +311,60 @@ def loc_boundaries(localization, offset,
     ms_max = ms_min + integration_time
     return x_min, x_max, y_min, y_max, ms_min, ms_max
 
-'''
-def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, integration_time=200):
+    
+    
+def locs_lt_to_picasso_40(localizations_file, photons_file, 
+                       drift_file, offset, box_side_length=5,
+                       integration_time=200):
     '''
-'''
-    Returns photons of localization
-    IN: 
-    - localization (picasso format)
-    - picked photons (dataframe format, undrifted)
-    - box_size in pixel 
-    - int time in ms
-    OUT:
-    - photons (dataframe format)
+    tagging list of picked localizations with lifetime (40mhz pulsed)
+    and returning as picasso files
+    IN:
+    - list of picked localizations (picasso hdf5 file with 'group' column)
+    - list of photons (hdf5 file)
+    - drift (txt file)
+    - offset (how many offsetted frames)
+    OUT: 
+    - picasso hdf5 file tagged with lifetime 
+    - yaml file 
     '''
-'''
-    photons_cylinder = core.crop_cylinder(localization,
-            pick_photons, offset, box_side_length, integration_time)
-    
-    return photons_cylinder
-    '''
-    
-    
-    
-    
-    
-    
+    #read in files
+    localizations = pd.read_hdf(localizations_file, key='locs')
+    total_localizations = len(localizations)
+    photons = pd.read_hdf(photons_file, key='photons')
+    print(len(photons), ' photons and ', total_localizations,
+          'localization read in')
+    drift = helper.process_input(drift_file, dataset='drift')
+    lifetime = np.ones(len(localizations))
+    lt_photons = np.ones(len(localizations), dtype=int)
+    counter = 0
+    # iterating over every pick in file
+    for g in set(localizations['group']):
+        locs_group = localizations[(localizations.group == g)]
+        print(len(locs_group), 'localizations in current group.')
+        pick_photons = get_photons.crop_undrift_crop(locs_group, photons, 
+                                        drift, offset,
+                                        box_side_length, integration_time)
+        peak_arrival_time = calibrate_peak(locs_group, pick_photons, 
+                                           offset, box_side_length, 
+                                           integration_time)
+        # iterating over every localization in pick
+        for i in range(counter, counter+len(locs_group)):
+            if i == 0: print('fitting lifetime of ', len(locs_group),
+                             ' localizations.') 
+            phot_loc = get_photons.photons_of_one_localization(
+                    locs_group.iloc[i-counter], 
+                    pick_photons,offset, 
+                    box_side_length, integration_time)
+            if i % 200 == 0:print('200 fitted. Number of photons',
+                                  ' in last fit: ', len(phot_loc))
+            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc, 
+                                                      peak_arrival_time)
+            lt_photons[i] = len(phot_loc)
+        counter += len(locs_group)
+    localizations['lifetime'] = lifetime
+    localizations['lt_photons'] = lt_photons
+    core.dataframe_to_picasso(
+        localizations, localizations_file)
+    print(len(localizations), 'localizations tagged with lifetime')
     

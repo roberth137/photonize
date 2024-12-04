@@ -29,7 +29,7 @@ def get_ms_bounds(locs_event, offset, int_time):
     first_loc = locs_event.iloc[0] # now a pd Series 
     last_loc = locs_event.iloc[-1]
     max_photons = max(locs_event['photons'])
-    num_locs = len(locs_event)
+    #num_locs = len(locs_event)
     
     #print('num_locs: ', num_locs)
     
