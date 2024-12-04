@@ -31,7 +31,7 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=50):
     weights = np.arange(1,(2500-(peak+50)))
     considered_bgsub = counts_bgsub[(peak+dt_offset):2500]
     if len(loc_photons) < 70:
-        print('photons for fitting: ', len(loc_photons))
+        print('\nphotons for fitting: ', len(loc_photons))
         print('considered bg is: ', sum(considered_bgsub))
     lifetime = np.sum(np.multiply(considered_bgsub, weights))/np.sum(considered_bgsub)
     return lifetime
