@@ -25,6 +25,8 @@ def process_input(input_data, dataset):
                 data = pd.read_hdf(input_data, key=dataset)
             elif dataset == 'photons':
                 data = pd.read_hdf(input_data, key=dataset)
+            elif dataset == 'drift':
+                data = pd.read_hdf(input_data, key=dataset)
             return data
         
             #if dataset == 'photons':

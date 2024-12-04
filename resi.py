@@ -5,6 +5,7 @@ import core
 import get_photons
 import helper
 import event
+import fitting
 #import scipy as sp
 #import matplotlib.pyplot as plt
 #import math
@@ -18,7 +19,7 @@ import event
 
 def locs_lt_to_picasso_40(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,
-                       integration_time=200, fitting='avg'):
+                       integration_time=200):
     '''
     tagging list of picked localizations with lifetime (40mhz pulsed)
     and returning as picasso files
@@ -61,7 +62,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
                     box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            lifetime[i] = avg_lifetime_sergi_40(phot_loc, 
+            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc, 
                                                       peak_arrival_time)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
@@ -87,7 +88,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                   box_side_length = radius, 
                                   int_time = int_time)
     # then events to average positions
-    total_events = len(events)
+    
     photons = helper.process_input(photons_file, dataset='photons')
     #print(len(photons), ' photons and ', total_events,
     #      'localization read in')
@@ -105,7 +106,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     
 def events_lt_avg_pos(event_file, photons_file, 
                        drift_file, offset, radius=5,
-                       int_time=200, fitting='avg'):
+                       int_time=200):
     '''
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
@@ -156,10 +157,10 @@ def events_lt_avg_pos(event_file, photons_file,
                                     (my_event, pick_photons, radius))
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_event))
-            x, y = avg_of_roi(my_event, phot_event, radius)
+            x, y = fitting.avg_of_roi(my_event, phot_event, radius)
             x_position[i] = x
             y_position[i] = y
-            lifetime[i] = avg_lifetime_sergi_40(phot_event, 
+            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event, 
                                                       peak_arrival_time)
             lt_photons[i] = len(phot_event)
         counter += len(events_group)
@@ -180,7 +181,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
 def locs_lt_avg_pos(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,
-                       integration_time=200, fitting='avg'):
+                       integration_time=200):
     '''
     tagging list of picked localizations with lifetime 
     and returning as picasso files
@@ -225,10 +226,10 @@ def locs_lt_avg_pos(localizations_file, photons_file,
                                        box_side_length, integration_time))
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            x, y = avg_of_roi(one_loc, phot_loc, box_side_length)
+            x, y = fitting.avg_of_roi(one_loc, phot_loc, box_side_length)
             x_position[i] = x
             y_position[i] = y
-            lifetime[i] = avg_lifetime_sergi_40(phot_loc, 
+            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc, 
                                                       peak_arrival_time)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
@@ -242,33 +243,10 @@ def locs_lt_avg_pos(localizations_file, photons_file,
           ' fitted with avg x,y position.') 
     
     
-def avg_of_roi(localization, phot_locs, box_side_length):
-    '''
-    Parameters
-    ----------
-    phot_locs : photons of one localization as pd dataframe
-    
-    Returns
-    -------
-    - x position
-    - y position
-    
-    Position is calculated by adding up all photons in the circular
-    surrounding of the localization. 
-    Background gets subtracted
-
-    '''
-    fit_area = np.pi*(box_side_length/2)**2
-    number_phot = (len(phot_locs)-fit_area*localization.bg)
-    bg = localization.bg*fit_area
-    x_pos = (np.sum(phot_locs.x) - bg*localization.x)/number_phot
-    y_pos = (np.sum(phot_locs.y) - bg*localization.y)/number_phot
-    return x_pos, y_pos
-    
 
 def locs_lt_to_picasso_80(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,
-                       integration_time=200, fitting='avg'):
+                       integration_time=200):
     '''
     tagging list of picked localizations with lifetime (40mhz pulsed)
     and returning as picasso files
@@ -310,7 +288,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
                                    box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            lifetime[i] = avg_lifetime_sergi_80(phot_loc, 80, 0)
+            lifetime[i] = fitting.avg_lifetime_sergi_80(phot_loc, 80, 0)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
     localizations['lifetime'] = lifetime
@@ -455,60 +433,6 @@ def get_pick_photons(
           len(phot_cr_und_cr))
     return phot_cr_und_cr
 
-    
-def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=50):
-    '''
-    Fit lifetimes of individual localizations with 40mhz laser frequency
-    Parameters
-    ----------
-    loc_photons : all photons from one localization 
-    peak : position of the maximum of arrival times for this pick of 
-    localizations, calibrated from calibrate_peak()
-    offset : the offset from the peak where arrival times are considered
-    for fitting the lifetime.The default is 50.
-
-    Returns
-    -------
-    average arrival time of photons, in units of arrival time bin size.
-    Usually 10ps 
-
-    '''
-    
-    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,2500))
-    background = np.sum(counts[-300:])/300
-    counts_bgsub = counts - background
-    weights = np.arange(1,(2500-(peak+50)))
-    considered_bgsub = counts_bgsub[(peak+dt_offset):2500]
-    if len(loc_photons) < 70:
-        print('photons for fitting: ', len(loc_photons))
-        print('considered bg is: ', sum(considered_bgsub))
-    lifetime = np.sum(np.multiply(considered_bgsub, weights))/np.sum(considered_bgsub)
-    return lifetime
-
-def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
-    '''
-    Fit lifetimes of individual localizations with 80mhz laser frequency
-    Parameters
-    ----------
-    loc_photons : all photons from one localization 
-    peak : position of the maximum of arrival times for this pick of 
-    localizations, calibrated from calibrate_peak()
-    offset : the offset from the peak where arrival times are considered
-    for fitting the lifetime.The default is 50.
-
-    Returns
-    -------
-    average arrival time of photons, in units of arrival time bin size.
-    Usually 10ps 
-
-    '''
-    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,1250))
-    background = np.sum(counts[-300:])/300
-    counts_bgsub = counts - background
-    weights = np.arange(1,(1250-(peak+dt_offset)))
-    considered_bgsub = counts_bgsub[(peak+dt_offset):1250]
-    lifetime = np.sum(np.multiply(considered_bgsub, weights))/np.sum(considered_bgsub)
-    return lifetime
 
 
 
