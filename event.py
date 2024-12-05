@@ -154,7 +154,7 @@ def locs_to_events_to_picasso(localizations_file,
                                   ignore_index=True)
     core.dataframe_to_picasso(events, localizations_file, 
                               extension='_locs_connected')
-    return events
+    #return events
 
 
 '''
