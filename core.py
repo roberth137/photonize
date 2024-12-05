@@ -11,6 +11,8 @@ import pandas as pd
 import h5py
 from pathlib import Path
 import shutil
+from multiprocessing import Pool
+
 
 
 
@@ -197,10 +199,48 @@ def dataframe_to_picasso(dataframe, filename, extension='_lt'):
     hf.create_dataset('locs', data=locs)
     hf.close()
     print('\ndataframe succesfully saved in picasso format.')
+    
+    
+    
+def undrift_fast(photons, drift, offset, int_time):
+    '''
+    try to speed up undrifting by multiprocessing
+
+    '''
+    chunk_size = 10**7  # Process 10 million photons at a time
+    frame_duration = int_time/offset
+    
+    n_frames = (photons['ms'].max() // frame_duration) + 1
+    #x_drift = np.random.rand(n_frames).astype(np.float32)
+    #y_drift = np.random.rand(n_frames).astype(np.float32)
+
+    x_positions = photons['x']
+    y_positions = photons['y']
+    timestaps = photons['ms']
+    
+#def process_chunk(start_idx, end_idx):
+#    # Process a chunk of the dataset
+#    chunk_ms = timestamps[start_idx:end_idx]
+#    chunk_x_pos = x_positions[start_idx:end_idx]
+#    chunk_y_pos = y_positions[start_idx:end_idx]
+    
+    # Map timestamps to frame indices
+#    frame_indices = chunk_timestamps // frame_duration #is array 
+    
+    # Get drift values for the chunk
+#    x_drift_values = x_drift[frame_indices]
+#    y_drift_values = y_drift[frame_indices]
+    
+    # Subtract drift
+#    x_corrected = chunk_x_positions - x_drift_values
+#    y_corrected = chunk_y_positions - y_drift_values
+    
+#    return x_corrected, y_corrected
 
 
 
-def undrift(photons, drift, offset, integration_time=200):
+
+def undrift(photons, drift, offset, int_time=200):
     '''
     IN: 
     - photon_index - list of all photons (x, y, dt, ms) as pd dataframe
@@ -221,7 +261,7 @@ def undrift(photons, drift, offset, integration_time=200):
     '''
     # create frame array
     ms_index = np.copy(photons.ms)
-    frames = np.floor((offset*ms_index)/integration_time).astype(int)
+    frames = np.floor((offset*ms_index)/int_time).astype(int)
     ## REMOVE after fixed in matlab
     for i in range(len(frames)):
         if frames[i] >179979:

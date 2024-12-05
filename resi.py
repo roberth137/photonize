@@ -36,7 +36,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
                       int_time=int_time)
     core.dataframe_to_picasso(
-        events, localizations_file, '_event')
+        events, localizations_file, '_event1')
     print(len(events), 'events tagged with lifetime and'
           ' fitted with avg x,y position.') 
     
