@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 # Generate random test data
-num_photons = 1000 # Smaller number for quick testing
+num_photons = 10000000 # Smaller number for quick testing
 photons_rand = np.random.rand(num_photons, 4) * [147, 147, 1000000, 1000]
 
 #photons = pd.read_hdf('photons.hdf5', key='photons')

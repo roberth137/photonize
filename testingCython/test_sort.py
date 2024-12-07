@@ -11,7 +11,7 @@ from photon_sorter import sort_photons
 import time 
 
 # Generate test data
-num_photons = 1000  # Smaller for testing; increase for real use cases
+num_photons = 10000000  # Smaller for testing; increase for real use cases
 x_coords = np.random.randint(0, 2359, size=num_photons, dtype=np.int16)
 y_coords = np.random.randint(0, 2359, size=num_photons, dtype=np.int16)
 dt_values = np.random.randint(0, 1000, size=num_photons, dtype=np.int16)
@@ -33,5 +33,5 @@ print(f"Elapsed time: {elapsed_time:.4f} seconds")
 # Check a specific bin
 x_bin, y_bin = 10, 20
 print(f"Bin ({x_bin}, {y_bin}) contains {len(grid[x_bin][y_bin])} photons")
-for photon in grid[x_bin][y_bin]:
-    print(f"Photon: x={photon[0]}, y={photon[1]}, dt={photon[2]}, ms={photon[3]}")
+
+print(len(grid[x_bin][y_bin]), 'photons in bin 10,20')
