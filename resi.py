@@ -26,6 +26,8 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events = event.locs_to_events(localizations, offset, 
                                   box_side_length = radius, 
                                   int_time = int_time)
+    
+    validate_columns(events, 'event')
     # then events to average positions
     
     #photons = helper.process_input(photons_file, dataset='photons')
@@ -62,6 +64,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events = helper.process_input(event_file, dataset='locs')
     total_events = len(events)
     photons = helper.process_input(photons_file, dataset='photons')
+
     
     print(len(photons), ' photons and ', total_events,
           'events read in')
@@ -114,6 +117,8 @@ def events_lt_avg_pos(event_file, photons_file,
                 
             my_event = events.iloc[i]
             
+            #print('my_event: \n', my_event)
+            
             phot_event = pd.DataFrame(data=core.crop_event
                                     (my_event, pick_photons, radius))
             
@@ -147,7 +152,26 @@ def events_lt_avg_pos(event_file, photons_file,
           ' fitted with avg x,y position.') 
     
 
+def validate_columns(dataframe, required_columns):
+    """
+    Validates if required columns are in the DataFrame.
+    Returns a tuple (missing_columns, has_all_columns).
+    """
+    missing = [col for col in required_columns if col not in dataframe.columns]
+    if len(missing) > 0:
+        print(missing)
 
+    # Example usage
+#required_columns = ['A', 'B', 'C']
+#missing_columns, has_all = validate_columns(dataframe, required_columns)
+
+#if has_all:
+#    print("All required columns are present.")
+#else:
+#    print(f"Missing columns: {missing_columns}")
+    
+    
+    
 
 def locs_lt_avg_pos(localizations_file, photons_file, 
                        drift_file, offset, box_side_length=5,

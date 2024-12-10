@@ -7,7 +7,7 @@ Created on Wed Dec  4 01:23:12 2024
 """
 import numpy as np
 
-def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=50):
+def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     '''
     Fit lifetimes of individual localizations with 40mhz laser frequency
     Parameters
@@ -28,7 +28,7 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=50):
     counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0,2500))
     background = np.sum(counts[-300:])/300
     counts_bgsub = counts - background
-    weights = np.arange(1,(2500-(peak+50)))
+    weights = np.arange(1,(2500-(peak+dt_offset)))
     considered_bgsub = counts_bgsub[(peak+dt_offset):2500]
     if len(loc_photons) < 70:
         print('\nphotons for fitting: ', len(loc_photons))
@@ -78,7 +78,7 @@ def avg_of_roi(localization, phot_locs, box_side_length):
     Background gets subtracted
 
     '''
-    fit_area = np.pi*(box_side_length/2)**2
+    fit_area = (box_side_length/2)**2
     number_phot = (len(phot_locs)-fit_area*localization.bg)
     bg = localization.bg*fit_area
     x_pos = (np.sum(phot_locs.x) - bg*localization.x)/number_phot
