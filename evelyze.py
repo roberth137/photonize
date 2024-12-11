@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import core
-import get_photons
 import helper
 import event
 import fitting
+import get_photons
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    radius, int_time):
@@ -78,10 +78,10 @@ def events_lt_avg_pos(event_file, photons_file,
         events_group = events[(events.group == g)]
 
         print('__get_pick_photons___')
-        pick_photons = get_pick_photons(events_group, photons,
+        pick_photons = get_photons.get_pick_photons(events_group, photons,
                                         drift, offset,
                                         box_side_length=radius,
-                                        integration_time=int_time)
+                                        int_time=int_time)
         print('number of picked photons: ', len(pick_photons), '\n')
         print('picked area:   x - ', min(pick_photons['x']),
               max(pick_photons['x']))
@@ -91,8 +91,8 @@ def events_lt_avg_pos(event_file, photons_file,
         print('__calibrate_peak__')
         peak_arrival_time = fitting.calibrate_peak(events_group, pick_photons,
                                            offset, box_side_length=radius,
-                                           integration_time=int_time)
-        print(peak_arrival_time)
+                                           int_time=int_time)
+        print('peak arrival time is: ', peak_arrival_time, '_________________')
         print('_______________________________________________________')
 
         # iterating over every event in pick
@@ -149,72 +149,14 @@ def validate_columns(dataframe, required_columns):
         print(missing)
 
 
-def calibrate_peak(locs_group, pick_photons, offset,
-                   box_side_length, integration_time):
-    '''
-    Parameters
-    ----------
-    locs_group : localizations of this pick as pd dataframe
-    pick_photons : photons of this pick as pd dataframe
-    offset : how many offsetted frames
-    Returns
-    -------
-    Position of arrival time histogram peak
-    '''
-    group_photons = pd.DataFrame()
-    for i in range(len(locs_group)):
-        phot_loc = get_photons.photons_of_one_localization(locs_group.iloc[i], pick_photons, offset,
-                                                           box_side_length, integration_time)
-        group_photons = pd.concat([group_photons, phot_loc],
-                                  ignore_index=True)
-    counts, bins = np.histogram(group_photons.dt, bins=np.arange(0, 2500))
-    return np.argmax(counts)
-
-
-def get_pick_photons(
-        locs_group, photons, drift, offset,
-        box_side_length, integration_time):
-    '''
-    Parameters
-    ----------
-    locs_group : localizations of this pick (group) as pd dataframe
-    photons : photons as pd dataframe
-    drift : drift as pd dataframe
-    integration time: camera integration time
-    box_side_length: size of the PSF in pixels
-
-    Returns
-    -------
-    All driftcorrected photons in the area
-    of the pick +- box_side_length/2
-    '''
-    # set dimensions of the region and crop photons
-    # -0.53125 because: -> see undrift (pixel conversion)
-    dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
-    min_x, max_x, min_y, max_y = core.min_max_box(locs_group, box_side_length)
-    phot_cr = core.crop_photons(photons,
-                                (min_x - 0.53125 - dr_x),
-                                (max_x - 0.53125 + dr_x),
-                                (min_y - 0.53125 - dr_y),
-                                (max_y - 0.53125 + dr_y))
-    print('number of cropped photons: ', len(phot_cr))
-    # undrift photons
-    phot_cr_und = core.undrift(phot_cr, drift, offset, integration_time)
-    # crop photons again after drift
-    phot_cr_und_cr = core.crop_photons(phot_cr_und,
-                                       min_x, max_x, min_y, max_y)
-    print('number of cropped-undrifted-cropped photons: ',
-          len(phot_cr_und_cr))
-    return phot_cr_und_cr
-
 
 def loc_boundaries(localization, offset,
-                   box_side_length, integration_time):
+                   box_side_length, int_time):
     x_min = localization.x - (box_side_length / 2)
     x_max = x_min + box_side_length
     y_min = localization.y - (box_side_length / 2)
     y_max = y_min + box_side_length
-    ms_min = (localization.frame / offset) * integration_time
-    ms_max = ms_min + integration_time
+    ms_min = (localization.frame / offset) * int_time
+    ms_max = ms_min + int_time
     return x_min, x_max, y_min, y_max, ms_min, ms_max
 

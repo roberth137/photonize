@@ -10,9 +10,46 @@ This module is returns original photons from localization data
 import core
 import pandas as pd
 
+def get_pick_photons(
+        locs_group, photons, drift, offset,
+        box_side_length, int_time):
+    '''
+    Parameters
+    ----------
+    locs_group : localizations of this pick (group) as pd dataframe
+    photons : photons as pd dataframe
+    drift : drift as pd dataframe
+    integration time: camera integration time
+    box_side_length: size of the PSF in pixels
+
+    Returns
+    -------
+    All driftcorrected photons in the area
+    of the pick +- box_side_length/2
+    '''
+    # set dimensions of the region and crop photons
+    # -0.53125 because: -> see undrift (pixel conversion)
+    dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
+    min_x, max_x, min_y, max_y = core.min_max_box(locs_group, box_side_length)
+    phot_cr = core.crop_photons(photons,
+                                (min_x - 0.53125 - dr_x),
+                                (max_x - 0.53125 + dr_x),
+                                (min_y - 0.53125 - dr_y),
+                                (max_y - 0.53125 + dr_y))
+    print('number of cropped photons: ', len(phot_cr))
+    # undrift photons
+    phot_cr_und = core.undrift(phot_cr, drift, offset, int_time)
+    # crop photons again after drift
+    phot_cr_und_cr = core.crop_photons(phot_cr_und,
+                                       min_x, max_x, min_y, max_y)
+    print('number of cropped-undrifted-cropped photons: ',
+          len(phot_cr_und_cr))
+    return phot_cr_und_cr
+
+
 def photons_of_picked_area(localizations_file, photons_file,
                          drift_file, offset, box_side_length, 
-                         integration_time):
+                         int_time):
     '''
 
     Parameters
@@ -22,7 +59,7 @@ def photons_of_picked_area(localizations_file, photons_file,
     drift_file : picasso generated drift file .hdf5
     offset : 
     box_side_length : 
-    integration_time : 
+    int_time :
 
     Returns
     -------
@@ -36,7 +73,7 @@ def photons_of_picked_area(localizations_file, photons_file,
     drift = drift[::offset]
     pick_photons = crop_undrift_crop(localizations, photons, drift, 
                                     offset, box_side_length, 
-                                    integration_time)
+                                    int_time)
     return pick_photons
 
 
@@ -44,7 +81,7 @@ def photons_of_picked_area(localizations_file, photons_file,
 def photons_of_many_picked_localizations(
         localizations_file, photons_file,
         drift_file, offset, box_side_length, 
-        integration_time):
+        int_time):
     '''
     Parameters
     ----------
@@ -67,12 +104,12 @@ def photons_of_many_picked_localizations(
     drift = drift[::offset]
     pick_photons = crop_undrift_crop(localizations, photons, drift, 
                                     offset, box_side_length, 
-                                    integration_time)
+                                    int_time)
     photons_locs = pd.DataFrame()
     for i in range(len(localizations)):
         photons = photons_of_one_localization(
                         localizations.iloc[i], pick_photons, offset, 
-                        box_side_length, integration_time)
+                        box_side_length, int_time)
         photons_locs = pd.concat([photons_locs, photons], 
                                   ignore_index=True)
     print('number of photons corresponding to locs: ', len(photons_locs))
@@ -81,7 +118,7 @@ def photons_of_many_picked_localizations(
 
 def crop_undrift_crop(
         locs_group, photons, drift, offset,
-        box_side_length, integration_time):
+        box_side_length, int_time):
     '''
     Parameters
     ----------
@@ -107,7 +144,7 @@ def crop_undrift_crop(
                           (max_y-0.53125+dr_y))
     print('number of cropped photons: ', len(phot_cr))
     # undrift photons 
-    phot_cr_und = core.undrift(phot_cr, drift, offset, integration_time)
+    phot_cr_und = core.undrift(phot_cr, drift, offset, int_time)
     # crop photons again after drift 
     phot_cr_und_cr = core.crop_photons(phot_cr_und, 
                                        min_x, max_x, min_y, max_y)
@@ -116,7 +153,7 @@ def crop_undrift_crop(
     return phot_cr_und_cr
 
 
-def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, integration_time=200):
+def photons_of_one_localization(localization, pick_photons, offset, box_side_length=5, int_time=200):
     '''
     Returns photons of localization
     IN: 
@@ -128,7 +165,7 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     - photons (dataframe format)
     '''
     photons_cylinder = core.crop_cylinder(localization,
-            pick_photons, offset, box_side_length, integration_time)
+            pick_photons, offset, box_side_length, int_time)
     
     return photons_cylinder
 

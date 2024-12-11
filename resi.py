@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import core
-import get_photons
 import helper
 import event
 from fitting import fit_lt, fit_pos
