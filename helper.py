@@ -38,3 +38,13 @@ def process_input(input_data, dataset):
         return input_data
     else:
         raise TypeError("Input must be a string ending with '.txt', '.hdf5' or a pandas DataFrame.")
+
+
+def validate_columns(dataframe, required_columns):
+    """
+    Validates if required columns are in the DataFrame.
+    Returns a tuple (missing_columns, has_all_columns).
+    """
+    missing = [col for col in required_columns if col not in dataframe.columns]
+    if len(missing) > 0:
+        print(missing)

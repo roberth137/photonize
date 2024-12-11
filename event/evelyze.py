@@ -5,6 +5,7 @@ import helper
 from event import create_events
 import fitting
 import get_photons
+import helper
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    radius, int_time):
@@ -26,7 +27,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
     print('connected locs to events. total events: ', len(events))
 
-    validate_columns(events, 'event')
+    helper.validate_columns(events, 'event')
 
 
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
@@ -136,27 +137,3 @@ def events_lt_avg_pos(event_file, photons_file,
             events, event_file, '_lt_avgPos_noBg')
     print(len(events), 'events tagged with lifetime and'
                        ' fitted with avg x,y position.')
-
-
-
-def validate_columns(dataframe, required_columns):
-    """
-    Validates if required columns are in the DataFrame.
-    Returns a tuple (missing_columns, has_all_columns).
-    """
-    missing = [col for col in required_columns if col not in dataframe.columns]
-    if len(missing) > 0:
-        print(missing)
-
-
-
-def loc_boundaries(localization, offset,
-                   box_side_length, int_time):
-    x_min = localization.x - (box_side_length / 2)
-    x_max = x_min + box_side_length
-    y_min = localization.y - (box_side_length / 2)
-    y_max = y_min + box_side_length
-    ms_min = (localization.frame / offset) * int_time
-    ms_max = ms_min + int_time
-    return x_min, x_max, y_min, y_max, ms_min, ms_max
-

@@ -8,7 +8,7 @@ Created on Tue Nov 26 15:10:41 2024
 
 import pandas as pd
 import core
-import resi
+#import resi
 import matplotlib.pyplot as plt
 import numpy as np
 

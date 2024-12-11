@@ -118,3 +118,12 @@ def get_end_ms(locs_event, offset, int_time):
     
     return end_ms_event
 
+def loc_boundaries(localization, offset,
+                   box_side_length, int_time):
+    x_min = localization.x - (box_side_length / 2)
+    x_max = x_min + box_side_length
+    y_min = localization.y - (box_side_length / 2)
+    y_max = y_min + box_side_length
+    ms_min = (localization.frame / offset) * int_time
+    ms_max = ms_min + int_time
+    return x_min, x_max, y_min, y_max, ms_min, ms_max
