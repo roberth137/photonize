@@ -15,7 +15,7 @@ import core
 import tag_events
 import event_bounds
 import helper
-import fitting
+from fitting.locs_average import avg_photon_weighted
     
     
 
@@ -60,21 +60,21 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
-                 'x': fitting.avg_photon_weighted(eve_group, 'x'),
-                 'y': fitting.avg_photon_weighted(eve_group, 'y'),
+                 'x': avg_photon_weighted(eve_group, 'x'),
+                 'y': avg_photon_weighted(eve_group, 'y'),
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'lpx': fitting.avg_photon_weighted(eve_group, 'lpx'),
-                 'lpy': fitting.avg_photon_weighted(eve_group, 'lpy'),
+                 'lpx': avg_photon_weighted(eve_group, 'lpx'),
+                 'lpy': avg_photon_weighted(eve_group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': fitting.avg_photon_weighted(eve_group, 'bg'),
-                 'sx': fitting.avg_photon_weighted(eve_group, 'sx'),
-                 'sy': fitting.avg_photon_weighted(eve_group, 'sy'),
-                 'net_gradient': fitting.avg_photon_weighted(eve_group, 'net_gradient'),
-                 'ellipticity': fitting.avg_photon_weighted(eve_group, 'ellipticity'),
+                 'bg': avg_photon_weighted(eve_group, 'bg'),
+                 'sx': avg_photon_weighted(eve_group, 'sx'),
+                 'sy': avg_photon_weighted(eve_group, 'sy'),
+                 'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(eve_group, 'ellipticity'),
                  'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
@@ -130,21 +130,21 @@ def locs_to_events_to_picasso(localizations_file,
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
-                 'x': fitting.avg_photon_weighted(group, 'x'),
-                 'y': fitting.avg_photon_weighted(group, 'y'),
+                 'x': avg_photon_weighted(group, 'x'),
+                 'y': avg_photon_weighted(group, 'y'),
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'lpx': fitting.avg_photon_weighted(group, 'lpx'),
-                 'lpy': fitting.avg_photon_weighted(group, 'lpy'),
+                 'lpx': avg_photon_weighted(group, 'lpx'),
+                 'lpy': avg_photon_weighted(group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': fitting.avg_photon_weighted(group, 'bg'),
-                 'sx': fitting.avg_photon_weighted(group, 'sx'),
-                 'sy': fitting.avg_photon_weighted(group, 'sy'),
-                 'net_gradient': fitting.avg_photon_weighted(group, 'net_gradient'),
-                 'ellipticity': fitting.avg_photon_weighted(group, 'ellipticity'),
+                 'bg': avg_photon_weighted(group, 'bg'),
+                 'sx': avg_photon_weighted(group, 'sx'),
+                 'sy': avg_photon_weighted(group, 'sy'),
+                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
+                 'ellipticity': avg_photon_weighted(group, 'ellipticity'),
                  'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
@@ -177,20 +177,20 @@ def event_average(localizations_file):
         locs_event = localizations[localizations.event == e]
         duration_frames = len(locs_event)
         #print(locs_event)
-        new_event = {'frame': int(np.floor(fitting.avg_photon_weighted(locs_event, 'frame'))),
-        'x': fitting.avg_photon_weighted(locs_event, 'x'),
-        'y': fitting.avg_photon_weighted(locs_event, 'y'),
+        new_event = {'frame': int(np.floor(avg_photon_weighted(locs_event, 'frame'))),
+        'x': avg_photon_weighted(locs_event, 'x'),
+        'y': avg_photon_weighted(locs_event, 'y'),
         'photons': max(locs_event['photons']),
         'event': e,
-        'lifetime': fitting.avg_photon_weighted(locs_event, 'lifetime'),
+        'lifetime': avg_photon_weighted(locs_event, 'lifetime'),
         'duration_fr': duration_frames,
-        'lpx': fitting.avg_photon_weighted(locs_event, 'lpx'),
-        'lpy': fitting.avg_photon_weighted(locs_event, 'lpy'),
-        'bg': fitting.avg_photon_weighted(locs_event, 'bg'),
-        'ellipticity': fitting.avg_photon_weighted(locs_event, 'ellipticity'),
-        'net_gradient': fitting.avg_photon_weighted(locs_event, 'net_gradient'),
-        'sx': fitting.avg_photon_weighted(locs_event, 'sx'),
-        'sy': fitting.avg_photon_weighted(locs_event, 'sy')}
+        'lpx': avg_photon_weighted(locs_event, 'lpx'),
+        'lpy': avg_photon_weighted(locs_event, 'lpy'),
+        'bg': avg_photon_weighted(locs_event, 'bg'),
+        'ellipticity': avg_photon_weighted(locs_event, 'ellipticity'),
+        'net_gradient': avg_photon_weighted(locs_event, 'net_gradient'),
+        'sx': avg_photon_weighted(locs_event, 'sx'),
+        'sy': avg_photon_weighted(locs_event, 'sy')}
         new_event_df = pd.DataFrame([new_event])
 
         averaged = pd.concat([averaged, new_event_df])

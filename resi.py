@@ -5,7 +5,7 @@ import core
 import get_photons
 import helper
 import event
-from fitting import fitting
+from fitting import fit_lt, fit_pos
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
@@ -121,11 +121,11 @@ def events_lt_avg_pos(event_file, photons_file,
             elif i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in phot_event: ', len(phot_event))
             
-            x, y = fitting.avg_of_roi(my_event, phot_event, radius)
+            x, y = fit_pos.avg_of_roi(my_event, phot_event, radius)
             
             x_position[i] = x
             y_position[i] = y
-            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
+            lifetime[i] = fit_lt.avg_lifetime_sergi_40(phot_event,
                                                         peak_arrival_time)
             lt_photons[i] = len(phot_event)
         counter += len(events_group)
@@ -202,10 +202,10 @@ def locs_lt_avg_pos(localizations_file, photons_file,
                                        box_side_length, integration_time))
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            x, y = fitting.avg_of_roi(one_loc, phot_loc, box_side_length)
+            x, y = fit_pos.avg_of_roi(one_loc, phot_loc, box_side_length)
             x_position[i] = x
             y_position[i] = y
-            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc,
+            lifetime[i] = fit_lt.avg_lifetime_sergi_40(phot_loc,
                                                         peak_arrival_time)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
@@ -264,7 +264,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
                                    box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            lifetime[i] = fitting.avg_lifetime_sergi_80(phot_loc, 80, 0)
+            lifetime[i] = fit_pos.avg_lifetime_sergi_80(phot_loc, 80, 0)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
     localizations['lifetime'] = lifetime
@@ -394,7 +394,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
                     box_side_length, integration_time)
             if i % 200 == 0:print('200 fitted. Number of photons',
                                   ' in last fit: ', len(phot_loc))
-            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc,
+            lifetime[i] = fit_lt.avg_lifetime_sergi_40(phot_loc,
                                                         peak_arrival_time)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
