@@ -20,12 +20,12 @@ from fitting.locs_average import avg_photon_weighted
     
 
 def locs_to_events(localizations_file, offset, box_side_length, int_time):
-    '''
+    """
     Converts a DataFrame of localizations into a list of Event objects.
 
     Returns:
         list of Event: List of Event objects.
-    '''
+    """
     # Validate required columns
     localizations = helper.process_input(localizations_file, 
                                          dataset='locs')
@@ -91,12 +91,12 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
 
 def locs_to_events_to_picasso(localizations_file, 
                               offset, box_side_length, int_time):
-    '''
+    """
     Converts a DataFrame of localizations into a list of Event objects.
 
     Returns:
         list of Event: List of Event objects.
-    '''
+    """
     localizations = pd.read_hdf(localizations_file, key='locs')
     # Validate required columns
     required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
@@ -157,7 +157,7 @@ def locs_to_events_to_picasso(localizations_file,
 
         
 def event_average(localizations_file):
-    '''
+    """
     Parameters
     ----------
     localizations_file : localizations_file, tagged with event
@@ -166,7 +166,7 @@ def event_average(localizations_file):
     -------
     localizations file with each row the average of events
 
-    '''
+    """
     localizations = pd.read_hdf(localizations_file, key='locs')
     averaged = pd.DataFrame()#{'frame':'','x':'','y':'', 'photons':'',
                              #'event':'','lifetime':'','lpx':'','lpy':'',
