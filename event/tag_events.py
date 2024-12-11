@@ -10,7 +10,6 @@ This module reads in picasso localizations and tags them with their event
 
 import pandas as pd
 import numpy as np
-import core
 
 def connect_locs(localizations):
     #localizations = pd.read_hdf(localizations_file, key='locs')
@@ -69,7 +68,7 @@ def connect_locs_to_picasso(localizations_file):
             
     localizations.insert(4, 'event', event)
     #filtered_locs = filter_unique_events(locs_event_tagged)
-    core.dataframe_to_picasso(localizations, localizations_file, '_eve')
+    helper.dataframe_to_picasso(localizations, localizations_file, '_eve')
     
     
     

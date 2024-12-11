@@ -7,7 +7,6 @@ This module is returns original photons from localization data
 
 @author: roberthollmann
 """
-import core
 import pandas as pd
 import get_photons
 

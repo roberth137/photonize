@@ -11,7 +11,6 @@ It should be used only with filtered localizations
 
 import pandas as pd
 import numpy as np
-import core
 from event import tag_events
 from event import event_bounds
 import helper
@@ -150,7 +149,7 @@ def locs_to_events_to_picasso(localizations_file,
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
-    core.dataframe_to_picasso(events, localizations_file, 
+    helper.dataframe_to_picasso(events, localizations_file,
                               extension='_locs_connected')
     #return events
 
@@ -195,4 +194,4 @@ def event_average(localizations_file):
 
         averaged = pd.concat([averaged, new_event_df])
         
-    core.dataframe_to_picasso(averaged, localizations_file, 'event_averaged')
+    helper.dataframe_to_picasso(averaged, localizations_file, 'event_averaged')

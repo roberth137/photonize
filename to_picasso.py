@@ -9,9 +9,9 @@ Module that outputs locs dataframes to picasso format
 """
 
 import pandas as pd
-import core
-from event import event_bounds, tag_events
+import helper
 import fitting
+from event import event_bounds, tag_events
 
 
 def locs_to_events_to_picasso(localizations_file, 
@@ -75,6 +75,6 @@ def locs_to_events_to_picasso(localizations_file,
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
-    core.dataframe_to_picasso(events, localizations_file, 
+    helper.dataframe_to_picasso(events, localizations_file,
                               extension='_locs_connected')
     #return events
