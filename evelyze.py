@@ -8,11 +8,11 @@ import fitting
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    radius, int_time):
-    '''
+    """
 
     reads in file of localizations, connects events and analyzes them
 
-    '''
+    """
     localizations = helper.process_input(localizations_file,
                                          dataset='locs')
 
@@ -24,7 +24,10 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                   box_side_length=radius,
                                   int_time=int_time)
 
+    print('connected locs to events. total events: ', len(events))
+
     validate_columns(events, 'event')
+
 
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
                       int_time=int_time)
@@ -37,7 +40,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 def events_lt_avg_pos(event_file, photons_file,
                       drift_file, offset, radius=5,
                       int_time=200):
-    '''
+    """
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
     IN:
@@ -48,7 +51,7 @@ def events_lt_avg_pos(event_file, photons_file,
     OUT:
     - picasso hdf5 file tagged with lifetime
     - yaml file
-    '''
+    """
     # read in files
     events = helper.process_input(event_file, dataset='locs')
     total_events = len(events)
