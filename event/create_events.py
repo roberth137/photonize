@@ -12,8 +12,8 @@ It should be used only with filtered localizations
 import pandas as pd
 import numpy as np
 import core
-import tag_events
-import event_bounds
+from event import tag_events
+from event import event_bounds
 import helper
 from fitting.locs_average import avg_photon_weighted
     
@@ -196,10 +196,3 @@ def event_average(localizations_file):
         averaged = pd.concat([averaged, new_event_df])
         
     core.dataframe_to_picasso(averaged, localizations_file, 'event_averaged')
-        
-        
-    
-
-    
-    
-        

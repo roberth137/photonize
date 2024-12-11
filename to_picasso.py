@@ -9,11 +9,8 @@ Module that outputs locs dataframes to picasso format
 """
 
 import pandas as pd
-import numpy as np
 import core
-import tag_events
-import event_bounds
-import helper
+from event import event_bounds, tag_events
 import fitting
 
 

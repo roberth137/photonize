@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import core
 import helper
-import event
+from event import create_events
 import fitting
 import get_photons
 
@@ -20,7 +20,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
     drift = helper.process_input(drift_file, dataset='drift')
     # first localizations to events
-    events = event.locs_to_events(localizations, offset,
+    events = create_events.locs_to_events(localizations, offset,
                                   box_side_length=radius,
                                   int_time=int_time)
 
