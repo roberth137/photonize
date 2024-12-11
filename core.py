@@ -11,9 +11,6 @@ import pandas as pd
 import h5py
 from pathlib import Path
 import shutil
-from multiprocessing import Pool
-
-
 
 
 def min_max_box(localizations, box_side_length=0):

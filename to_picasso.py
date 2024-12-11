@@ -14,6 +14,7 @@ import core
 import tag_events
 import event_bounds
 import helper
+import fitting
 
 
 def locs_to_events_to_picasso(localizations_file, 
@@ -57,21 +58,21 @@ def locs_to_events_to_picasso(localizations_file,
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
-                 'x': avg_photon_weighted(group, 'x'),
-                 'y': avg_photon_weighted(group, 'y'),
+                 'x': fitting.avg_photon_weighted(group, 'x'),
+                 'y': fitting.avg_photon_weighted(group, 'y'),
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'lpx': avg_photon_weighted(group, 'lpx'),
-                 'lpy': avg_photon_weighted(group, 'lpy'),
+                 'lpx': fitting.avg_photon_weighted(group, 'lpx'),
+                 'lpy': fitting.avg_photon_weighted(group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': avg_photon_weighted(group, 'bg'),
-                 'sx': avg_photon_weighted(group, 'sx'),
-                 'sy': avg_photon_weighted(group, 'sy'),
-                 'net_gradient': avg_photon_weighted(group, 'net_gradient'),
-                 'ellipticity': avg_photon_weighted(group, 'ellipticity'),
+                 'bg': fitting.avg_photon_weighted(group, 'bg'),
+                 'sx': fitting.avg_photon_weighted(group, 'sx'),
+                 'sy': fitting.avg_photon_weighted(group, 'sy'),
+                 'net_gradient': fitting.avg_photon_weighted(group, 'net_gradient'),
+                 'ellipticity': fitting.avg_photon_weighted(group, 'ellipticity'),
                  'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
