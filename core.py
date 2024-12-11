@@ -190,8 +190,8 @@ def dataframe_to_picasso(dataframe, filename, extension='_lt'):
     # Saving data
     yaml_old = (path + '/' + filename[:-4] + 'yaml')
     yaml_new = (yaml_old[:-5] + extension + '.yaml')
-    shutil.copyfile(yaml_old, yaml_new) 
-    
+    shutil.copyfile(yaml_old, yaml_new)
+
     hf = h5py.File(path + '/' + filename[:-5] + extension +'.hdf5', 'w')
     hf.create_dataset('locs', data=locs)
     hf.close()

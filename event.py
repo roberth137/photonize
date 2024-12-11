@@ -80,6 +80,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
+    events = events.astype({'frame': 'uint32'})
         
     print('Linked ', len(localizations), ' locs to ', 
           len(events), 'events.')
