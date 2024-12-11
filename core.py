@@ -12,164 +12,6 @@ import h5py
 from pathlib import Path
 import shutil
 
-
-def min_max_box(localizations, box_side_length=0):
-    
-    '''
-    Returns x, y, boundaries + box 
-    for a set of localizations as pd dataframe
-    '''
-    min_x = min(localizations.x)-(box_side_length/2)
-    max_x = max(localizations.x)+(box_side_length/2)
-    min_y = min(localizations.y)-(box_side_length/2)
-    max_y = max(localizations.y)+(box_side_length/2)
-    
-    return min_x, max_x, min_y, max_y
-
-def spatial_boundaries(event, radius):
-    x_min = event.x - (radius/2)
-    x_max = x_min + radius
-    
-    y_min = event.y - (radius/2)
-    y_max = y_min + radius
-    
-    return x_min, x_max, y_min, y_max
-
-def loc_boundaries(localization, offset, 
-                            box_side_length, integration_time):
-    '''
-    Returns boundaries in x, y, ms of a single localization (pd Series) 
-    as a rectangular box
-    
-    '''
-    
-    x_min = localization.x - (box_side_length/2)
-    x_max = x_min + box_side_length
-    
-    y_min = localization.y - (box_side_length/2)
-    y_max = y_min + box_side_length
-    
-    ms_min = (localization.frame/offset) * integration_time
-    ms_max = ms_min + integration_time
-    
-    return x_min, x_max, y_min, y_max, ms_min, ms_max
-
-
-def crop_event(event, photons, radius):
-    '''
-    Parameters
-    ----------
-    localization : single localization as pd Series
-    photons : photons as pd DataFrame
-    offset :
-    box_side_length :
-    integration_time : 
-
-    Returns
-    -------
-    photons_cylinder : All photons from the current frame closer than 
-    box_side_length/2 to the localization position 
-
-    '''
-    
-    x_min, x_max, y_min, y_max = spatial_boundaries(event, radius)
-    
-    photons_cropped = pd.DataFrame(data = crop_photons(
-                                    photons, 
-                                    x_min, x_max, 
-                                    y_min, y_max,
-                                    event['start_ms'], event['end_ms']))
-    
-    x_distance = (photons_cropped['x'].to_numpy() - event.x)
-    y_distance = (photons_cropped['y'].to_numpy() - event.y)
-    
-    total_distance_sq = np.square(x_distance) + np.square(y_distance)
-    photons_cropped['distance'] = total_distance_sq
-    
-    radius_sq = ((0.5*radius)**2)
-    photons_cylinder = photons_cropped[
-        photons_cropped.distance < radius_sq]
-    
-    if len(photons_cylinder) < 30: 
-        print('\nlow photon count for crop_event: ')
-        print('len(pick_photons) : ', len(photons_cylinder))
-        print('\nthis is the event: \n', event)
-    
-    return photons_cylinder
-
-
-def crop_cylinder(localization, photons, offset, 
-                  box_side_length, integration_time):
-    '''
-    Parameters
-    ----------
-    localization : single localization as pd Series
-    photons : photons as pd DataFrame
-    offset :
-    box_side_length :
-    integration_time : 
-
-    Returns
-    -------
-    photons_cylinder : All photons from the current frame closer than 
-    box_side_length/2 to the localization position 
-
-    '''
-    
-    x_min, x_max, y_min, y_max, ms_min, ms_max = loc_boundaries(
-        localization, offset, box_side_length, integration_time)
-    
-    photons_cropped = pd.DataFrame(data = crop_photons(
-                                    photons, 
-                                    x_min, x_max, 
-                                    y_min, y_max, 
-                                    ms_min, ms_max))
-    
-    x_distance = (photons_cropped['x'].to_numpy() - localization.x)
-    y_distance = (photons_cropped['y'].to_numpy() - localization.y)
-    
-    total_distance_sq = np.square(x_distance) + np.square(y_distance)
-    photons_cropped['distance'] = total_distance_sq
-    
-    radius_sq = ((0.5*box_side_length)**2)
-    photons_cylinder = photons_cropped[
-        photons_cropped.distance < radius_sq]
-    
-    return photons_cylinder
-
-
-
-def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0, 
-                 y_max=float('inf'), ms_min=0, ms_max=float('inf')):
-    '''
-    Parameters
-    ----------
-    photons : photons as pd dataframe
-    x_min :
-    x_max :
-    y_min :
-    y_max :
-    ms_min : optional The default is None.
-    ms_max : optional The default is None.
-
-    Returns
-    -------
-    cropped photons as pd dataframe
-
-    '''
-    
-    photons_cropped = photons[
-        (photons.x>=x_min)
-        &(photons.x<=x_max)
-        &(photons.y>=y_min)
-        &(photons.y<=y_max)
-        &(photons.ms>=ms_min)
-        &(photons.ms<=ms_max)]
-    
-    return photons_cropped 
-
-
-
 def dataframe_to_picasso(dataframe, filename, extension='_lt'):
     '''
 
@@ -196,65 +38,28 @@ def dataframe_to_picasso(dataframe, filename, extension='_lt'):
     hf.create_dataset('locs', data=locs)
     hf.close()
     print('\ndataframe succesfully saved in picasso format.')
-    
-    
-    
-def undrift_fast(photons, drift, offset, int_time):
-    '''
-    try to speed up undrifting by multiprocessing
-
-    '''
-    chunk_size = 10**7  # Process 10 million photons at a time
-    frame_duration = int_time/offset
-    
-    n_frames = (photons['ms'].max() // frame_duration) + 1
-    #x_drift = np.random.rand(n_frames).astype(np.float32)
-    #y_drift = np.random.rand(n_frames).astype(np.float32)
-
-    x_positions = photons['x']
-    y_positions = photons['y']
-    timestaps = photons['ms']
-    
-#def process_chunk(start_idx, end_idx):
-#    # Process a chunk of the dataset
-#    chunk_ms = timestamps[start_idx:end_idx]
-#    chunk_x_pos = x_positions[start_idx:end_idx]
-#    chunk_y_pos = y_positions[start_idx:end_idx]
-    
-    # Map timestamps to frame indices
-#    frame_indices = chunk_timestamps // frame_duration #is array 
-    
-    # Get drift values for the chunk
-#    x_drift_values = x_drift[frame_indices]
-#    y_drift_values = y_drift[frame_indices]
-    
-    # Subtract drift
-#    x_corrected = chunk_x_positions - x_drift_values
-#    y_corrected = chunk_y_positions - y_drift_values
-    
-#    return x_corrected, y_corrected
 
 
 
 
 def undrift(photons, drift, offset, int_time=200):
     '''
-    IN: 
+    IN:
     - photon_index - list of all photons (x, y, dt, ms) as pd dataframe
     - drift_file - picasso generated as pd DataFrame
     - integration_time
-    OUT: 
+    OUT:
     undrifted photons_index as dataframe
-    
-    
+
+
     Note: drift array is subtracted from locs to get undrifted coordinates
-    0.53125 is added to coordinates to convert coordinates 
+    0.53125 is added to coordinates to convert coordinates
     from camera pixels (LINCAM) to TIFfile to picasso coordinates.
-    
+
     Formula: Picasso_coord = LIN_coord + 0.5 + (1/(2*Binning))
-    
+
     For 16x Binning: P_c = L_c + 0.5 +(1/(2*16)) = L_c + 0.53125
-    
+
     '''
     # create frame array
     ms_index = np.copy(photons.ms)
@@ -263,14 +68,14 @@ def undrift(photons, drift, offset, int_time=200):
     max_frame_drift = len(drift.x)
     if max_frame_photons > max_frame_drift-1:
         overhang_ms = 0
-        for i in range(len(frames)): 
-            if frames[i] > max_frame_drift-1: 
+        for i in range(len(frames)):
+            if frames[i] > max_frame_drift-1:
                 frames[i] = max_frame_drift-1
                 overhang_ms += 1
         print('overhang for ', overhang_ms, ' number of photons.')
     drift_x = np.copy(drift.x)
     drift_y = np.copy(drift.y)
-    
+
     #create numpy arrays to speed up
     number_photons = len(photons)
     undrifted_x = np.copy(photons.x)
@@ -285,15 +90,15 @@ def undrift(photons, drift, offset, int_time=200):
         drift_y_array[i] = drift_y[frame]
         if i == 0: print('start undrifting')
         elif i %10000000 == 0: print('100mio undrifted')
-        
-    #apply drift and shift of 0.53125 to photons -> synchron in position 
+
+    #apply drift and shift of 0.53125 to photons -> synchron in position
     #with Localizations
     undrifted_x += (0.53125-drift_x_array)
     undrifted_y += (0.53125-drift_y_array)
-    
-    #create and return new dataframe 
-    photons_undrifted = pd.DataFrame({'x': undrifted_x, 
+
+    #create and return new dataframe
+    photons_undrifted = pd.DataFrame({'x': undrifted_x,
         'y': undrifted_y, 'dt': photons.dt, 'ms': photons.ms})
-    
+
     return photons_undrifted
 

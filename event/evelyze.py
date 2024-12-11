@@ -108,7 +108,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             # print('my_event: \n', my_event)
 
-            phot_event = pd.DataFrame(data=core.crop_event
+            phot_event = pd.DataFrame(data=get_photons.crop_event
             (my_event, pick_photons, radius))
 
             if i == 0:
