@@ -4,7 +4,8 @@ import core
 import get_photons
 import helper
 import event
-from fitting import fit_lt, fit_pos
+import fitting
+#from fitting import fit_lt, fit_pos
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
@@ -113,11 +114,11 @@ def events_lt_avg_pos(event_file, photons_file,
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
 
-            x, y = fit_pos.avg_of_roi(my_event, phot_event, radius)
+            x, y = fitting.avg_of_roi(my_event, phot_event, radius)
 
             x_position[i] = x
             y_position[i] = y
-            lifetime[i] = fit_lt.avg_lifetime_sergi_40(phot_event,
+            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
                                                        peak_arrival_time)
             lt_photons[i] = len(phot_event)
         counter += len(events_group)

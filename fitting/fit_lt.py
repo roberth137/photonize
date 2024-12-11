@@ -1,4 +1,7 @@
 import numpy as np
+import pandas as pd
+import get_photons
+
 
 
 def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
@@ -55,3 +58,24 @@ def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     considered_bgsub = counts_bgsub[(peak + dt_offset):1250]
     lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     return lifetime
+
+def calibrate_peak(locs_group, pick_photons, offset,
+                   box_side_length, integration_time):
+    '''
+    Parameters
+    ----------
+    locs_group : localizations of this pick as pd dataframe
+    pick_photons : photons of this pick as pd dataframe
+    offset : how many offsetted frames
+    Returns
+    -------
+    Position of arrival time histogram peak
+    '''
+    group_photons = pd.DataFrame()
+    for i in range(len(locs_group)):
+        phot_loc = get_photons.photons_of_one_localization(locs_group.iloc[i], pick_photons, offset,
+                                                           box_side_length, integration_time)
+        group_photons = pd.concat([group_photons, phot_loc],
+                                  ignore_index=True)
+    counts, bins = np.histogram(group_photons.dt, bins=np.arange(0, 2500))
+    return np.argmax(counts)
