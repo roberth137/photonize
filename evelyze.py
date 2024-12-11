@@ -5,8 +5,6 @@ import get_photons
 import helper
 import event
 import fitting
-#from fitting import fit_lt, fit_pos
-
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    radius, int_time):
@@ -88,9 +86,11 @@ def events_lt_avg_pos(event_file, photons_file,
               max(pick_photons['y']))
 
         print('__calibrate_peak__')
-        peak_arrival_time = calibrate_peak(events_group, pick_photons,
+        peak_arrival_time = fitting.calibrate_peak(events_group, pick_photons,
                                            offset, box_side_length=radius,
                                            integration_time=int_time)
+        print(peak_arrival_time)
+        print('_______________________________________________________')
 
         # iterating over every event in pick
         for i in range(counter, counter + len(events_group)):
