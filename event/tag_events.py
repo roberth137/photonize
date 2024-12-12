@@ -8,7 +8,6 @@ This module reads in picasso localizations and tags them with their event
 @author: roberthollmann
 """
 
-import pandas as pd
 import numpy as np
 import helper
 
@@ -28,7 +27,7 @@ def connect_locs(localizations_dset):
         group = localizations.group.iloc[i]
         locs_next_frame = localizations[(localizations.frame == frame+1)
                                         &(localizations.group == group)]
-        
+        follower_index = None
         if len(locs_next_frame) != 0:
             has_follower, follower_index = return_nearby(
                 localizations.iloc[i], locs_next_frame)
@@ -58,8 +57,11 @@ def connect_locs_to_picasso(localizations_file):
             event_column[i] = event_counter
                     
         frame = localizations.frame.iloc[i]
-        locs_next_frame = localizations[(localizations.frame == frame+1)]
-        
+        group = localizations.group.iloc[i]
+        locs_next_frame = localizations[(localizations.frame == frame+1)
+                                        &(localizations.group == group)]
+
+        follower_index = None
         if len(locs_next_frame) != 0:
             has_follower, follower_index = return_nearby(
                 localizations.iloc[i], locs_next_frame)
@@ -73,28 +75,28 @@ def connect_locs_to_picasso(localizations_file):
     
     
     
-def return_nearby(localization, locs_next_frame):
-    '''
+def return_nearby(this_localization, locs_next_frame):
+    """
 
     Parameters
     ----------
-    localization : one localization
+    this_localization : one localization
     locs_next_frame : all locs in next frame
 
     Returns
     -------
     If the localization has a successor in the next frame
 
-    '''
+    """
     
     has_next = False
     
     locs_next = locs_next_frame.copy()
     
-    max_distance = (localization.lpx+localization.lpy)
+    max_distance = (this_localization.lpx+this_localization.lpy)
     
-    x_distance = (locs_next['x'].to_numpy() - localization.x)
-    y_distance = (locs_next['y'].to_numpy() - localization.y)
+    x_distance = (locs_next['x'].to_numpy() - this_localization.x)
+    y_distance = (locs_next['y'].to_numpy() - this_localization.y)
     
     total_distance_sq = np.square(x_distance) + np.square(y_distance)
 
@@ -136,8 +138,6 @@ def filter_unique_events(localizations):
     
     Args:
       localizations: The DataFrame to filter.
-      event_column: The name of the column containing the events to filter.
-    
     Returns:
       A new DataFrame with the filtered rows.
     """
