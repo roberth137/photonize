@@ -12,26 +12,23 @@ This module reads in event tagged localizations and defines event bins:
 """
 import numpy as np
 
-
-
-
 def get_ms_bounds(locs_event, offset, int_time):
-    '''
+    """
     Parameters
     ----------
-    event : all localizations of an event
+    locs_event : all localizations of an event
+    offset
+    int_time
 
     Returns
     -------
     start_ms of an event
 
-    '''
+    """
     first_loc = locs_event.iloc[0] # now a pd Series 
     last_loc = locs_event.iloc[-1]
     max_photons = max(locs_event['photons'])
-    #num_locs = len(locs_event)
-    
-    #print('num_locs: ', num_locs)
+    #print('num_locs: ', len(locs_event))
     
     #print(first_loc)
     #print('max_photons: ', max_photons)
@@ -53,77 +50,65 @@ def get_ms_bounds(locs_event, offset, int_time):
     return np.floor(start_ms_event), np.ceil(end_ms_event)
 
 
-
-
-
 def get_start_ms(locs_event, offset, int_time):
-    '''
+    """
     Parameters
     ----------
-    event : all localizations of an event
+    locs_event : all localizations of an event
+    offset
+    int_time
 
     Returns
     -------
     start_ms of an event
 
-    '''
+    """
     first_loc = locs_event.iloc[0] # now a pd Series 
     max_photons = max(locs_event['photons'])
-    num_locs = len(locs_event)
-    print('num_locs: ', num_locs)
+    #print('num_locs: ', len(locs_event))
     
-    print(first_loc)
-    print('max_photons: ', max_photons)
+    #print(first_loc)
+    #print('max_photons: ', max_photons)
     
     start_ms_first = (first_loc['frame']/offset) * int_time
-    print('start_ms first: ', start_ms_first)
+    #print('start_ms first: ', start_ms_first)
     
     on_fraction = (first_loc['photons']/max_photons)
-    print('on_ fraction: ', on_fraction)
+    print('on_fraction first: ', on_fraction)
     
     start_ms_event = start_ms_first + (1 - on_fraction) * int_time
-    print('start_ms event', start_ms_event)
+    #print('start_ms event', start_ms_event)
     
     return start_ms_event
 
 
-
 def get_end_ms(locs_event, offset, int_time):
-    '''
+    """
     Parameters
     ----------
-    event : all localizations of an event
+    locs_event : all localizations of an event
+    offset
+    int_time
 
     Returns
     -------
     end_ms of an event
 
-    '''
+    """
     last_loc = locs_event.iloc[-1] # now a pd Series 
     max_photons = max(locs_event['photons'])
-    num_locs = len(locs_event)
-    print('num_locs; ', num_locs)
+    #print('num_locs; ', len(locs_event))
     
-    print(last_loc)
-    print('max_photons: ', max_photons)
+    #print(last_loc)
+    #print('max_photons: ', max_photons)
     
     start_ms_last = (last_loc['frame']/offset) * int_time
-    print('start_ms_last: ', start_ms_last)
+    #print('start_ms_last: ', start_ms_last)
     
     on_fraction = (last_loc['photons']/max_photons)
-    print('on_fraction: ', on_fraction)
+    print('on_fraction last: ', on_fraction)
     
     end_ms_event = start_ms_last + (on_fraction * int_time)
-    print('end_ms_event: ', end_ms_event)
+    #print('end_ms_event: ', end_ms_event)
     
     return end_ms_event
-
-def loc_boundaries(localization, offset,
-                   box_side_length, int_time):
-    x_min = localization.x - (box_side_length / 2)
-    x_max = x_min + box_side_length
-    y_min = localization.y - (box_side_length / 2)
-    y_max = y_min + box_side_length
-    ms_min = (localization.frame / offset) * int_time
-    ms_max = ms_min + int_time
-    return x_min, x_max, y_min, y_max, ms_min, ms_max

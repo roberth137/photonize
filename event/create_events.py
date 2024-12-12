@@ -18,7 +18,7 @@ from fitting.locs_average import avg_photon_weighted
     
     
 
-def locs_to_events(localizations_file, offset, box_side_length, int_time):
+def locs_to_events(localizations_file, offset, int_time):
     """
     Converts a DataFrame of localizations into a list of Event objects.
 
@@ -46,16 +46,9 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         first = eve_group.iloc[0]
         last = eve_group.iloc[-1]
         
-        
-        #print('group photons values: \n', group['photons'])
-        #print('max phot index: ',group['photons'].idxmax())
-        #print('len group', len(group))
-        
-        
         peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             eve_group, offset, int_time)
-        #print('peak event is: ', '\n', peak_event)
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
@@ -64,6 +57,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
+                 'duration_ms': (end_ms-start_ms),
                  'lpx': avg_photon_weighted(eve_group, 'lpx'),
                  'lpy': avg_photon_weighted(eve_group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
@@ -89,14 +83,14 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
    
 
 def locs_to_events_to_picasso(localizations_file, 
-                              offset, box_side_length, int_time):
+                              offset, int_time):
     """
     Converts a DataFrame of localizations into a list of Event objects.
 
     Returns:
         list of Event: List of Event objects.
     """
-    localizations = pd.read_hdf(localizations_file, key='locs')
+    localizations = helper.process_input(localizations_file, 'locs')
     # Validate required columns
     required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
     if not required_columns.issubset(localizations.columns):
@@ -115,17 +109,21 @@ def locs_to_events_to_picasso(localizations_file,
         # Compute event properties
         first = group.iloc[0]
         last = group.iloc[-1]
-        
-        
-        #print('group photons values: \n', group['photons'])
-        #print('max phot index: ',group['photons'].idxmax())
-        #print('len group', len(group))
-        
-        
+        photons_array = np.ones(len(group))
+        for i in range(len(group)):
+            photons_array[i] = group.iloc[i].photons
+
         peak_event = group.iloc[group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             group, offset, int_time)
-        #print('peak event is: ', '\n', peak_event)
+        print('_____________________________________')
+        print('FRAME: first -- last -- duration')
+        print('_____', first.frame, ' -- ', last.frame, ' -- ', (last.frame-first.frame+1))
+        print('peak event is: ', peak_event.frame)
+        print('MS:    first -- last -- duration')
+        print('_____', start_ms, end_ms, (end_ms-start_ms))
+        print('\PHOTONS: first -- max -- last ')
+        print(photons_array)
         
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
@@ -134,6 +132,7 @@ def locs_to_events_to_picasso(localizations_file,
                  'photons': peak_event['photons'],
                  'start_ms': start_ms,
                  'end_ms': end_ms,
+                 'duration_ms': (end_ms - start_ms),
                  'lpx': avg_photon_weighted(group, 'lpx'),
                  'lpy': avg_photon_weighted(group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
@@ -150,7 +149,7 @@ def locs_to_events_to_picasso(localizations_file,
         events = pd.concat([events, event], 
                                   ignore_index=True)
     helper.dataframe_to_picasso(events, localizations_file,
-                              extension='_locs_connected')
+                              extension='_locs_to_events')
     #return events
 
 
@@ -193,5 +192,5 @@ def event_average(localizations_file):
         new_event_df = pd.DataFrame([new_event])
 
         averaged = pd.concat([averaged, new_event_df])
-        
+
     helper.dataframe_to_picasso(averaged, localizations_file, 'event_averaged')
