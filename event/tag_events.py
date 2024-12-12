@@ -10,18 +10,19 @@ This module reads in picasso localizations and tags them with their event
 
 import pandas as pd
 import numpy as np
+import helper
 
-def connect_locs(localizations):
-    #localizations = pd.read_hdf(localizations_file, key='locs')
-    event = np.zeros(len(localizations), dtype=int)
+def connect_locs(localizations_dset):
+    localizations = helper.process_input(localizations_dset, 'locs')
+    event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0
     
     for i in np.arange(len(localizations), dtype=int): 
         has_follower = False
         
-        if event[i] == 0: #not connected to previous event -> new event
+        if event_column[i] == 0: #not connected to previous event -> new event
             event_counter +=1 
-            event[i] = event_counter
+            event_column[i] = event_counter
                     
         frame = localizations.frame.iloc[i]
         group = localizations.group.iloc[i]
@@ -33,28 +34,28 @@ def connect_locs(localizations):
                 localizations.iloc[i], locs_next_frame)
         
         if has_follower: 
-            event[follower_index] = event[i] #set to same event
+            event_column[follower_index] = event_column[i] #set to same event
     
     if 'event' in localizations.columns:
         localizations = localizations.drop('event', axis=1)   
     
-    localizations.insert(4, 'event', event)
+    localizations.insert(4, 'event', event_column)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     return localizations
     
 
 
 def connect_locs_to_picasso(localizations_file):
-    localizations = pd.read_hdf(localizations_file, key='locs')
-    event = np.zeros(len(localizations), dtype=int)
+    localizations = helper.process_input(localizations_file, 'locs')
+    event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0
     
     for i in np.arange(len(localizations), dtype=int): 
         has_follower = False
         
-        if event[i] == 0: #not connected to previous event -> new event
+        if event_column[i] == 0: #not connected to previous event -> new event
             event_counter +=1 
-            event[i] = event_counter
+            event_column[i] = event_counter
                     
         frame = localizations.frame.iloc[i]
         locs_next_frame = localizations[(localizations.frame == frame+1)]
@@ -64,11 +65,11 @@ def connect_locs_to_picasso(localizations_file):
                 localizations.iloc[i], locs_next_frame)
         
         if has_follower: 
-            event[follower_index] = event[i] #set to same event
+            event_column[follower_index] = event_column[i] #set to same event
             
-    localizations.insert(4, 'event', event)
+    localizations.insert(4, 'event', event_column)
     #filtered_locs = filter_unique_events(locs_event_tagged)
-    helper.dataframe_to_picasso(localizations, localizations_file, '_eve')
+    helper.dataframe_to_picasso(localizations, localizations_file, '_event_tagged')
     
     
     
