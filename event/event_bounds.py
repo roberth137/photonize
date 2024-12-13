@@ -28,25 +28,15 @@ def get_ms_bounds(locs_event, offset, int_time):
     first_loc = locs_event.iloc[0] # now a pd Series 
     last_loc = locs_event.iloc[-1]
     average_photons = (locs_event['total_photons'].sum()/len(locs_event))
-    max_photons = max(locs_event['photons'])
-    #print('num_locs: ', len(locs_event))
-    
-    #print(first_loc)
-    #print('max_photons: ', max_photons)
     
     start_ms_first = (first_loc['frame']/offset) * int_time
-    #print('start_ms first: ', start_ms_first)
     start_ms_last = (last_loc['frame']/offset) * int_time
     
     on_fraction_first = (first_loc['total_photons']/average_photons)
     on_fraction_last = (last_loc['total_photons']/average_photons)
-    #print('on_ fraction: ', on_fraction_first)
-    
+
     start_ms_event = start_ms_first + (0.5 - 0.5*on_fraction_first) * int_time
     end_ms_event = start_ms_last + (0.5 + 0.5*on_fraction_last) * int_time
-    #print('start_ms event', start_ms_event)
-    #print('end_ms_event: ', end_ms_event)
-    #print('on time in ms: ', (end_ms_event - start_ms_event))
     
     return np.floor(start_ms_event), np.ceil(end_ms_event)
 
@@ -98,18 +88,11 @@ def get_end_ms(locs_event, offset, int_time):
     """
     last_loc = locs_event.iloc[-1] # now a pd Series 
     max_photons = max(locs_event['photons'])
-    #print('num_locs; ', len(locs_event))
-    
-    #print(last_loc)
-    #print('max_photons: ', max_photons)
-    
     start_ms_last = (last_loc['frame']/offset) * int_time
-    #print('start_ms_last: ', start_ms_last)
-    
+
     on_fraction = (last_loc['photons']/max_photons)
     print('on_fraction last: ', on_fraction)
     
     end_ms_event = start_ms_last + (on_fraction * int_time)
-    #print('end_ms_event: ', end_ms_event)
-    
+
     return end_ms_event

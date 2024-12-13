@@ -31,7 +31,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
                       int_time=int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event_new_ms_bounds_longer_bg')
+        events, localizations_file, '_event_new_avgroi')
 
 
 def events_lt_avg_pos(event_file, photons_file,
