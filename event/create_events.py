@@ -60,6 +60,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                  'x': avg_photon_weighted(eve_group, 'x'),
                  'y': avg_photon_weighted(eve_group, 'y'),
                  'photons': peak_event['photons'],
+                 'total_photons': total_photons_estimate,
                  'start_ms': start_ms,
                  'end_ms': end_ms,
                  'duration_ms': (end_ms-start_ms),
