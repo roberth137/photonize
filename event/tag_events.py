@@ -11,7 +11,7 @@ This module reads in picasso localizations and tags them with their event
 import numpy as np
 import helper
 
-def connect_locs(localizations_dset):
+def connect_locs(localizations_dset, box_side_length=5):
     localizations = helper.process_input(localizations_dset, 'locs')
     event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0
@@ -39,12 +39,13 @@ def connect_locs(localizations_dset):
         localizations = localizations.drop('event', axis=1)   
     
     localizations.insert(4, 'event', event_column)
+    calculate_total_photons(localizations, 5)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     return localizations
     
 
 
-def connect_locs_to_picasso(localizations_file):
+def connect_locs_to_picasso(localizations_file, box_side_length=5):
     localizations = helper.process_input(localizations_file, 'locs')
     event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0
@@ -70,6 +71,7 @@ def connect_locs_to_picasso(localizations_file):
             event_column[follower_index] = event_column[i] #set to same event
             
     localizations.insert(4, 'event', event_column)
+    calculate_total_photons(localizations, 5)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     helper.dataframe_to_picasso(localizations, localizations_file, '_event_tagged')
     
@@ -155,7 +157,12 @@ def filter_unique_events(localizations):
     return filtered_locs
 
 
-
-    
-    
-    
+def calculate_total_photons(localizations, box_side_length):
+    if {'photons', 'bg'}.issubset(localizations.columns):
+        photons_arr = localizations['photons'].to_numpy()
+        bg_arr = localizations['bg'].to_numpy()
+        total_photons = photons_arr + (bg_arr * box_side_length ** 2)
+        localizations.insert(5, 'total_photons', total_photons)
+        return localizations
+    else:
+        raise ValueError("DataFrame must contain 'photons', 'bg', and 'roi' columns.")
