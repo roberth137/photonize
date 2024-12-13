@@ -52,11 +52,13 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
             eve_group, offset, int_time)
 
         event_duration = (1 + ((last.frame - first.frame) / offset))  # * int_time ## start_1st frame to end_last frame
+        duration_ms = (end_ms-start_ms)
         measured_frames = len(eve_group)  # * int_time
         overlap = measured_frames / event_duration
         total_photons_estimate = eve_group['total_photons'].sum() / overlap
 
         average_bg = eve_group['bg'].mean()
+        bg = average_bg * duration_ms / int_time
 
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
@@ -66,13 +68,13 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                  'total_photons': total_photons_estimate,
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'duration_ms': (end_ms-start_ms),
+                 'duration_ms': duration_ms,
                  'lpx': avg_photon_weighted(eve_group, 'lpx'),
                  'lpy': avg_photon_weighted(eve_group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': average_bg,
+                 'bg': bg,
                  'sx': avg_photon_weighted(eve_group, 'sx'),
                  'sy': avg_photon_weighted(eve_group, 'sy'),
                  'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
@@ -124,11 +126,13 @@ def locs_to_events_to_picasso(localizations_file,
         peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             eve_group, offset, int_time)
+        duration_ms = (end_ms-start_ms)
         event_duration = (1 + ((last.frame - first.frame)/offset)) #* int_time ## start_1st frame to end_last frame
         measured_frames = len(eve_group) #* int_time
         overlap = measured_frames/event_duration
         total_photons_estimate = eve_group['total_photons'].sum()/overlap
         average_bg = eve_group['bg'].mean()
+        bg = average_bg*duration_ms/int_time
 
         #print('_____________________________________')
         #print('FRAME: first -- last -- duration')
@@ -147,13 +151,13 @@ def locs_to_events_to_picasso(localizations_file,
                  'total_photons': total_photons_estimate,
                  'start_ms': start_ms,
                  'end_ms': end_ms,
-                 'duration_ms': (end_ms - start_ms),
+                 'duration_ms': duration_ms,
                  'lpx': avg_photon_weighted(eve_group, 'lpx'),
                  'lpy': avg_photon_weighted(eve_group, 'lpy'),
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': average_bg,
+                 'bg': bg,
                  'sx': avg_photon_weighted(eve_group, 'sx'),
                  'sy': avg_photon_weighted(eve_group, 'sy'),
                  'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
