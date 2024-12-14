@@ -92,7 +92,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
     localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_sd_new')
+        localizations, localizations_file, '_lt_com_prec')
     print(len(localizations), 'localizations tagged with lifetime and'
                               ' fitted with avg x,y position.')
 
