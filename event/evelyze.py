@@ -114,7 +114,7 @@ def events_lt_avg_pos(event_file, photons_file,
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
 
-            x, y = fitting.avg_of_roi(my_event, phot_event, radius)
+            x, y = fitting.event_position(my_event, phot_event, radius, return_sd=False)
 
             x_position[i] = x
             y_position[i] = y
@@ -130,7 +130,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
-            events, event_file, '_lt_avgPos_noBg')
+            events, event_file, 'eve_lt_avgPos')
     print('___________________FINISHED_____________________')
     print('\n', len(events), 'events tagged with lifetime and'
                        ' fitted with avg x,y position.')
