@@ -69,6 +69,8 @@ def crop_event(event, photons, radius):
         y_min, y_max,
         event['start_ms'], event['end_ms']))
 
+    #total_photons = len(photons_cropped)
+
     x_distance = (photons_cropped['x'].to_numpy() - event.x)
     y_distance = (photons_cropped['y'].to_numpy() - event.y)
 
@@ -78,6 +80,8 @@ def crop_event(event, photons, radius):
     radius_sq = ((0.5 * radius) ** 2)
     photons_cylinder = photons_cropped[
         photons_cropped.distance < radius_sq]
+
+    #bg_photons = total_photons - len(photons_cylinder)
 
     if len(photons_cylinder) < 30:
         print('\nlow photon count for crop_event: ')
@@ -95,7 +99,7 @@ def crop_cylinder(localization, photons, offset,
     localization : single localization as pd Series
     photons : photons as pd DataFrame
     offset :
-    box_side_length :
+    box_side_length : in pixel
     integration_time :
 
     Returns
@@ -124,7 +128,10 @@ def crop_cylinder(localization, photons, offset,
     photons_cylinder = photons_cropped[
         photons_cropped.distance < radius_sq]
 
-    return photons_cylinder
+    bg_per_pixel = ((len(photons_cropped) - len(photons_cylinder))/
+                    ((box_side_length**2) * 0.21460183)) # 0.214... is (1-pi/4), (square - circle)
+
+    return photons_cylinder, bg_per_pixel
 
 
 def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0,

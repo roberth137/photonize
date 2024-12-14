@@ -35,6 +35,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
     lt_photons = np.ones(total_localizations, dtype=int)
     x_position = np.ones(total_localizations, dtype=np.float32)
     y_position = np.ones(total_localizations, dtype=np.float32)
+    bg_new = np.ones(total_localizations, dtype=np.float32)
     s_dev_x = np.ones(total_localizations, dtype=np.float32)
     s_dev_y = np.ones(total_localizations, dtype=np.float32)
     com_px = np.ones(total_localizations, dtype=np.float32)
@@ -59,9 +60,10 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                              ' localizations.')
 
             one_loc = locs_group.iloc[i - counter]
-            phot_loc = pd.DataFrame(data=get_photons.crop_cylinder
-                (one_loc, pick_photons, offset,
-                box_side_length, integration_time))
+            cylinder_photons, bg_photons = get_photons.crop_cylinder(one_loc, pick_photons, offset,
+            box_side_length, integration_time)
+            phot_loc = pd.DataFrame(data=cylinder_photons)
+
             bg = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
             signal_photons = len(phot_loc) - bg
 
@@ -76,6 +78,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
             s_dev_y[i] = sd_y
             com_px[i] = fitting.localization_precision(signal_photons, sd_x, one_loc.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, one_loc.bg)
+            bg_new[i] = bg_photons
 
 
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc,
@@ -85,6 +88,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
 
     localizations['x'] = x_position.astype('float32')
     localizations['y'] = y_position.astype('float32')
+    localizations['bg_new'] = bg_new.astype('float32')
     localizations['sdx'] = s_dev_x.astype('float32')
     localizations['sdy'] = s_dev_y.astype('float32')
     localizations['com_px'] = com_px.astype('float32')
@@ -92,7 +96,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
     localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_com_prec')
+        localizations, localizations_file, '_lt_com_bsl6')
     print(len(localizations), 'localizations tagged with lifetime and'
                               ' fitted with avg x,y position.')
 
