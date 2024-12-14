@@ -2,21 +2,21 @@ import numpy as np
 
 
 def avg_of_roi(localization, phot_locs, box_side_length, return_sd=False):
-    '''
+    """
     Parameters
     ----------
     phot_locs : photons of one localization as pd dataframe
-
     Returns
     -------
     - x position
     - y position
+    - sd_x
+    - sd_y
 
     Position is calculated by adding up all photons in the circular
     surrounding of the localization.
     Background gets subtracted
-
-    '''
+    """
 
     x_photons = phot_locs['x'].to_numpy()
     y_photons = phot_locs['y'].to_numpy()
@@ -26,31 +26,32 @@ def avg_of_roi(localization, phot_locs, box_side_length, return_sd=False):
     number_phot = (total_photons - fit_area * localization.bg)
     bg = localization.bg * fit_area
 
-    pos_x = (np.sum(phot_locs.x) - bg * localization.x) / number_phot
-    pos_y = (np.sum(phot_locs.y) - bg * localization.y) / number_phot
+    pos_x = (np.sum(x_photons) - bg * localization.x) / number_phot
+    pos_y = (np.sum(y_photons) - bg * localization.y) / number_phot
 
     if return_sd:
-        bg_var = ((box_side_length/2) ** 2) / 4  # s.d. in 1d of a random distr on disk
-        tot_dev_x2 = np.sum((x_photons - pos_x) ** 2)
-        tot_dev_y2 = np.sum((x_photons - pos_x) ** 2)
-        var_x = (tot_dev_x2 - (bg_var * bg)) / number_phot
-        var_y = (tot_dev_y2 - (bg_var * bg)) / number_phot
-        print('variances are: tot_dev_x2, var_x, tot_dev_y2, var_y, bg_var, bg')
-        print(tot_dev_x2, var_x, tot_dev_y2, var_y, bg_var, bg)
-        std_x = np.sqrt(var_x)
-        std_y = np.sqrt(var_y)
 
-        return pos_x, pos_y, std_x, std_y
+        sd_x = calculate_sd(x_photons, pos_x, number_phot, bg, box_side_length)
+        sd_y = calculate_sd(y_photons, pos_y, number_phot, bg, box_side_length)
+
+        return pos_x, pos_y, sd_x, sd_y
 
     else:
         return pos_x, pos_y
 
 
-def calculate_sd(positions, pos_true, bg, radius, number_phot):
-    bg_var = (radius ** 2) / 4  # s.d. in 1d of a random distr on disk
-    var_x = (np.sum((positions - pos_true) ** 2) - (bg_var * bg)) / number_phot
-    std_x = np.sqrt(var_x)
-    return std_x
+def calculate_sd(positions, pos_fit, number_phot, bg, radius):
+    """
+    Calculates 1d std for a center of mass fit:
+    positions: array with photons positions
+    pos_fit: fitted position
+    number_photons: total_photons - bg
+    bg: number of background photons
+    radius: radius of roi
+    """
+    bg_var = ((radius/2) ** 2) / 4  # s.d. in 1d of a random distribution on disk
+    var = (np.sum((positions - pos_fit) ** 2) - (bg_var * bg)) / number_phot
+    return 10 if var <= 0 else np.sqrt(var)
 
 
 
