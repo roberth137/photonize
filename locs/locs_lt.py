@@ -33,10 +33,10 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
 
     lifetime = np.ones(total_localizations)
     lt_photons = np.ones(total_localizations, dtype=int)
-    x_position = np.ones(total_localizations)
-    y_position = np.ones(total_localizations)
-    s_dev_x = np.ones(total_localizations)
-    s_dev_y = np.ones(total_localizations)
+    x_position = np.ones(total_localizations, dtype=np.float32)
+    y_position = np.ones(total_localizations, dtype=np.float32)
+    s_dev_x = np.ones(total_localizations, dtype=np.float32)
+    s_dev_y = np.ones(total_localizations, dtype=np.float32)
 
     counter = 0
     # iterating over every pick in file
@@ -76,11 +76,11 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                                                        peak_arrival_time)
             lt_photons[i] = len(phot_loc)
         counter += len(locs_group)
-    localizations['x'] = x_position
-    localizations['y'] = y_position
-    localizations['sdx'] = s_dev_x
-    localizations['sdy'] = s_dev_y
-    localizations['lifetime'] = lifetime
+    localizations['x'] = x_position.astype('float32')
+    localizations['y'] = y_position.astype('float32')
+    localizations['sdx'] = s_dev_x.astype('float32')
+    localizations['sdy'] = s_dev_y.astype('float32')
+    localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
     helper.dataframe_to_picasso(
         localizations, localizations_file, '_lt_sd')
