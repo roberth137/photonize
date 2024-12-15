@@ -59,7 +59,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                                         drift, offset,
                                         box_side_length, integration_time)
 
-        peak_arrival_time = fitting.calibrate_peak(locs_group, pick_photons,
+        peak_arrival_time = fitting.calibrate_peak_locs(locs_group, pick_photons,
                                            offset, box_side_length,
                                            integration_time)
         # iterating over every localization in pick
@@ -233,7 +233,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
             drift, offset,
             box_side_length, integration_time)
 
-        peak_arrival_time = fitting.calibrate_peak(
+        peak_arrival_time = fitting.calibrate_peak_locs(
             locs_group, pick_photons,
             offset, box_side_length,
             integration_time)

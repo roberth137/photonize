@@ -88,10 +88,12 @@ def events_lt_avg_pos(event_file, photons_file,
         print('picked area:   y - ', min(pick_photons['y']),
               max(pick_photons['y']))
 
+        all_events_photons = get_photons.photons_of_many_events(events_group,
+                                                                pick_photons,
+                                                                diameter)
+
         print('__calibrate_peak__')
-        peak_arrival_time = fitting.calibrate_peak(events_group, pick_photons,
-                                           offset, box_side_length=diameter,
-                                           int_time=int_time)
+        peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
         print('_______________________________________________________')
 
@@ -105,7 +107,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter)
+            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
             bg_total = my_event.bg * (diameter / 2) * np.pi
             signal_photons = len(cylinder_photons) - bg_total
             phot_event = pd.DataFrame(data=cylinder_photons)

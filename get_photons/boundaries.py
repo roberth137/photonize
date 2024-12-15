@@ -67,7 +67,7 @@ def crop_event(event, photons, diameter):
         photons,
         x_min, x_max,
         y_min, y_max,
-        event['start_ms'], event['end_ms']))
+        event.start_ms, event.end_ms))
 
     #total_photons = len(photons_cropped)
 

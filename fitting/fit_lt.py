@@ -10,7 +10,7 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     ----------
     loc_photons : all photons from one localization
     peak : position of the maximum of arrival times for this pick of
-    localizations, calibrated from calibrate_peak()
+    localizations, calibrated from calibrate_peak_locs()
     offset : the offset from the peak where arrival times are considered
     for fitting the lifetime.The default is 50.
 
@@ -26,9 +26,9 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     counts_bgsub = counts - background
     weights = np.arange(1, (2500 - (peak + dt_offset)))
     considered_bgsub = counts_bgsub[(peak + dt_offset):2500]
-    if len(loc_photons) < 70:
-        print('\nphotons for fitting: ', len(loc_photons))
-        print('good photons: ', sum(considered_bgsub))
+    #if len(loc_photons) < 70:
+    #    print('\nphotons for fitting: ', len(loc_photons))
+    #    print('good photons: ', sum(considered_bgsub))
     lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     return lifetime
 
@@ -40,7 +40,7 @@ def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     ----------
     loc_photons : all photons from one localization
     peak : position of the maximum of arrival times for this pick of
-    localizations, calibrated from calibrate_peak()
+    localizations, calibrated from calibrate_peak_locs()
     offset : the offset from the peak where arrival times are considered
     for fitting the lifetime.The default is 50.
 
@@ -58,7 +58,7 @@ def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     return lifetime
 
-def calibrate_peak(locs_group, pick_photons, offset,
+def calibrate_peak_locs(locs_group, pick_photons, offset,
                    box_side_length, int_time):
     '''
     Parameters
@@ -77,4 +77,18 @@ def calibrate_peak(locs_group, pick_photons, offset,
         group_photons = pd.concat([group_photons, phot_loc],
                                   ignore_index=True)
     counts, bins = np.histogram(group_photons.dt, bins=np.arange(0, 2500))
+    print('len photons for calib_peak: ', len(group_photons))
+    return np.argmax(counts)
+
+def calibrate_peak_events(event_photons):
+    '''
+    Parameters
+    ----------
+    All photons of the current fov that arrive during events
+    Returns
+    -------
+    Position of arrival time histogram peak
+    '''
+    counts, bins = np.histogram(event_photons.dt, bins=np.arange(0, 2500))
+    print('len photons for calib_peak: ', len(event_photons))
     return np.argmax(counts)
