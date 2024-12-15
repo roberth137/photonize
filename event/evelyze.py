@@ -6,7 +6,7 @@ import fitting
 import get_photons
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
-                   radius, int_time):
+                   diameter, int_time):
     """
 
     reads in file of localizations, connects events and analyzes them
@@ -20,7 +20,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     drift = helper.process_input(drift_file, dataset='drift')
     # first localizations to events
     events = create_events.locs_to_events(localizations, offset,
-                                  box_side_length=radius,
+                                  box_side_length=diameter,
                                   int_time=int_time)
 
     print('connected locs to events. total events: ', len(events))
@@ -28,14 +28,14 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     helper.validate_columns(events, ('event'))
 
 
-    events_lt_avg_pos(events, photons, drift, offset, radius=radius,
+    events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
     helper.dataframe_to_picasso(
         events, localizations_file, '_event')
 
 
 def events_lt_avg_pos(event_file, photons_file,
-                      drift_file, offset, radius=5,
+                      drift_file, offset, diameter=5,
                       int_time=200):
     """
     tagging list of events with lifetime and avg of roi position
@@ -80,7 +80,7 @@ def events_lt_avg_pos(event_file, photons_file,
         print('__get_pick_photons___')
         pick_photons = get_photons.get_pick_photons(events_group, photons,
                                         drift, offset,
-                                        box_side_length=radius,
+                                        box_side_length=diameter,
                                         int_time=int_time)
         print('number of picked photons: ', len(pick_photons), '\n')
         print('picked area:   x - ', min(pick_photons['x']),
@@ -90,7 +90,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
         print('__calibrate_peak__')
         peak_arrival_time = fitting.calibrate_peak(events_group, pick_photons,
-                                           offset, box_side_length=radius,
+                                           offset, box_side_length=diameter,
                                            int_time=int_time)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
         print('_______________________________________________________')
@@ -105,8 +105,8 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, pick_photons, radius)
-            bg_total = my_event.bg * (radius / 2) * np.pi
+            cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter)
+            bg_total = my_event.bg * (diameter / 2) * np.pi
             signal_photons = len(cylinder_photons) - bg_total
             phot_event = pd.DataFrame(data=cylinder_photons)
 
@@ -119,7 +119,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             x, y, sd_x, sd_y = fitting.event_position(my_event,
                                                       phot_event,
-                                                      radius,
+                                                      diameter,
                                                       return_sd=True)
 
             x_position[i] = x

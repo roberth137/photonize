@@ -14,12 +14,12 @@ def min_max_box(localizations, box_side_length=0):
     return min_x, max_x, min_y, max_y
 
 
-def spatial_boundaries(event, radius):
-    x_min = event.x - (radius / 2)
-    x_max = x_min + radius
+def spatial_boundaries(event, diameter):
+    x_min = event.x - (diameter / 2)
+    x_max = x_min + diameter
 
-    y_min = event.y - (radius / 2)
-    y_max = y_min + radius
+    y_min = event.y - (diameter / 2)
+    y_max = y_min + diameter
 
     return x_min, x_max, y_min, y_max
 
@@ -44,7 +44,7 @@ def loc_boundaries(localization, offset,
     return x_min, x_max, y_min, y_max, ms_min, ms_max
 
 
-def crop_event(event, photons, radius):
+def crop_event(event, photons, diameter):
     '''
     Parameters
     ----------
@@ -61,7 +61,7 @@ def crop_event(event, photons, radius):
 
     '''
 
-    x_min, x_max, y_min, y_max = spatial_boundaries(event, radius)
+    x_min, x_max, y_min, y_max = spatial_boundaries(event, diameter)
 
     photons_cropped = pd.DataFrame(data=crop_photons(
         photons,
@@ -77,7 +77,7 @@ def crop_event(event, photons, radius):
     total_distance_sq = np.square(x_distance) + np.square(y_distance)
     photons_cropped['distance'] = total_distance_sq
 
-    radius_sq = ((0.5 * radius) ** 2)
+    radius_sq = ((diameter/2) ** 2)
     photons_cylinder = photons_cropped[
         photons_cropped.distance < radius_sq]
 
@@ -124,7 +124,7 @@ def crop_cylinder(localization, photons, offset,
     total_distance_sq = np.square(x_distance) + np.square(y_distance)
     photons_cropped['distance'] = total_distance_sq
 
-    radius_sq = ((0.5 * box_side_length) ** 2)
+    radius_sq = ((box_side_length/2) ** 2)
 
     bg_photons = np.sum(total_distance_sq > radius_sq) # photons further out than radius
     bg_per_pixel = (bg_photons/(radius_sq*0.85840732)) # 0.85 is (4 * (1-pi/4))
