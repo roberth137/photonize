@@ -31,7 +31,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, radius=radius,
                       int_time=int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event_new_avgroi')
+        events, localizations_file, '_event')
 
 
 def events_lt_avg_pos(event_file, photons_file,
@@ -57,13 +57,16 @@ def events_lt_avg_pos(event_file, photons_file,
     print(len(photons), ' photons and ', total_events,
           'events read in')
     print('starting events_lt_avg_pos function.')
-    # drift = drift_file #pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
     drift = helper.process_input(drift_file, dataset='drift')
 
-    lifetime = np.ones(len(events))
-    lt_photons = np.ones(len(events), dtype=int)
-    x_position = np.ones(len(events))
-    y_position = np.ones(len(events))
+    lifetime = np.ones(total_events, dtype=np.float32)
+    lt_photons = np.ones(total_events, dtype=int)
+    x_position = np.ones(total_events, dtype=np.float32)
+    y_position = np.ones(total_events, dtype=np.float32)
+    s_dev_x = np.ones(total_events, dtype=np.float32)
+    s_dev_y = np.ones(total_events, dtype=np.float32)
+    com_px = np.ones(total_events, dtype=np.float32)
+    com_py = np.ones(total_events, dtype=np.float32)
     counter = 0
 
     # iterating over every pick in file
@@ -102,10 +105,10 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            # print('my_event: \n', my_event)
-
-            phot_event = pd.DataFrame(data=get_photons.crop_event
-            (my_event, pick_photons, radius))
+            cylinder_photons = get_photons.crop_event(my_event, pick_photons, radius)
+            bg_total = my_event.bg * (radius / 2) * np.pi
+            signal_photons = len(cylinder_photons) - bg_total
+            phot_event = pd.DataFrame(data=cylinder_photons)
 
             if i == 0:
                 print('FIRST fitted. Number of photons',
@@ -114,10 +117,17 @@ def events_lt_avg_pos(event_file, photons_file,
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
 
-            x, y = fitting.event_position(my_event, phot_event, radius, return_sd=False)
+            x, y, sd_x, sd_y = fitting.event_position(my_event,
+                                                      phot_event,
+                                                      radius,
+                                                      return_sd=True)
 
             x_position[i] = x
             y_position[i] = y
+            s_dev_x[i] = sd_x
+            s_dev_y[i] = sd_y
+            com_px[i] = fitting.localization_precision(signal_photons, sd_x, my_event.bg)
+            com_py[i] = fitting.localization_precision(signal_photons, sd_y, my_event.bg)
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
                                                        peak_arrival_time)
             lt_photons[i] = len(phot_event)
@@ -125,6 +135,10 @@ def events_lt_avg_pos(event_file, photons_file,
 
     events['x'] = x_position
     events['y'] = y_position
+    events['sdx'] = s_dev_x
+    events['sdy'] = s_dev_y
+    events['com_px'] = com_px
+    events['com_py'] = com_py
     events['lifetime'] = lifetime
     events['lt_photons'] = lt_photons
 

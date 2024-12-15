@@ -41,8 +41,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
     
     for event, eve_group in grouped:
         eve_group = eve_group.reset_index(drop=True)
-        #print('_____________________________________________________START')
-        #print('calculating event number: ', event)
+
         # Compute event properties
         first = eve_group.iloc[0]
         last = eve_group.iloc[-1]
@@ -69,8 +68,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                  'start_ms': start_ms,
                  'end_ms': end_ms,
                  'duration_ms': duration_ms,
-                 'lpx': avg_photon_weighted(eve_group, 'lpx'),
-                 'lpy': avg_photon_weighted(eve_group, 'lpy'),
+                 'lpx': peak_event['lpx'],
+                 'lpy': peak_event['lpy'],
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
@@ -84,8 +83,15 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
                                   ignore_index=True)
-    events = events.astype({'frame': 'uint32'})
-        
+    events = events.astype({'frame': 'uint32',
+                            'x': 'float32',
+                            'y': 'float32',
+                            'photons': 'float32',
+                            'total_photons': 'float32',
+                            'start_ms': 'float32',
+                            'end_ms': 'float32',
+                            'duration_ms': 'float32',
+                            'bg': 'float32'})
     print('Linked ', len(localizations), ' locs to ', 
           len(events), 'events.')
     print('_______________________________________________')
