@@ -5,7 +5,8 @@ Created on Tue Nov 19 15:08:39 2024
 
 @author: roberthollmann
 
-This is a python script to connect individual localizations to events. 
+This is a python script to create events from individual localizations.
+One event has the key coordinates: start_ms, end_ms, x and y.
 It should be used only with filtered localizations
 """
 
@@ -91,7 +92,17 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
                             'start_ms': 'float32',
                             'end_ms': 'float32',
                             'duration_ms': 'float32',
-                            'bg': 'float32'})
+                            'lpx': 'float32',
+                            'lpy': 'float32',
+                            'num_frames': 'uint32',
+                            'start_frame': 'uint32',
+                            'end_frame': 'uint32',
+                            'bg': 'float32',
+                            'sx': 'float32',
+                            'sy': 'float32',
+                            'net_gradient': 'float32',
+                            'ellipticity': 'float32'})
+
     print('Linked ', len(localizations), ' locs to ', 
           len(events), 'events.')
     print('_______________________________________________')
@@ -120,19 +131,16 @@ def locs_to_events_to_picasso(localizations_file,
     events = pd.DataFrame()
     for event, eve_group in grouped:
         eve_group = eve_group.reset_index(drop=True)
-        #print('_____________________________________________________START')
-        #print('calculating event number: ', event)
+
         # Compute event properties
         first = eve_group.iloc[0]
         last = eve_group.iloc[-1]
-        #photons_array = np.ones(len(group))
-        #for i in range(len(group)):
-        #    photons_array[i] = group.iloc[i].photons
 
         peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             eve_group, offset, int_time)
         duration_ms = (end_ms-start_ms)
+
         event_duration = (1 + ((last.frame - first.frame)/offset)) #* int_time ## start_1st frame to end_last frame
         measured_frames = len(eve_group) #* int_time
         overlap = measured_frames/event_duration

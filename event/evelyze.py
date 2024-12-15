@@ -60,7 +60,7 @@ def events_lt_avg_pos(event_file, photons_file,
     drift = helper.process_input(drift_file, dataset='drift')
 
     lifetime = np.ones(total_events, dtype=np.float32)
-    lt_photons = np.ones(total_events, dtype=int)
+    my_photons = np.ones(total_events, dtype=np.float32)
     x_position = np.ones(total_events, dtype=np.float32)
     y_position = np.ones(total_events, dtype=np.float32)
     s_dev_x = np.ones(total_events, dtype=np.float32)
@@ -130,7 +130,7 @@ def events_lt_avg_pos(event_file, photons_file,
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, my_event.bg)
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
                                                        peak_arrival_time)
-            lt_photons[i] = len(phot_event)
+            my_photons[i] = signal_photons
         counter += len(events_group)
 
     events['x'] = x_position
@@ -140,7 +140,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events['com_px'] = com_px
     events['com_py'] = com_py
     events['lifetime'] = lifetime
-    events['lt_photons'] = lt_photons
+    events['my_photons'] = my_photons
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
