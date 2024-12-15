@@ -88,4 +88,4 @@ def calculate_total_photons(localizations, box_side_length):
         localizations.insert(5, 'total_photons', total_photons)
         return localizations
     else:
-        raise ValueError("DataFrame must contain 'photons', 'bg', and 'roi' columns.")
+        raise ValueError("DataFrame must contain 'photons' and 'bg' columns.")

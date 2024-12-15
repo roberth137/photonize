@@ -40,8 +40,8 @@ def connect_locs(localizations_dset, box_side_length=5):
     
     localizations.insert(4, 'event', event_column)
     helper.calculate_total_photons(localizations, 5)
-    #filtered_locs = filter_unique_events(locs_event_tagged)
-    return localizations
+    filtered_locs = filter_unique_events(localizations)
+    return filtered_locs
     
 
 
@@ -69,8 +69,10 @@ def connect_locs_to_picasso(localizations_file, box_side_length=5):
         
         if has_follower: 
             event_column[follower_index] = event_column[i] #set to same event
-            
+
+    event_counts = count_localizations(event_column)
     localizations.insert(4, 'event', event_column)
+    localizations.insert(5, 'count', event_counts)
     helper.calculate_total_photons(localizations, 5)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     helper.dataframe_to_picasso(localizations, localizations_file, '_event_tagged')
@@ -166,3 +168,25 @@ def calculate_total_photons(localizations, box_side_length):
         return localizations
     else:
         raise ValueError("DataFrame must contain 'photons', 'bg', and 'roi' columns.")
+
+def count_localizations(events):
+    """
+    Count the number of localizations per event.
+
+    Parameters:
+    events (numpy array): Array of event labels.
+
+    Returns:
+    numpy array: Array where each element represents the number of localizations per event.
+    """
+    # Get unique events and their counts
+    unique_events, counts = np.unique(events, return_counts=True)
+
+    # Create an array mapping events to counts
+    number_locs = np.zeros_like(events, dtype=int)
+
+    # Fill number_locs array
+    for event, count in zip(unique_events, counts):
+        number_locs[events == event] = count
+
+    return number_locs
