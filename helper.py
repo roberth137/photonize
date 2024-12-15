@@ -79,3 +79,13 @@ def validate_columns(dataframe, required_columns):
     missing = [col for col in required_columns if col not in dataframe.columns]
     if len(missing) > 0:
         print(missing)
+
+def calculate_total_photons(localizations, box_side_length):
+    if {'photons', 'bg'}.issubset(localizations.columns):
+        photons_arr = localizations['photons'].to_numpy()
+        bg_arr = localizations['bg'].to_numpy()
+        total_photons = photons_arr + (bg_arr * box_side_length ** 2)
+        localizations.insert(5, 'total_photons', total_photons)
+        return localizations
+    else:
+        raise ValueError("DataFrame must contain 'photons', 'bg', and 'roi' columns.")

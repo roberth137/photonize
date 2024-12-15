@@ -125,11 +125,11 @@ def crop_cylinder(localization, photons, offset,
     photons_cropped['distance'] = total_distance_sq
 
     radius_sq = ((0.5 * box_side_length) ** 2)
-    photons_cylinder = photons_cropped[
-        photons_cropped.distance < radius_sq]
 
-    bg_per_pixel = ((len(photons_cropped) - len(photons_cylinder))/
-                    ((box_side_length**2) * 0.21460183)) # 0.214... is (1-pi/4), (square - circle)
+    bg_photons = np.sum(total_distance_sq > radius_sq) # photons further out than radius
+    bg_per_pixel = (bg_photons/(radius_sq*0.85840732)) # 0.85 is (4 * (1-pi/4))
+
+    photons_cylinder = photons_cropped[photons_cropped.distance < radius_sq]
 
     return photons_cylinder, bg_per_pixel
 

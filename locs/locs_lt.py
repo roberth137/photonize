@@ -29,17 +29,25 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
     print(len(photons), ' photons and ', total_localizations,
           'localization read in')
     drift = helper.process_input(drift_file, dataset='drift')
+    helper.calculate_total_photons(localizations, box_side_length=box_side_length)
+
 
 
     lifetime = np.ones(total_localizations)
     lt_photons = np.ones(total_localizations, dtype=int)
     x_position = np.ones(total_localizations, dtype=np.float32)
     y_position = np.ones(total_localizations, dtype=np.float32)
-    bg_new = np.ones(total_localizations, dtype=np.float32)
+    my_x_position = np.ones(total_localizations, dtype=np.float32)
+    my_y_position = np.ones(total_localizations, dtype=np.float32)
+    my_bg_array = np.ones(total_localizations, dtype=np.float32)
     s_dev_x = np.ones(total_localizations, dtype=np.float32)
     s_dev_y = np.ones(total_localizations, dtype=np.float32)
+    my_s_dev_x = np.ones(total_localizations, dtype=np.float32)
+    my_s_dev_y = np.ones(total_localizations, dtype=np.float32)
     com_px = np.ones(total_localizations, dtype=np.float32)
     com_py = np.ones(total_localizations, dtype=np.float32)
+    my_com_px = np.ones(total_localizations, dtype=np.float32)
+    my_com_py = np.ones(total_localizations, dtype=np.float32)
 
     counter = 0
     # iterating over every pick in file
@@ -60,25 +68,40 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                              ' localizations.')
 
             one_loc = locs_group.iloc[i - counter]
-            cylinder_photons, bg_photons = get_photons.crop_cylinder(one_loc, pick_photons, offset,
+            cylinder_photons, my_bg = get_photons.crop_cylinder(one_loc, pick_photons, offset,
             box_side_length, integration_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
-            bg = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
-            signal_photons = len(phot_loc) - bg
+            bg_total = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
+            my_bg_total = my_bg * (box_side_length/2) * np.pi # calculates new bg photons
+            signal_photons = len(phot_loc) - bg_total
+            signal_photons_new = len(phot_loc) - my_bg_total
 
             if i % 200 == 0: print('200 fitted. Number of photons',
                                    ' in last fit: ', len(phot_loc))
 
-            x, y , sd_x, sd_y = fitting.avg_of_roi(one_loc, phot_loc, box_side_length, return_sd=True)
+            x, y , sd_x, sd_y = fitting.avg_of_roi(one_loc, one_loc.bg,
+                                                   phot_loc, box_side_length,
+                                                   return_sd=True)
+            my_x, my_y, my_sd_x, my_sd_y = fitting.avg_of_roi(one_loc, my_bg,
+                                                              phot_loc, box_side_length,
+                                                              return_sd=True)
 
             x_position[i] = x
             y_position[i] = y
+            my_x_position[i] = my_x
+            my_y_position[i] = my_y
+
             s_dev_x[i] = sd_x
             s_dev_y[i] = sd_y
+            my_s_dev_x[i] = my_sd_x
+            my_s_dev_y[i] = my_sd_y
+
             com_px[i] = fitting.localization_precision(signal_photons, sd_x, one_loc.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, one_loc.bg)
-            bg_new[i] = bg_photons
+            my_com_px[i] = fitting.localization_precision(signal_photons_new, my_sd_x, my_bg)
+            my_com_py[i] = fitting.localization_precision(signal_photons_new, my_sd_y, my_bg)
+            my_bg_array[i] = my_bg
 
 
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc,
@@ -88,15 +111,21 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
 
     localizations['x'] = x_position.astype('float32')
     localizations['y'] = y_position.astype('float32')
-    localizations['bg_new'] = bg_new.astype('float32')
+    #localizations['x'] = my_x_position.astype('float32')
+    #localizations['y'] = my_y_position.astype('float32')
+    localizations['my_bg'] = my_bg_array.astype('float32')
     localizations['sdx'] = s_dev_x.astype('float32')
     localizations['sdy'] = s_dev_y.astype('float32')
+    localizations['my_sdx'] = my_s_dev_x.astype('float32')
+    localizations['my_sdy'] = my_s_dev_y.astype('float32')
     localizations['com_px'] = com_px.astype('float32')
     localizations['com_py'] = com_py.astype('float32')
+    localizations['my_com_px'] = my_com_px.astype('float32')
+    localizations['my_com_py'] = my_com_py.astype('float32')
     localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_com_bsl6')
+        localizations, localizations_file, '_lt_bsl5_new_bg_statistics')
     print(len(localizations), 'localizations tagged with lifetime and'
                               ' fitted with avg x,y position.')
 

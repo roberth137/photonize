@@ -39,7 +39,7 @@ def connect_locs(localizations_dset, box_side_length=5):
         localizations = localizations.drop('event', axis=1)   
     
     localizations.insert(4, 'event', event_column)
-    calculate_total_photons(localizations, 5)
+    helper.calculate_total_photons(localizations, 5)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     return localizations
     
@@ -71,7 +71,7 @@ def connect_locs_to_picasso(localizations_file, box_side_length=5):
             event_column[follower_index] = event_column[i] #set to same event
             
     localizations.insert(4, 'event', event_column)
-    calculate_total_photons(localizations, 5)
+    helper.calculate_total_photons(localizations, 5)
     #filtered_locs = filter_unique_events(locs_event_tagged)
     helper.dataframe_to_picasso(localizations, localizations_file, '_event_tagged')
     
