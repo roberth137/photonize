@@ -5,6 +5,7 @@ import fitting
 import get_photons
 import event
 
+
 def locs_eve_lt_com_40(localizations_file, photons_file,
                     drift_file, offset, box_side_length=5,
                     int_time=200):
@@ -32,7 +33,9 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
     events = event.locs_to_events(localizations, offset,
                                           box_side_length=box_side_length,
                                           int_time=int_time, filter_single=False)
+    total_events = len(events)
 
+    events_lifetime = np.ones(total_events, dtype=np.float32)
     lifetime = np.ones(total_localizations)
     lt_photons = np.ones(total_localizations, dtype=int)
     x_position = np.ones(total_localizations, dtype=np.float32)
@@ -42,7 +45,8 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
     com_px = np.ones(total_localizations, dtype=np.float32)
     com_py = np.ones(total_localizations, dtype=np.float32)
 
-    counter = 0
+    counter_locs = 0
+    counter_events = 0
     # iterating over every pick in file
     for g in set(localizations['group']):
         events_group = events[(events.group == g)]
@@ -54,6 +58,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                                                                 pick_photons,
                                                                 (box_side_length*1.5))
 
+
         print('__calibrate_peak__')
         peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
@@ -61,70 +66,67 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
         locs_group = localizations[(localizations.group == g)]
         print(len(locs_group), 'localizations in current group.')
 
-        # iterating over every localization in pick
-        for i in range(counter, counter + len(locs_group)):
-            if i == 0: print('fitting lifetime of ', len(locs_group),
-                             ' localizations.')
+        for eve in range(counter_events, counter_events + len(events_group)):
+            if (eve-counter_events) == 0: print('fitting lifetime of ', len(events_group),
+                             ' events in this group.')
+            this_event = events_group.iloc[eve - counter_events]
+            this_event_photons = get_photons.crop_event(this_event,
+                                                        all_events_photons,
+                                                        box_side_length)
+            if eve % 200 == 0: print('200 events fitted. Number of photons',
+                                   ' in last fit: ', len(this_event_photons))
+            events_lifetime[eve] = fitting.avg_lifetime_sergi_40(this_event_photons,
+                                                       peak_arrival_time)
 
-            one_loc = locs_group.iloc[i - counter]
+        # iterating over every localization in pick
+        for i in range(counter_locs, counter_locs + len(locs_group)):
+            if (i-counter_locs) == 0: print('fitting lifetime of ', len(locs_group),
+                             ' localizations in this group.')
+
+            one_loc = locs_group.iloc[i - counter_locs]
             cylinder_photons = get_photons.crop_cylinder(one_loc, all_events_photons, offset,
             box_side_length, int_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
             bg_total = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
-            #my_bg_total = my_bg * (box_side_length/2) * np.pi # calculates new bg photons
             signal_photons = len(phot_loc) - bg_total
-            #signal_photons_new = len(phot_loc) - my_bg_total
 
-            if i % 200 == 0: print('200 fitted. Number of photons',
+            if i % 200 == 0: print('200 locs fitted. Number of photons',
                                    ' in last fit: ', len(phot_loc))
 
             x, y , sd_x, sd_y = fitting.avg_of_roi(one_loc, one_loc.bg,
                                                    phot_loc, box_side_length,
                                                    return_sd=True)
-            #my_x, my_y, my_sd_x, my_sd_y = fitting.avg_of_roi(one_loc, my_bg,
-            #                                                  phot_loc, box_side_length,
-            #                                                  return_sd=True)
 
             x_position[i] = x
             y_position[i] = y
-            #my_x_position[i] = my_x
-            #my_y_position[i] = my_y
-
             s_dev_x[i] = sd_x
             s_dev_y[i] = sd_y
-            #my_s_dev_x[i] = my_sd_x
-            #my_s_dev_y[i] = my_sd_y
 
             com_px[i] = fitting.localization_precision(signal_photons, sd_x, one_loc.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, one_loc.bg)
-            #my_com_px[i] = fitting.localization_precision(signal_photons_new, my_sd_x, my_bg)
-            #my_com_py[i] = fitting.localization_precision(signal_photons_new, my_sd_y, my_bg)
-            #my_bg_array[i] = my_bg
 
 
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_loc,
                                                        peak_arrival_time)
             lt_photons[i] = len(phot_loc)
-        counter += len(locs_group)
+
+        counter_locs += len(locs_group)
+        counter_events += len(events_group)
+
+    events_lifetime_pds = pd.Series(events_lifetime, index=range(1,(len(events)+1)))
 
     localizations['x'] = x_position.astype('float32')
     localizations['y'] = y_position.astype('float32')
-    #localizations['x'] = my_x_position.astype('float32')
-    #localizations['y'] = my_y_position.astype('float32')
-    #localizations['my_bg'] = my_bg_array.astype('float32')
     localizations['sdx'] = s_dev_x.astype('float32')
     localizations['sdy'] = s_dev_y.astype('float32')
-    #localizations['my_sdx'] = my_s_dev_x.astype('float32')
-    #localizations['my_sdy'] = my_s_dev_y.astype('float32')
     localizations['com_px'] = com_px.astype('float32')
     localizations['com_py'] = com_py.astype('float32')
-    #localizations['my_com_px'] = my_com_px.astype('float32')
-    #localizations['my_com_py'] = my_com_py.astype('float32')
     localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
+    localizations['eve_lt'] = localizations['event'].map(events_lifetime_pds)
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_com')
+        localizations, localizations_file, '_lt_com_new_bounds')
     print(len(localizations), 'localizations tagged with lifetime and'
                               ' fitted with avg x,y position.')
 

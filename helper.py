@@ -85,7 +85,7 @@ def calculate_total_photons(localizations, box_side_length):
         photons_arr = localizations['photons'].to_numpy()
         bg_arr = localizations['bg'].to_numpy()
         total_photons = photons_arr + (bg_arr * box_side_length ** 2)
-        localizations.insert(5, 'total_photons', total_photons)
+        localizations.insert(4, 'total_photons', total_photons)
         return localizations
     else:
         raise ValueError("DataFrame must contain 'photons' and 'bg' columns.")

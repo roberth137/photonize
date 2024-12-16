@@ -32,11 +32,35 @@ def get_ms_bounds(locs_event, offset, int_time):
     start_ms_first = (first_loc['frame']/offset) * int_time
     start_ms_last = (last_loc['frame']/offset) * int_time
     
-    on_fraction_first = (first_loc['total_photons']/average_photons)
-    on_fraction_last = (last_loc['total_photons']/average_photons)
+    if len(locs_event) <3:
 
-    start_ms_event = start_ms_first + (0.5 - 0.5*on_fraction_first) * int_time
-    end_ms_event = start_ms_last + (0.5 + 0.5*on_fraction_last) * int_time
+        beg_on_fraction = (first_loc['total_photons']/average_photons)
+        end_on_fraction = (last_loc['total_photons']/average_photons)
+
+    else:
+        second_loc = locs_event.iloc[1]
+        second_last_loc = locs_event.iloc[-2]
+
+        difference_time = 1/offset
+
+        #avg_top3 = (locs_event['total_photons'].nlargest(3).sum())/3
+
+        on_fraction_first = (first_loc['total_photons'] / average_photons)
+        on_fraction_second = (second_loc['total_photons'] / average_photons)
+
+        on_fraction_last = (last_loc['total_photons'] / average_photons)
+        on_fraction_second_last = (second_last_loc['total_photons'] / average_photons)
+
+        on_sec_in_first = on_fraction_second - difference_time
+        beg_on_fraction = (on_fraction_first+on_sec_in_first)/2
+
+        on_sec_last_in_last = on_fraction_second_last - difference_time
+        end_on_fraction = (on_fraction_last+on_sec_last_in_last)/2
+
+
+
+    start_ms_event = start_ms_first + (1-beg_on_fraction) * int_time
+    end_ms_event = start_ms_last + end_on_fraction * int_time
     
     return np.floor(start_ms_event), np.ceil(end_ms_event)
 
