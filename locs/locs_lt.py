@@ -52,7 +52,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                                                     int_time=int_time)
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
-                                                                box_side_length)
+                                                                (box_side_length*1.5))
 
         print('__calibrate_peak__')
         peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
@@ -193,7 +193,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                              ' localizations.')
 
             one_loc = locs_group.iloc[i - counter]
-            cylinder_photons, _ = get_photons.crop_cylinder(one_loc, pick_photons, offset,
+            cylinder_photons = get_photons.crop_cylinder(one_loc, pick_photons, offset,
             box_side_length, integration_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
@@ -250,7 +250,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
     localizations['lifetime'] = lifetime.astype('float32')
     localizations['lt_photons'] = lt_photons
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_com')
+        localizations, localizations_file, '_lt_com_old')
     print(len(localizations), 'localizations tagged with lifetime and'
                               ' fitted with avg x,y position.')
 

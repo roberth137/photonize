@@ -170,7 +170,7 @@ def photons_of_one_localization(localization, pick_photons, offset, box_side_len
     OUT:
     - photons (dataframe format)
     '''
-    photons_cylinder, _ = get_photons.crop_cylinder(localization,
+    photons_cylinder = get_photons.crop_cylinder(localization,
             pick_photons, offset, box_side_length, int_time)
     
     return photons_cylinder
