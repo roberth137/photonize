@@ -36,9 +36,12 @@ def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
             event_column[follower_index] = event_column[i] #set to same event
     
     if 'event' in localizations.columns:
-        localizations = localizations.drop('event', axis=1)   
-    
+        localizations = localizations.drop('event', axis=1)
+
+
+    event_counts = count_localizations(event_column)
     localizations.insert(4, 'event', event_column)
+    localizations.insert(5, 'count', event_counts)
     helper.calculate_total_photons(localizations, 5)
     if filter_single:
         filtered_locs = filter_unique_events(localizations)

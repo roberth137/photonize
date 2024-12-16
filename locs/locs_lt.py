@@ -56,7 +56,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                                                     int_time=int_time)
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
-                                                                (box_side_length*1.5))
+                                                                (box_side_length*1.1)) #use 1.1 to keep homogenous bg for all localizations
 
 
         print('__calibrate_peak__')
@@ -126,9 +126,9 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
     localizations['lt_photons'] = lt_photons
     localizations['eve_lt'] = localizations['event'].map(events_lifetime_pds)
     helper.dataframe_to_picasso(
-        localizations, localizations_file, '_lt_com_new_bounds')
-    print(len(localizations), 'localizations tagged with lifetime and'
-                              ' fitted with avg x,y position.')
+        localizations, localizations_file, '_lt_com')
+    print(len(localizations), 'localizations tagged with lifetime from fitting whole events and'
+                              ' fitted individually with avg x,y position.')
 
 
 
