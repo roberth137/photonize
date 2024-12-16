@@ -11,7 +11,7 @@ This module reads in picasso localizations and tags them with their event
 import numpy as np
 import helper
 
-def connect_locs(localizations_dset, box_side_length=5):
+def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
     localizations = helper.process_input(localizations_dset, 'locs')
     event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0
@@ -40,8 +40,10 @@ def connect_locs(localizations_dset, box_side_length=5):
     
     localizations.insert(4, 'event', event_column)
     helper.calculate_total_photons(localizations, 5)
-    filtered_locs = filter_unique_events(localizations)
-    return filtered_locs
+    if filter_single:
+        filtered_locs = filter_unique_events(localizations)
+        return filtered_locs
+    else: return localizations
     
 
 

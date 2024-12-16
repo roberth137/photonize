@@ -17,7 +17,7 @@ def avg_of_roi(localization, bg_pixel, phot_locs, box_side_length, return_sd=Fal
     surrounding of the localization.
     Background gets subtracted
     """
-    if len(phot_locs)==0: print(localization)
+    if len(phot_locs)==0: print('avg_of_roi(), no photons: \n', localization)
 
     x_photons = phot_locs['x'].to_numpy()
     y_photons = phot_locs['y'].to_numpy()

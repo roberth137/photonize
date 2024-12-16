@@ -19,7 +19,7 @@ from fitting.locs_average import avg_photon_weighted
     
     
 
-def locs_to_events(localizations_file, offset, box_side_length, int_time):
+def locs_to_events(localizations_file, offset, box_side_length, int_time, filter_single=True):
     """
     Converts a DataFrame of localizations into a list of Event objects.
 
@@ -34,7 +34,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time):
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
     # Tag localizations with event number and group them
-    localizations_eve = tag_events.connect_locs(localizations)
+    localizations_eve = tag_events.connect_locs(localizations, filter_single=filter_single)
     grouped = localizations_eve.groupby('event')
 
 
