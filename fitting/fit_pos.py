@@ -133,8 +133,8 @@ def event_position(event, phot_event, diameter, return_sd=True):
 
     fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(phot_event)
-    number_phot = (total_photons - fit_area * event.bg) #fit area in pixel^2 #bg per pixel
-    bg = event.bg * fit_area
+    number_phot = (total_photons - fit_area * event.bg/2) #fit area in pixel^2 #bg per pixel
+    bg = event.bg * fit_area/2
     #bg = 1 * fit_area
 
 

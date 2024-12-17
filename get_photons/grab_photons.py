@@ -9,6 +9,8 @@ This module is returns original photons from localization data
 """
 import pandas as pd
 import get_photons
+import helper
+
 
 def get_pick_photons(
         locs_group, photons, drift, offset,
@@ -67,9 +69,10 @@ def photons_of_picked_area(localizations_file, photons_file,
     over the whole imaging time 
 
     '''
-    localizations = pd.read_hdf(localizations_file, key='locs')
-    photons = pd.read_hdf(photons_file, key='photons')
-    drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
+    localizations = helper.process_input(localizations_file, 'locs')
+    photons = helper.process_input(photons_file, 'photons')
+    drift = helper.process_input(drift_file, 'drift')
+    #drift = pd.read_csv(drift_file, delimiter=' ',names =['x','y'])
     drift = drift[::offset]
     pick_photons = crop_undrift_crop(localizations, photons, drift, 
                                     offset, box_side_length, 
