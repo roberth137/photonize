@@ -42,8 +42,15 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
     y_position = np.ones(total_localizations, dtype=np.float32)
     s_dev_x = np.ones(total_localizations, dtype=np.float32)
     s_dev_y = np.ones(total_localizations, dtype=np.float32)
+    #s_dev_x_w_bg = np.ones(total_localizations, dtype=np.float32)
+    #s_dev_y_w_bg = np.ones(total_localizations, dtype=np.float32)
     com_px = np.ones(total_localizations, dtype=np.float32)
     com_py = np.ones(total_localizations, dtype=np.float32)
+    #sdx_n_plain = np.ones(total_localizations, dtype=np.float32)
+    #sdy_n_plain = np.ones(total_localizations, dtype=np.float32)
+    #sdx_n_no_bg = np.ones(total_localizations, dtype=np.float32)
+    #sdy_n_no_bg = np.ones(total_localizations, dtype=np.float32)
+
 
     counter_locs = 0
     counter_events = 0

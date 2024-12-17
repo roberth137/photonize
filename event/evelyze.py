@@ -31,7 +31,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event')
+        events, localizations_file, '_event_new_stats')
 
 
 def events_lt_avg_pos(event_file, photons_file,
@@ -65,8 +65,15 @@ def events_lt_avg_pos(event_file, photons_file,
     y_position = np.ones(total_events, dtype=np.float32)
     s_dev_x = np.ones(total_events, dtype=np.float32)
     s_dev_y = np.ones(total_events, dtype=np.float32)
+    s_dev_x_w_bg = np.ones(total_events, dtype=np.float32)
+    s_dev_y_w_bg = np.ones(total_events, dtype=np.float32)
     com_px = np.ones(total_events, dtype=np.float32)
     com_py = np.ones(total_events, dtype=np.float32)
+    sdx_sqrtn = np.ones(total_events, dtype=np.float32)
+    sdy_sqrtn = np.ones(total_events, dtype=np.float32)
+    sdx_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
+    sdy_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
+
     counter = 0
 
     # iterating over every pick in file
@@ -109,7 +116,8 @@ def events_lt_avg_pos(event_file, photons_file,
 
             cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
             bg_total = my_event.bg * (diameter / 2) * np.pi
-            signal_photons = len(cylinder_photons) - bg_total
+            total_photons = len(cylinder_photons)
+            signal_photons = total_photons - bg_total
             phot_event = pd.DataFrame(data=cylinder_photons)
 
             if i == 0:
@@ -123,11 +131,21 @@ def events_lt_avg_pos(event_file, photons_file,
                                                       phot_event,
                                                       diameter,
                                                       return_sd=True)
+            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position_w_bg(my_event,
+                                                                 phot_event,
+                                                                 diameter,
+                                                                 return_sd=True)
 
             x_position[i] = x
             y_position[i] = y
             s_dev_x[i] = sd_x
             s_dev_y[i] = sd_y
+            s_dev_x_w_bg[i] = sd_x_bg
+            s_dev_y_w_bg[i] = sd_y_bg
+            sdx_sqrtn[i] = sd_x/np.sqrt(signal_photons)
+            sdy_sqrtn[i] = sd_y/np.sqrt(signal_photons)
+            sdx_sqrtn_w_bg[i] = sd_x_bg/np.sqrt(total_photons)
+            sdy_sqrtn_w_bg[i] = sd_y_bg/np.sqrt(total_photons)
             com_px[i] = fitting.localization_precision(signal_photons, sd_x, my_event.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, my_event.bg)
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
@@ -139,6 +157,12 @@ def events_lt_avg_pos(event_file, photons_file,
     events['y'] = y_position
     events['sdx'] = s_dev_x
     events['sdy'] = s_dev_y
+    events['sdx_w_bg'] = s_dev_x_w_bg
+    events['sdy_w_bg'] = s_dev_y_w_bg
+    events['sdx_sqrtn_w_bg'] = sdx_sqrtn_w_bg
+    events['sdy_sqrtn_w_bg'] = sdy_sqrtn_w_bg
+    events['sdx_sqrtn'] = sdx_sqrtn
+    events['sdy_sqrtn'] = sdy_sqrtn
     events['com_px'] = com_px
     events['com_py'] = com_py
     events['lifetime'] = lifetime
