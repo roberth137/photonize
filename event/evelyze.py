@@ -31,7 +31,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event_new_stats')
+        events, localizations_file, '_event_bg_normal_bsl6')
 
 
 def events_lt_avg_pos(event_file, photons_file,
@@ -150,7 +150,7 @@ def events_lt_avg_pos(event_file, photons_file,
             com_py[i] = fitting.localization_precision(signal_photons, sd_y, my_event.bg)
             lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
                                                        peak_arrival_time)
-            my_photons[i] = signal_photons
+            my_photons[i] = total_photons
         counter += len(events_group)
 
     events['x'] = x_position

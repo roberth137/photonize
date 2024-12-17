@@ -133,8 +133,10 @@ def event_position(event, phot_event, diameter, return_sd=True):
 
     fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(phot_event)
-    number_phot = (total_photons - fit_area * event.bg)
+    number_phot = (total_photons - fit_area * event.bg) #fit area in pixel^2 #bg per pixel
     bg = event.bg * fit_area
+    #bg = 1 * fit_area
+
 
     pos_x = (np.sum(x_photons) - bg * event.x) / number_phot
     pos_y = (np.sum(y_photons) - bg * event.y) / number_phot
@@ -155,11 +157,11 @@ def event_position_w_bg(event, phot_event, diameter, return_sd=True):
 
     fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(phot_event)
-    number_phot = (total_photons - fit_area * event.bg)
+    #number_phot = (total_photons - fit_area * event.bg)
     bg = event.bg * fit_area
 
-    pos_x = (np.sum(x_photons) - bg * event.x) / number_phot
-    pos_y = (np.sum(y_photons) - bg * event.y) / number_phot
+    pos_x = (np.sum(x_photons))/total_photons# - bg * event.x) / number_phot
+    pos_y = (np.sum(y_photons))/total_photons# - bg * event.y) / number_phot
 
     if return_sd:
         sd_x = calculate_sd_w_bg(x_photons, pos_x, total_photons, bg, diameter)
