@@ -31,7 +31,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event')
+        events, localizations_file, '_event_bsl15')
 
 
 def events_lt_avg_pos(event_file, photons_file,
@@ -58,6 +58,9 @@ def events_lt_avg_pos(event_file, photons_file,
           'events read in')
     print('starting events_lt_avg_pos function.')
     drift = helper.process_input(drift_file, dataset='drift')
+
+    x_old = np.copy(events['x'])
+    y_old = np.copy(events['y'])
 
     lifetime = np.ones(total_events, dtype=np.float32)
     my_photons = np.ones(total_events, dtype=np.float32)
@@ -136,8 +139,8 @@ def events_lt_avg_pos(event_file, photons_file,
                                                                  diameter,
                                                                  return_sd=True)
 
-            x_position[i] = x
-            y_position[i] = y
+            x_position[i] = x_t
+            y_position[i] = y_t
             s_dev_x[i] = sd_x
             s_dev_y[i] = sd_y
             s_dev_x_w_bg[i] = sd_x_bg
@@ -167,6 +170,10 @@ def events_lt_avg_pos(event_file, photons_file,
     events['com_py'] = com_py
     events['lifetime'] = lifetime
     events['my_photons'] = my_photons
+    events['x_old'] = x_old
+    events['y_old'] = y_old
+    events['delta_x'] = (events['x_old'] - events['x'])
+    events['log_delta_x2_inverse'] = 1/(-np.log((events['x_old'] - events['x'])**2))
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(

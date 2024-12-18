@@ -90,7 +90,7 @@ def calculate_sd(positions, pos_fit, number_phot, bg_total, diameter):
     bg_total: total number of background photons
     diameter: diameter of roi
     """
-    bg_var = ((diameter/4) ** 2) / 4  # s.d. in 1d of a random distribution on disk
+    bg_var = ((diameter/4) ** 2) / 2 # s.d. in 1d of a random distribution on disk
     var = (np.sum((positions - pos_fit) ** 2) - (bg_var * bg_total)) / number_phot
     return 10 if var <= 0 else np.sqrt(var)
 
@@ -133,8 +133,8 @@ def event_position(event, phot_event, diameter, return_sd=True):
 
     fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(phot_event)
-    number_phot = (total_photons - fit_area * event.bg/2) #fit area in pixel^2 #bg per pixel
-    bg = event.bg * fit_area/2
+    number_phot = (total_photons - fit_area * event.bg) #fit area in pixel^2 #bg per pixel
+    bg = event.bg * fit_area
     #bg = 1 * fit_area
 
 

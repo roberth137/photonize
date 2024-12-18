@@ -58,7 +58,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         total_photons_estimate = eve_group['total_photons'].sum() / overlap
 
         average_bg = eve_group['bg'].mean()
-        bg = average_bg * duration_ms / int_time
+        bg = average_bg * duration_ms / (int_time*2) # cutting the bg in half seems to give better results
 
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
@@ -148,15 +148,6 @@ def locs_to_events_to_picasso(localizations_file,
         average_bg = eve_group['bg'].mean()
         bg = average_bg*duration_ms/int_time
 
-        #print('_____________________________________')
-        #print('FRAME: first -- last -- duration')
-        #print('_____', first.frame, ' -- ', last.frame, ' -- ', (last.frame-first.frame+1))
-        #print('peak event is: ', peak_event.frame)
-        #print('MS:    first -- last -- duration')
-        #print('_____', start_ms, end_ms, (end_ms-start_ms))
-        #print('PHOTONS: first -- max -- last ')
-        #print(photons_array)
-        
         event_data = {'frame': peak_event['frame'],
                  'event': first['event'], 
                  'x': avg_photon_weighted(eve_group, 'x'),

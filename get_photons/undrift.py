@@ -23,8 +23,13 @@ def undrift_photons(photons, drift, offset, int_time=200):
     # create frame array
     ms_index = np.copy(photons.ms)
     frames = np.floor((offset * ms_index) / int_time).astype(int)
+    print('length ms_index is: ', len(ms_index))
+    print('length frames_array is: ', len(frames))
+    print('highes ms is: ', max(ms_index))
     max_frame_photons = max(frames)
     max_frame_drift = len(drift.x)
+    print('Length of drift file: ', len(drift))
+    print('frames array (offset*ms_index)/int_time [:10], [-10:]: ', frames[:10], frames[-10:])
     if max_frame_photons > max_frame_drift - 1:
         overhang_ms = 0
         for i in range(len(frames)):
@@ -41,8 +46,8 @@ def undrift_photons(photons, drift, offset, int_time=200):
     undrifted_y = np.copy(photons.y)
     drift_x_array = np.ones(number_photons)
     drift_y_array = np.ones(number_photons)
-    print('length of drift_x: ', len(drift_x))
-    print('max frame: ', max(frames))
+    #print('length of drift_x: ', len(drift_x))
+    #print('max frame: ', max(frames))
     for i in range(number_photons):
         frame = frames[i]
         drift_x_array[i] = drift_x[frame]
@@ -54,9 +59,10 @@ def undrift_photons(photons, drift, offset, int_time=200):
 
     # apply drift and shift of 0.53125 to photons -> synchron in position
     # with Localizations
-    undrifted_x += (0.53125 - drift_x_array)
-    undrifted_y += (0.53125 - drift_y_array)
-
+    undrifted_x -= (0.46875 + drift_x_array)
+    undrifted_y -= (0.46875 + drift_y_array)
+    #undrifted_x -= drift_x_array
+    #undrifted_y -= drift_y_array
     # create and return new dataframe
     photons_undrifted = pd.DataFrame({'x': undrifted_x,
                                       'y': undrifted_y, 'dt': photons.dt, 'ms': photons.ms})
