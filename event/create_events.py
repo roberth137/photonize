@@ -125,7 +125,7 @@ def locs_to_events_to_picasso(localizations_file,
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
     # Tag localizations with event number and group them
-    localizations_eve = tag_events.connect_locs(localizations)
+    localizations_eve = tag_events.connect_locs(localizations, False)
     grouped = localizations_eve.groupby('event')
 
     events = pd.DataFrame()

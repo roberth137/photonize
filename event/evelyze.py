@@ -6,7 +6,7 @@ import fitting
 import get_photons
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
-                   diameter, int_time):
+                   diameter, int_time, suffix=''):
     """
 
     reads in file of localizations, connects events and analyzes them
@@ -21,7 +21,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     # first localizations to events
     events = create_events.locs_to_events(localizations, offset,
                                   box_side_length=diameter,
-                                  int_time=int_time)
+                                  int_time=int_time, filter_single=False)
 
     print('connected locs to events. total events: ', len(events))
 
@@ -30,8 +30,9 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
+    file_extension = '_event'+suffix
     helper.dataframe_to_picasso(
-        events, localizations_file, '_event')
+        events, localizations_file, file_extension)
 
 
 def events_lt_avg_pos(event_file, photons_file,
