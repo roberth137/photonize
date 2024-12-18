@@ -32,6 +32,35 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     return lifetime
 
+def avg_lifetime_weighted_40(loc_photons, peak, dt_offset=0):
+    '''
+    Fit lifetimes of individual localizations with 40mhz laser frequency
+    Parameters
+    ----------
+    loc_photons : all photons from one localization
+    peak : position of the maximum of arrival times for this pick of
+    localizations, calibrated from calibrate_peak_locs()
+    offset : the offset from the peak where arrival times are considered
+    for fitting the lifetime.The default is 50.
+
+    Returns
+    -------
+    average arrival time of photons, in units of arrival time bin size.
+    Usually 10ps
+
+    '''
+
+    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 2500))
+    #background = np.sum(counts[-300:]) / 300
+    #counts_bgsub = counts - background
+    arr_times = np.arange(1, (2500 - (peak + dt_offset)))
+    considered_bgsub = counts[(peak + dt_offset):2500]
+    #if len(loc_photons) < 70:
+    #    print('\nphotons for fitting: ', len(loc_photons))
+    #    print('good photons: ', sum(considered_bgsub))
+    lifetime = np.sum(np.multiply(considered_bgsub, arr_times)) / np.sum(considered_bgsub)
+    return lifetime
+
 
 def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     '''

@@ -7,15 +7,15 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-events_filename = 't/orig58_pf_event.hdf5'
-photons_filename = 't/orig58_index.hdf5'
-drift_filename = 't/orig58_drift.txt'
+events_filename = 't/NUP_pf_20k_event_test.hdf5'
+photons_filename = 't/NUP20k_index.hdf5'
+drift_filename = ('t/drift_20k.txt')
 
 events = helper.process_input(events_filename, 'locs')
 photons = helper.process_input(photons_filename, 'photons')
 drift = helper.process_input(drift_filename, 'drift')
 
-diameter = 15
+diameter = 5
 group_events = events[events.group == 1]
 group_events.reset_index(drop=True, inplace=True)
 
@@ -23,7 +23,18 @@ pick_photons = get_photons.get_pick_photons(group_events, photons, drift, 10, di
 
 all_events_photons = get_photons.photons_of_many_events(group_events, pick_photons,diameter)
 
+def plot_all_dt(all_events_photons):
 
+    bin_size = 10
+    bins = np.arange(min(all_events_photons.dt), max(all_events_photons.dt) + bin_size, bin_size)
+    plt.figure(figsize=(8, 6))
+    plt.hist(all_events_photons['dt'], bins=bins)
+    plt.plot([], [], ' ', label=f'Total number of photons: {len(all_events_photons)}')
+    plt.title("Histogram of dt values")
+    plt.xlabel("arrival time ")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend(loc='upper left')  # Adjust the legend position if needed
+    plt.show()
 
 def plot_event(i):
     this_event = group_events.iloc[i]
@@ -46,6 +57,22 @@ def plot_event(i):
     plt.title('Data Points with Legend')
     plt.xlabel("X Position")
     plt.ylabel("Y Position")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend(loc='upper left')  # Adjust the legend position if needed
+    plt.show()
+
+def hist_dt_event(i):
+    this_event = group_events.iloc[i]
+
+    this_event_photons = get_photons.crop_event(this_event, all_events_photons, diameter)
+
+    bin_size = 10
+    bins = np.arange(min(this_event_photons.dt), max(this_event_photons.dt) + bin_size, bin_size)
+    plt.figure(figsize=(8, 6))
+    plt.hist(this_event_photons['dt'], bins=bins)
+    plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
+    plt.title("Histogram of dt values")
+    plt.xlabel("arrival time ")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')  # Adjust the legend position if needed
     plt.show()
