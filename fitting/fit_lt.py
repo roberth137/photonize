@@ -75,7 +75,7 @@ def avg_lifetime_weighted_40(loc_photons, peak, diameter, sigma=None,dt_offset=0
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
     #ap_weight = -np.log(ap_dist/(radius**2))
-    ap_weight = 1+3*((diameter-ap_dist)/diameter)
+    ap_weight = 1+4*((diameter-ap_dist)/diameter)
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime

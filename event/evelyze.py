@@ -158,10 +158,10 @@ def events_lt_avg_pos(event_file, photons_file,
 
             #print(max(phot_event.distance))
 
-            lifetime[i] = fitting.avg_lifetime_gauss_w_40(phot_event,
+            lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
                                                           peak_arrival_time,
-                                                          diameter,
-                                                          sigma=s_dev)
+                                                          diameter)#,
+            #                                             sigma=s_dev)
 
 
             x_position[i] = x_t
