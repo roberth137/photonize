@@ -32,33 +32,36 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     return lifetime
 
-def avg_lifetime_weighted_40(loc_photons, peak, dt_offset=0):
+def avg_lifetime_no_bg_40(loc_photons, peak, dt_offset=0):
     '''
-    Fit lifetimes of individual localizations with 40mhz laser frequency
-    Parameters
-    ----------
-    loc_photons : all photons from one localization
-    peak : position of the maximum of arrival times for this pick of
-    localizations, calibrated from calibrate_peak_locs()
-    offset : the offset from the peak where arrival times are considered
-    for fitting the lifetime.The default is 50.
-
-    Returns
-    -------
-    average arrival time of photons, in units of arrival time bin size.
-    Usually 10ps
-
+    Not considering bg
     '''
 
-    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 2500))
-    #background = np.sum(counts[-300:]) / 300
+    #counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 2500))
     #counts_bgsub = counts - background
-    arr_times = np.arange(1, (2500 - (peak + dt_offset)))
-    considered_bgsub = counts[(peak + dt_offset):2500]
+    #weights = np.arange(1, (2500 - (peak + dt_offset)))
+    #considered_bgsub = counts_bgsub[(peak + dt_offset):2500]
     #if len(loc_photons) < 70:
     #    print('\nphotons for fitting: ', len(loc_photons))
     #    print('good photons: ', sum(considered_bgsub))
-    lifetime = np.sum(np.multiply(considered_bgsub, arr_times)) / np.sum(considered_bgsub)
+    #lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
+    arr_times = np.copy(loc_photons.dt)
+    arr_times_normalized = arr_times[arr_times > peak]
+    lifetime = np.mean(arr_times_normalized-peak)
+    return lifetime
+
+def avg_lifetime_weighted_40(loc_photons, peak, diameter, dt_offset=0):
+    '''
+    use weights for fluorophores position
+    '''
+    radius = diameter/2
+    after_peak = loc_photons[loc_photons.dt>peak]
+    ap_dt = np.copy(after_peak.dt)
+    ap_dist = np.copy(after_peak.distance)
+    ap_dt -= peak
+    ap_weight = 1+4*((diameter-ap_dist)/diameter)
+    weighted_dt = np.multiply(ap_dt,ap_weight)
+    lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime
 
 

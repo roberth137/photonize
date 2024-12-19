@@ -129,14 +129,14 @@ def events_lt_avg_pos(event_file, photons_file,
             total_photons = len(cylinder_photons)
             signal_photons = total_photons - bg_total
             phot_event = pd.DataFrame(data=cylinder_photons)
-
             if i == 0:
                 print('FIRST fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
             elif i % 200 == 0:
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
-
+            lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
+                                                           peak_arrival_time, diameter)
             #x, y, sd_x, sd_y = fitting.event_position(my_event,
             #                                          phot_event,
             #                                          diameter,
@@ -145,6 +145,14 @@ def events_lt_avg_pos(event_file, photons_file,
                                                                  phot_event,
                                                                  diameter,
                                                                  return_sd=True)
+            #phot_x = np.copy(phot_event.x)
+            #phot_y = np.copy(phot_event.y)
+            #phot_x -= x_t
+            #phot_y -= y_t
+            #print(phot_x, phot_y)
+            #dist_2 = (phot_x**2 + phot_y**2)
+            #phot_event['distance'] = np.sqrt(dist_2)
+
 
             x_position[i] = x_t
             y_position[i] = y_t
@@ -158,8 +166,6 @@ def events_lt_avg_pos(event_file, photons_file,
             sdy_sqrtn_w_bg[i] = sd_y_bg/np.sqrt(total_photons)
             com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y_bg, my_event.bg)
-            lifetime[i] = fitting.avg_lifetime_sergi_40(phot_event,
-                                                       peak_arrival_time)
             total_photons_lin[i] = total_photons
         counter += len(events_group)
 
