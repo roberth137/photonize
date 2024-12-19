@@ -145,13 +145,23 @@ def events_lt_avg_pos(event_file, photons_file,
                                                                  phot_event,
                                                                  diameter,
                                                                  return_sd=True)
-            #phot_x = np.copy(phot_event.x)
-            #phot_y = np.copy(phot_event.y)
-            #phot_x -= x_t
-            #phot_y -= y_t
+            s_dev = (sd_x_bg+sd_y_bg)/2
+
+
+            phot_x = np.copy(phot_event.x)
+            phot_y = np.copy(phot_event.y)
+            phot_x -= x_t
+            phot_y -= y_t
             #print(phot_x, phot_y)
-            #dist_2 = (phot_x**2 + phot_y**2)
-            #phot_event['distance'] = np.sqrt(dist_2)
+            dist_2 = (phot_x**2 + phot_y**2)
+            phot_event['distance'] = dist_2
+
+            #print(max(phot_event.distance))
+
+            lifetime[i] = fitting.avg_lifetime_gauss_w_40(phot_event,
+                                                          peak_arrival_time,
+                                                          diameter,
+                                                          sigma=s_dev)
 
 
             x_position[i] = x_t

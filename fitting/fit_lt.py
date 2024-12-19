@@ -50,7 +50,7 @@ def avg_lifetime_no_bg_40(loc_photons, peak, dt_offset=0):
     lifetime = np.mean(arr_times_normalized-peak)
     return lifetime
 
-def avg_lifetime_weighted_40(loc_photons, peak, diameter, dt_offset=0):
+def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
     '''
     use weights for fluorophores position
     '''
@@ -59,7 +59,23 @@ def avg_lifetime_weighted_40(loc_photons, peak, diameter, dt_offset=0):
     ap_dt = np.copy(after_peak.dt)
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
-    ap_weight = 1+4*((diameter-ap_dist)/diameter)
+    #ap_weight = 1+3*((diameter-ap_dist)/diameter)
+    ap_weight = np.exp(-(ap_dist/sigma**2))
+    weighted_dt = np.multiply(ap_dt,ap_weight)
+    lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
+    return lifetime
+
+def avg_lifetime_weighted_40(loc_photons, peak, diameter, sigma=None,dt_offset=0):
+    '''
+    use weights for fluorophores position
+    '''
+    radius = diameter/2
+    after_peak = loc_photons[loc_photons.dt>peak]
+    ap_dt = np.copy(after_peak.dt)
+    ap_dist = np.copy(after_peak.distance)
+    ap_dt -= peak
+    #ap_weight = -np.log(ap_dist/(radius**2))
+    ap_weight = 1+3*((diameter-ap_dist)/diameter)
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime
