@@ -57,6 +57,7 @@ def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
     radius = diameter/2
     after_peak = loc_photons[loc_photons.dt>peak]
     ap_dt = np.copy(after_peak.dt)
+    ap_dt = ap_dt.astype('int64')
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
     #ap_weight = 1+3*((diameter-ap_dist)/diameter)
@@ -72,10 +73,11 @@ def avg_lifetime_weighted_40(loc_photons, peak, diameter, sigma=None,dt_offset=0
     radius = diameter/2
     after_peak = loc_photons[loc_photons.dt>peak]
     ap_dt = np.copy(after_peak.dt)
+    ap_dt = ap_dt.astype('int64')
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
     #ap_weight = -np.log(ap_dist/(radius**2))
-    ap_weight = 1+4*((diameter-ap_dist)/diameter)
+    ap_weight = (0.2+(1-ap_dist/(radius**2)))#1+4*((diameter-ap_dist)/diameter)
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime

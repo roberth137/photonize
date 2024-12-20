@@ -69,14 +69,10 @@ def events_lt_avg_pos(event_file, photons_file,
     total_photons_lin = np.ones(total_events, dtype=np.float32)
     x_position = np.ones(total_events, dtype=np.float32)
     y_position = np.ones(total_events, dtype=np.float32)
-    #s_dev_x = np.ones(total_events, dtype=np.float32)
-    #s_dev_y = np.ones(total_events, dtype=np.float32)
     s_dev_x_w_bg = np.ones(total_events, dtype=np.float32)
     s_dev_y_w_bg = np.ones(total_events, dtype=np.float32)
     com_px = np.ones(total_events, dtype=np.float32)
     com_py = np.ones(total_events, dtype=np.float32)
-    #sdx_sqrtn = np.ones(total_events, dtype=np.float32)
-    #sdy_sqrtn = np.ones(total_events, dtype=np.float32)
     sdx_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
     sdy_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
 
@@ -104,10 +100,10 @@ def events_lt_avg_pos(event_file, photons_file,
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
                                                                 diameter)
-        all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
         print('__calibrate_peak__')
-        peak_arrival_time = 100#fitting.calibrate_peak_events(all_events_photons)
+        peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
         print('_______________________________________________________')
 
@@ -145,33 +141,26 @@ def events_lt_avg_pos(event_file, photons_file,
                                                                  phot_event,
                                                                  diameter,
                                                                  return_sd=True)
-            s_dev = (sd_x_bg+sd_y_bg)/2
+            #s_dev = (sd_x_bg+sd_y_bg)/2
 
 
             phot_x = np.copy(phot_event.x)
             phot_y = np.copy(phot_event.y)
             phot_x -= x_t
             phot_y -= y_t
-            #print(phot_x, phot_y)
             dist_2 = (phot_x**2 + phot_y**2)
             phot_event['distance'] = dist_2
 
-            #print(max(phot_event.distance))
-
             lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
                                                           peak_arrival_time,
-                                                          diameter)#,
-            #                                             sigma=s_dev)
+                                                          diameter)
+                                                         #sigma=s_dev)
 
 
             x_position[i] = x_t
             y_position[i] = y_t
-            #s_dev_x[i] = sd_x
-            #s_dev_y[i] = sd_y
             s_dev_x_w_bg[i] = sd_x_bg
             s_dev_y_w_bg[i] = sd_y_bg
-            #sdx_sqrtn[i] = sd_x/np.sqrt(signal_photons)
-            #sdy_sqrtn[i] = sd_y/np.sqrt(signal_photons)
             sdx_sqrtn_w_bg[i] = sd_x_bg/np.sqrt(total_photons)
             sdy_sqrtn_w_bg[i] = sd_y_bg/np.sqrt(total_photons)
             com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
@@ -181,16 +170,12 @@ def events_lt_avg_pos(event_file, photons_file,
 
     events['x'] = x_position
     events['y'] = y_position
-    #events['sdx'] = s_dev_x
-    #events['sdy'] = s_dev_y
     events['lpx'] = sdx_sqrtn_w_bg
     events['lpy'] = sdy_sqrtn_w_bg
     events['sdx'] = s_dev_x_w_bg
     events['sdy'] = s_dev_y_w_bg
     events['old_lpx'] = lpx_old
     events['old_lpy'] = lpy_old
-    #events['sdx_sqrtn'] = sdx_sqrtn
-    #events['sdy_sqrtn'] = sdy_sqrtn
     events['com_px'] = com_px
     events['com_py'] = com_py
     events['lifetime'] = lifetime
@@ -198,7 +183,6 @@ def events_lt_avg_pos(event_file, photons_file,
     events['x_old'] = x_old
     events['y_old'] = y_old
     events['delta_x'] = (events['x_old'] - events['x'])
-    #events['log_delta_x2_inverse'] = 1/(-np.log((events['x_old'] - events['x'])**2))
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
