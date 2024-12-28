@@ -1,7 +1,31 @@
-This is my masters project, hope you enjoy! 
+The goal of this package is anlyzing photons data from the LINCAM.
 
-This project is meant to be working with a 4xoffset photons file thats just to big for github and ignored atm
+In this analysis all data is analysed prior with the Picasso package. 
 
-The current master branch is also used with a photons file where the positions are binned 16x. 
+To further optimize this data, a picasso file with picked localizations, the photons file with LINCAM coordiantes divided by 16 (16x binning) and the drift file from picasso are required.
 
-In the new branch this wont be the case anymore.
+The main functions are event.event_analysis() (for analysing whole binding events) and locs.locs_lt() (for analysing localizaitons).
+
+first the corresponding modules have to be imported. Then the function can be called.
+
+Example: 
+
+$ import event
+$ event.event_analysis('t/orig58_pf.hdf5', 't/orig58_index.hdf5', 't/orig58_drift.txt', 10, 4.5, 200, 'test')
+
+
+For event analysis the imput is:
+
+- picked localizations 
+- photons 
+- drift 
+- offset 
+- diameter of fit region (~box side length but smaller)
+- integration time 
+- suffix for labeling the output file 
+
+
+If you have questions please let me know: rahollmann137@gmail.com
+
+This is part of my masters project in Simoncelli lab at the London Centre for Nanotechnology.
+Hope you Enjoy ;) 
