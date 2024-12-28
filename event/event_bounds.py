@@ -43,8 +43,6 @@ def get_ms_bounds(locs_event, offset, int_time):
 
         difference_time = 1/offset
 
-        #avg_top3 = (locs_event['total_photons'].nlargest(3).sum())/3
-
         on_fraction_first = (first_loc['total_photons'] / average_photons)
         on_fraction_second = (second_loc['total_photons'] / average_photons)
 

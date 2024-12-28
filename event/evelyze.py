@@ -131,19 +131,15 @@ def events_lt_avg_pos(event_file, photons_file,
             elif i % 200 == 0:
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
-            lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
-                                                           peak_arrival_time, diameter)
-            #x, y, sd_x, sd_y = fitting.event_position(my_event,
-            #                                          phot_event,
-            #                                          diameter,
-            #                                          return_sd=True)
+            #lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
+            #                                               peak_arrival_time, diameter)
+
             x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position_w_bg(my_event,
                                                                  phot_event,
                                                                  diameter,
                                                                  return_sd=True)
-            #s_dev = (sd_x_bg+sd_y_bg)/2
 
-
+            #calculate photon distances from new center for better lifetime determination:
             phot_x = np.copy(phot_event.x)
             phot_y = np.copy(phot_event.y)
             phot_x -= x_t
@@ -154,8 +150,6 @@ def events_lt_avg_pos(event_file, photons_file,
             lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
                                                           peak_arrival_time,
                                                           diameter)
-                                                         #sigma=s_dev)
-
 
             x_position[i] = x_t
             y_position[i] = y_t

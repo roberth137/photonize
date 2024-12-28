@@ -27,6 +27,9 @@ def crop_photons_file(new_photons_df, photons_file, extension='_20k'):
     print('\nphotons successfully saved.')
 
 def crop_drift(drift_file):
+    """
+    Modify a drift file to use only for specific frames
+    """
     # Load the data from drift.txt
     drift_file = pd.read_csv(drift_file, delimiter=' ', names=['x', 'y'])
 

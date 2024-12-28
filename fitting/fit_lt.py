@@ -11,7 +11,7 @@ def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
     loc_photons : all photons from one localization
     peak : position of the maximum of arrival times for this pick of
     localizations, calibrated from calibrate_peak_locs()
-    offset : the offset from the peak where arrival times are considered
+    dt_offset : the offset from the peak where arrival times are considered
     for fitting the lifetime.The default is 50.
 
     Returns
@@ -60,15 +60,14 @@ def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
     ap_dt = ap_dt.astype('int64')
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
-    #ap_weight = 1+3*((diameter-ap_dist)/diameter)
     ap_weight = np.exp(-(ap_dist/sigma**2))
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime
 
-def avg_lifetime_weighted_40(loc_photons, peak, diameter, sigma=None,dt_offset=0):
+def avg_lifetime_weighted_40(loc_photons, peak, diameter):
     '''
-    use weights for fluorophores position
+    uses quadratic weights for lifetimes depending on photons distance from center of localization
     '''
     radius = diameter/2
     after_peak = loc_photons[loc_photons.dt>peak]
@@ -76,8 +75,7 @@ def avg_lifetime_weighted_40(loc_photons, peak, diameter, sigma=None,dt_offset=0
     ap_dt = ap_dt.astype('int64')
     ap_dist = np.copy(after_peak.distance)
     ap_dt -= peak
-    #ap_weight = -np.log(ap_dist/(radius**2))
-    ap_weight = (0.2+(1-ap_dist/(radius**2)))#1+4*((diameter-ap_dist)/diameter)
+    ap_weight = (0.2+(1-ap_dist/(radius**2)))
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
     return lifetime
@@ -91,7 +89,7 @@ def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
     loc_photons : all photons from one localization
     peak : position of the maximum of arrival times for this pick of
     localizations, calibrated from calibrate_peak_locs()
-    offset : the offset from the peak where arrival times are considered
+    dt_offset : the offset from the peak where arrival times are considered
     for fitting the lifetime.The default is 50.
 
     Returns

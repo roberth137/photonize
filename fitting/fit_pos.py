@@ -96,7 +96,7 @@ def calculate_sd(positions, pos_fit, number_phot, bg_total, diameter):
 
 def calculate_sd_w_bg(positions, pos_fit, total_phot, bg_total, diameter):
     """
-    Calculates 1d std for a center of mass fit:
+    Calculates 1d std for a center of mass fit, not considering bg
     positions: array with photons positions
     pos_fit: fitted position
     number_photons: total_photons - bg
