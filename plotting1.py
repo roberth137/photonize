@@ -19,23 +19,36 @@ diameter = 4
 group_events = events[events.group == 0]
 group_events.reset_index(drop=True, inplace=True)
 
-pick_photons = get_photons.get_pick_photons(group_events, photons, drift, 10, diameter, 200)
+pick_photons = get_photons.get_pick_photons(group_events,
+                                            photons,
+                                            drift,
+                                            10,
+                                            diameter,
+                                            200)
 
-all_events_photons = get_photons.photons_of_many_events(group_events, pick_photons,diameter, 100)
+all_events_photons = get_photons.photons_of_many_events(group_events,
+                                                        pick_photons,
+                                                        diameter,
+                                                        200)
 
 
 def hist_ms_event(i):
     this_event = group_events.iloc[i]
 
-    this_event_photons = get_photons.crop_event(this_event, all_events_photons, diameter, 100)
+    this_event_photons = get_photons.crop_event(this_event,
+                                                all_events_photons,
+                                                diameter,
+                                                200)
     print(this_event_photons)
-    bin_size=2
+    bin_size=5
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     plt.figure(figsize=(8, 6))
     plt.hist(this_event_photons['ms'],
              bins=bins)
     plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
     plt.plot([], [], ' ', label=f'Start_ms: {this_event.start_ms}, End_ms: {this_event.end_ms}')
+    plt.axvline(this_event.start_ms, color='red')
+    plt.axvline(this_event.end_ms, color='red')
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")
     #plt.ylabel("Y Position")

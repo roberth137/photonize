@@ -34,7 +34,7 @@ noise = np.random.normal(0, 0.2, size=len(true_signal))
 noisy_signal = true_signal + noise
 
 # Apply the Lee filter
-filtered_signal = lee_filter_1d(noisy_signal)
+filtered_signal = lee_filter_1d(noisy_signal, 2)
 
 # Plotting
 plt.figure(figsize=(12, 6))
