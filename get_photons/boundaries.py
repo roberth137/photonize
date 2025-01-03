@@ -44,7 +44,7 @@ def loc_boundaries(localization, offset,
     return x_min, x_max, y_min, y_max, ms_min, ms_max
 
 
-def crop_event(event, photons, diameter):
+def crop_event(event, photons, diameter, more_ms=0):
     '''
     Parameters
     ----------
@@ -67,7 +67,8 @@ def crop_event(event, photons, diameter):
         photons,
         x_min, x_max,
         y_min, y_max,
-        event.start_ms, event.end_ms))
+        (event.start_ms-more_ms),
+        (event.end_ms+more_ms)))
 
     #total_photons = len(photons_cropped)
 

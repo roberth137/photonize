@@ -79,9 +79,9 @@ def photons_of_picked_area(localizations_file, photons_file,
                                     int_time)
     return pick_photons
 
-def photons_of_many_events(events, photons, diameter):
+def photons_of_many_events(events, photons, diameter, more_ms=0):
     photons_all_events = pd.concat(
-        [get_photons.crop_event(event, photons, diameter) for event in events.itertuples(index=False)],
+        [get_photons.crop_event(event, photons, diameter, more_ms) for event in events.itertuples(index=False)],
         ignore_index=True) #iterate through the events and return photons
     return photons_all_events
 
