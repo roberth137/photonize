@@ -50,6 +50,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             eve_group, offset, int_time)
+        start_ms_fr = (first.frame/offset)*int_time
+        end_ms_fr = (last.frame/offset + 1)*int_time
 
         event_duration = (1 + ((last.frame - first.frame) / offset))  # * int_time ## start_1st frame to end_last frame
         duration_ms = (end_ms-start_ms)
@@ -69,6 +71,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
                  'start_ms': start_ms,
                  'end_ms': end_ms,
                  'duration_ms': duration_ms,
+                 'start_ms_fr': start_ms_fr,
+                 'end_ms_fr': end_ms_fr,
                  'lpx': peak_event['lpx'],
                  'lpy': peak_event['lpy'],
                  'num_frames': (last['frame']-first['frame'])+1,
@@ -92,6 +96,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
                             'start_ms': 'float32',
                             'end_ms': 'float32',
                             'duration_ms': 'float32',
+                            'start_ms_fr': 'float32',
+                            'end_ms_fr': 'float32',
                             'lpx': 'float32',
                             'lpy': 'float32',
                             'num_frames': 'uint32',

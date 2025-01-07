@@ -3,19 +3,21 @@ matplotlib.use('Qt5Agg')
 import helper
 import get_photons
 
-# Load the photon data when the package is imported
+# Set filenames and parameters
 events_filename = 't/orig58_pf_eventtest.hdf5'
 photons_filename = 't/orig58_index.hdf5'
 drift_filename = 't/orig58_drift.txt'
+diameter = 4
+pick_group = 0
 
+# Loading data to memory
 print("Loading events and photons...")
 events = helper.process_input(events_filename, 'locs')
 photons = helper.process_input(photons_filename, 'photons')
 drift = helper.process_input(drift_filename, 'drift')
 
-# Prepare for photon analysis
-diameter = 4
-group_events = events[events.group == 0]
+# Load photons of events
+group_events = events[events.group == pick_group]
 group_events.reset_index(drop=True, inplace=True)
 
 pick_photons = get_photons.get_pick_photons(group_events,
@@ -38,6 +40,7 @@ __all__ = ["events",
            "all_events_photons",
            "diameter"]
 
+# Make plotting functions available (after making data available, otherwise circular import)
 from .plot_functions import (hist_ms_event,
                              plot_all_dt,
                              scatter_event,
