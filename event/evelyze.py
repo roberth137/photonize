@@ -75,6 +75,7 @@ def events_lt_avg_pos(event_file, photons_file,
     com_py = np.ones(total_events, dtype=np.float32)
     sdx_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
     sdy_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
+    lt_over_phot = np.ones(total_events, dtype=np.float32)
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
 
@@ -176,6 +177,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events['com_px'] = com_px
     events['com_py'] = com_py
     events['lifetime'] = lifetime
+    events['lt_over_phot'] = lifetime/total_photons_lin
     events['tot_phot_cylinder'] = total_photons_lin
     events['x_old'] = x_old
     events['y_old'] = y_old

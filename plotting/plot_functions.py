@@ -13,14 +13,20 @@ def hist_ms_event(i):
                                                 diameter,
                                                 200)
     print(this_event_photons)
-    bin_size = 5
+    bin_size = 10
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
-    smoothed_counts = lee_filter_1d(counts, 3)
+    #smoothed_counts_0 = lee_filter_1d(counts, 5)
+    smoothed_counts_1 = lee_filter_1d(counts, 5)
+    smoothed_counts_2 = lee_filter_1d(counts, 7)
+    smoothed_counts_3 = lee_filter_1d(counts, 11)
     plt.figure(figsize=(8, 6))
-    plt.bar(bins[:-1], counts, width=bin_size)
-    plt.bar(bins[:-1], smoothed_counts, width=bin_size, color='orange', alpha=0.5)
-    start, end, threshold = detect_signal_threshold(smoothed_counts, 0)#
+    #plt.bar(bins[:-1], smoothed_counts_0, width=bin_size, color='red', alpha=0.5)
+    plt.bar(bins[:-1], smoothed_counts_1, width=bin_size, color='blue', alpha=0.5)
+    plt.bar(bins[:-1], smoothed_counts_2, width=bin_size, color='orange', alpha=0.5)
+    #plt.bar(bins[:-1], smoothed_counts_3, width=bin_size, color='magenta', alpha=0.5)
+    #plt.bar(bins[:-1], counts, width=bin_size, color='orange', alpha=0.5)
+    start, end, threshold = detect_signal_threshold(smoothed_counts_1, 0)#
     start_after = (start*bin_size)+bins[0]
     end_after = (end*bin_size)+bins[0]
 

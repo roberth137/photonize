@@ -57,8 +57,8 @@ def get_ms_bounds(locs_event, offset, int_time):
 
 
 
-    start_ms_event = start_ms_first + (1-beg_on_fraction) * int_time
-    end_ms_event = start_ms_last + end_on_fraction * int_time
+    start_ms_event = start_ms_first #+ (1-beg_on_fraction) * int_time
+    end_ms_event = start_ms_last + int_time#end_on_fraction * int_time
     
     return np.floor(start_ms_event), np.ceil(end_ms_event)
 
