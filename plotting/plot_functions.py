@@ -13,20 +13,20 @@ def hist_ms_event(i):
                                                 diameter,
                                                 200)
     print(this_event_photons)
-    bin_size = 10
+    bin_size = 5
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
-    smoothed_counts = gaussian_filter(counts, sigma=1)
+    smoothed_counts = lee_filter_1d(counts, 3)
     plt.figure(figsize=(8, 6))
-    #plt.bar(bins[:-1], counts, width=bin_size)
-    plt.bar(bins[:-1], smoothed_counts, width=bin_size, color='orange', alpha=1)
+    plt.bar(bins[:-1], counts, width=bin_size)
+    plt.bar(bins[:-1], smoothed_counts, width=bin_size, color='orange', alpha=0.5)
     start, end, threshold = detect_signal_threshold(smoothed_counts, 0)#
     start_after = (start*bin_size)+bins[0]
     end_after = (end*bin_size)+bins[0]
 
-    plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
-    plt.plot([], [], ' ', label=f'Start_ms: {this_event.start_ms}, End_ms: {this_event.end_ms}')
-    plt.plot([], [], ' ', label=f'Start_thresh: {start}, End_thresh: {end}')
+    #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
+    #plt.plot([], [], ' ', label=f'Start_ms: {this_event.start_ms}, End_ms: {this_event.end_ms}')
+    #plt.plot([], [], ' ', label=f'Start_thresh: {start}, End_thresh: {end}')
     plt.plot([], [], ' ', label=f'Start_after: {start_after}, End_after: {end_after}')
     plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime}')
     plt.axvline(this_event.start_ms, color='red')
@@ -34,6 +34,7 @@ def hist_ms_event(i):
     plt.axvline(start_after, color='magenta')
     plt.axvline(end_after, color='magenta')
     plt.axhline(threshold, color='blue')
+    plt.axhline(5, color='green')
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")
     # plt.ylabel("Y Position")
@@ -56,6 +57,33 @@ def detect_signal_threshold(data, threshold_factor=2):
 
     return start, end, threshold
 
+
+def lee_filter_1d(data, window_size=5):
+    """
+    Applies the Lee filter to 1D data for noise reduction.
+
+    Parameters:
+        data (numpy.ndarray): 1D array of data to filter.
+        window_size (int): Size of the sliding window (must be odd).
+
+    Returns:
+        numpy.ndarray: Smoothed data after applying the Lee filter.
+    """
+    # Ensure the window size is odd
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be odd.")
+
+    # Calculate the local mean and variance in the sliding window
+    padded_data = np.pad(data, pad_width=window_size // 2, mode='reflect')
+    local_mean = np.convolve(padded_data, np.ones(window_size) / window_size, mode='valid')
+    local_var = np.convolve(padded_data ** 2, np.ones(window_size) / window_size, mode='valid') - local_mean ** 2
+
+    # Estimate the noise variance (assume it's uniform across the data)
+    noise_var = np.mean(local_var)
+
+    # Apply the Lee filter
+    result = local_mean + (local_var / (local_var + noise_var)) * (data - local_mean)
+    return result
 
 def plot_all_dt(all_events_photons):
     bin_size = 10

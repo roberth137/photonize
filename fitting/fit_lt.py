@@ -78,7 +78,7 @@ def avg_lifetime_weighted_40(loc_photons, peak, diameter):
     ap_weight = (0.2+(1-ap_dist/(radius**2)))
     weighted_dt = np.multiply(ap_dt,ap_weight)
     lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
-    return lifetime
+    return lifetime.astype(np.float32)
 
 
 def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
