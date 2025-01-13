@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import get_photons
 import fitting
+from scipy.ndimage import gaussian_filter
 from plotting import group_events, all_events_photons, diameter
 
 def hist_ms_event(i):
@@ -12,12 +13,14 @@ def hist_ms_event(i):
                                                 diameter,
                                                 200)
     print(this_event_photons)
-    bin_size = 5
+    bin_size = 10
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
+    smoothed_counts = gaussian_filter(counts, sigma=1)
     plt.figure(figsize=(8, 6))
-    plt.bar(bins[:-1], counts, width=bin_size)
-    start, end, _ = detect_signal_threshold(counts, 1)#
+    #plt.bar(bins[:-1], counts, width=bin_size)
+    plt.bar(bins[:-1], smoothed_counts, width=bin_size, color='orange', alpha=1)
+    start, end, threshold = detect_signal_threshold(smoothed_counts, 0)#
     start_after = (start*bin_size)+bins[0]
     end_after = (end*bin_size)+bins[0]
 
@@ -30,6 +33,7 @@ def hist_ms_event(i):
     plt.axvline(this_event.end_ms, color='red')
     plt.axvline(start_after, color='magenta')
     plt.axvline(end_after, color='magenta')
+    plt.axhline(threshold, color='blue')
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")
     # plt.ylabel("Y Position")
@@ -42,7 +46,7 @@ def detect_signal_threshold(data, threshold_factor=2):
     # Calculate basic statistics
     mean = np.mean(data)
     std_dev = np.std(data)
-    threshold = mean + threshold_factor * std_dev
+    threshold = 1.5*mean + threshold_factor * std_dev
 
     # Vectorized approach to find the start and end points
     above_threshold = data > threshold
