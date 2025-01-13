@@ -102,7 +102,7 @@ def return_nearby(this_localization, locs_next_frame):
     
     locs_next = locs_next_frame.copy()
     
-    max_distance = (this_localization.lpx+this_localization.lpy)
+    max_distance = 3*(this_localization.lpx+this_localization.lpy)
     
     x_distance = (locs_next['x'].to_numpy() - this_localization.x)
     y_distance = (locs_next['y'].to_numpy() - this_localization.y)

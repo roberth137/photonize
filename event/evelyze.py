@@ -21,7 +21,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     # first localizations to events
     events = create_events.locs_to_events(localizations, offset,
                                   box_side_length=diameter,
-                                  int_time=int_time, filter_single=False)
+                                  int_time=int_time, filter_single=True)
 
     print('connected locs to events. total events: ', len(events))
 
@@ -177,7 +177,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events['com_px'] = com_px
     events['com_py'] = com_py
     events['lifetime'] = lifetime
-    events['lt_over_phot'] = lifetime/total_photons_lin
+    events['lt_over_phot'] = total_photons_lin/lifetime
     events['tot_phot_cylinder'] = total_photons_lin
     events['x_old'] = x_old
     events['y_old'] = y_old
