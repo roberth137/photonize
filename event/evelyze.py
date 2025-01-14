@@ -106,7 +106,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
-                                                                diameter, 100)
+                                                                diameter)
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
         print('__calibrate_peak__')
@@ -124,7 +124,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 100)
+            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
 
             #determine start and end of event
             bin_size = 10
@@ -140,10 +140,10 @@ def events_lt_avg_pos(event_file, photons_file,
             ms_dur = (change_points_trans[1]-change_points_trans[0])*bin_size
             change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
             change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
-            print('bins: ', bins)
-            print('counts: ', counts)
-            print('change points: ', change_points)
-            print('change points trans: ', change_points_trans)
+            #print('bins: ', bins)
+            #print('counts: ', counts)
+            #print('change points: ', change_points)
+            #print('change points trans: ', change_points_trans)
 
             #filter photons according to new bounds
             photons_new_bounds = cylinder_photons[(cylinder_photons.ms > change_points_trans[0])
