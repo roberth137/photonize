@@ -4,7 +4,7 @@ import helper
 import get_photons
 
 # Set filenames and parameters
-events_filename = 't/orig58_pf_eventt1.hdf5'
+events_filename = 't/orig58_pf_eventstart_end.hdf5'
 photons_filename = 't/orig58_index.hdf5'
 drift_filename = 't/orig58_drift.txt'
 diameter = 4

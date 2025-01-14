@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import get_photons
 import fitting
+import ruptures as rpt
 from scipy.ndimage import gaussian_filter
 from plotting import group_events, all_events_photons, diameter
 
@@ -12,31 +13,43 @@ def hist_ms_event(i):
                                                 all_events_photons,
                                                 diameter,
                                                 200)
-    print(this_event_photons)
     bin_size = 10
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
     #smoothed_counts_0 = lee_filter_1d(counts, 5)
     smoothed_counts_1 = lee_filter_1d(counts, 5)
     smoothed_counts_2 = lee_filter_1d(counts, 7)
+    bg = np.sum((smoothed_counts_1[:(int(200/bin_size))])
+                + np.sum(smoothed_counts_1[:-(int(200/bin_size))])/400)
     smoothed_counts_3 = lee_filter_1d(counts, 11)
     plt.figure(figsize=(8, 6))
     #plt.bar(bins[:-1], smoothed_counts_0, width=bin_size, color='red', alpha=0.5)
     plt.bar(bins[:-1], smoothed_counts_1, width=bin_size, color='blue', alpha=0.5)
     plt.bar(bins[:-1], smoothed_counts_2, width=bin_size, color='orange', alpha=0.5)
-    #plt.bar(bins[:-1], smoothed_counts_3, width=bin_size, color='magenta', alpha=0.5)
-    #plt.bar(bins[:-1], counts, width=bin_size, color='orange', alpha=0.5)
-    start, end, threshold = detect_signal_threshold(smoothed_counts_1, 0)#
+
+    # Fit a step function using change point detection
+    model = "l2"  # Least squares cost function
+    algo = rpt.Binseg(model=model).fit(smoothed_counts_1)
+    change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
+
+    change_points_trans = [(x * bin_size + bins[0]) for x in change_points]
+    print('change points raw: ', change_points)
+    print('change points transf: ', change_points_trans)
+
+    start, end, threshold = detect_signal_threshold(smoothed_counts_1, bg, bin_size)#
     start_after = (start*bin_size)+bins[0]
     end_after = (end*bin_size)+bins[0]
 
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
-    #plt.plot([], [], ' ', label=f'Start_ms: {this_event.start_ms}, End_ms: {this_event.end_ms}')
-    #plt.plot([], [], ' ', label=f'Start_thresh: {start}, End_thresh: {end}')
-    plt.plot([], [], ' ', label=f'Start_after: {start_after}, End_after: {end_after}')
+    plt.plot([], [], ' ', label=f'dist_frames:: {this_event.end_ms-this_event.start_ms}')
+    plt.plot([], [], ' ', label=f'dist_thresh: {end_after-start_after}')
+    plt.plot([], [], ' ', label=f'dist_rupt: {change_points_trans[1]-change_points_trans[0]}')
+    plt.plot([], [], ' ', label=f'num_frames: {this_event.num_frames}')
     plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime}')
     plt.axvline(this_event.start_ms, color='red')
     plt.axvline(this_event.end_ms, color='red')
+    plt.axvline(change_points_trans[0], color='green')
+    plt.axvline(change_points_trans[1], color='green')
     plt.axvline(start_after, color='magenta')
     plt.axvline(end_after, color='magenta')
     plt.axhline(threshold, color='blue')
@@ -49,11 +62,10 @@ def hist_ms_event(i):
     plt.show()
 
 
-def detect_signal_threshold(data, threshold_factor=2):
+def detect_signal_threshold(data, bg, bin_size):
     # Calculate basic statistics
-    mean = np.mean(data)
-    std_dev = np.std(data)
-    threshold = 1.5*mean + threshold_factor * std_dev
+    mean = np.mean(data[int((200/bin_size)):-int((200/bin_size))])
+    threshold = mean/2
 
     # Vectorized approach to find the start and end points
     above_threshold = data > threshold
