@@ -17,7 +17,7 @@ def hist_ms_event(i):
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
     #smoothed_counts_0 = lee_filter_1d(counts, 5)
-    smoothed_counts_1 = lee_filter_1d(counts, 5)
+    smoothed_counts_1 = counts # lee_filter_1d(counts, 5)
     smoothed_counts_2 = lee_filter_1d(counts, 7)
     bg = np.sum((smoothed_counts_1[:(int(200/bin_size))])
                 + np.sum(smoothed_counts_1[:-(int(200/bin_size))])/400)
@@ -29,10 +29,11 @@ def hist_ms_event(i):
 
     # Fit a step function using change point detection
     model = "l2"  # Least squares cost function
-    algo = rpt.Binseg(model=model).fit(smoothed_counts_1)
+    algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
     change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-
-    change_points_trans = [(x * bin_size + bins[0]) for x in change_points]
+    change_points_trans = np.array(change_points)
+    change_points_trans[0] = (change_points_trans[0] - 1.5)*bin_size + bins[0]
+    change_points_trans[1] = (change_points_trans[1] + 0.5)*bin_size + bins[0]
     print('change points raw: ', change_points)
     print('change points transf: ', change_points_trans)
 
@@ -41,7 +42,8 @@ def hist_ms_event(i):
     end_after = (end*bin_size)+bins[0]
 
     print(bins)
-    print(len(counts))
+    print('len bins: ', len(bins))
+    print('len counts: ', len(counts))
 
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
     plt.plot([], [], ' ', label=f'dist_frames:: {this_event.end_ms-this_event.start_ms}')
@@ -53,8 +55,8 @@ def hist_ms_event(i):
     plt.axvline(this_event.end_ms, color='red')
     plt.axvline(change_points_trans[0], color='green')
     plt.axvline(change_points_trans[1], color='green')
-    plt.axvline(start_after, color='magenta')
-    plt.axvline(end_after, color='magenta')
+    #plt.axvline(start_after, color='magenta')
+    #plt.axvline(end_after, color='magenta')
     plt.axhline(threshold, color='blue')
     #plt.axhline(5, color='green')
     plt.title("Histogram of ms")

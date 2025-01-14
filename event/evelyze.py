@@ -104,7 +104,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
-                                                                diameter)
+                                                                diameter, 100)
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
         print('__calibrate_peak__')
@@ -122,7 +122,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
+            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 100)
 
             #determine start and end of event
             bin_size = 10
@@ -130,11 +130,18 @@ def events_lt_avg_pos(event_file, photons_file,
             counts, _ = np.histogram(cylinder_photons, bins=bins)
             smoothed_counts_1 = lee_filter_1d(counts, 5)
             model = "l2"  # Least squares cost function
-            algo = rpt.Binseg(model=model).fit(smoothed_counts_1)
+            algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
             change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-            change_points[0] = change_points[0] # better to be more generous than to miss
-            change_points[1] = change_points[1]
-            change_points_trans = [(x * bin_size + bins[0]) for x in change_points]
+            #change_points[0] = change_points[0] # better to be more generous than to miss
+            #change_points[1] = change_points[1]
+            change_points_trans = np.array(change_points)
+            duration_ms_new[i] = (change_points_trans[1]-change_points_trans[0])*int_time
+            change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
+            change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
+            print('bins: ', bins)
+            print('counts: ', counts)
+            print('change points: ', change_points)
+            print('change points trans: ', change_points_trans)
 
             #filter photons according to new bounds
             photons_new_bounds = cylinder_photons[(cylinder_photons.ms > change_points_trans[0])
@@ -181,7 +188,6 @@ def events_lt_avg_pos(event_file, photons_file,
             total_photons_lin[i] = total_photons
             start_ms_new[i] = change_points_trans[0]
             end_ms_new[i] = change_points_trans[1]
-            duration_ms_new[i] = (change_points_trans[1] - change_points_trans[0])
 
         counter += len(events_group)
 
