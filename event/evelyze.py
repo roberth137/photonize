@@ -4,6 +4,7 @@ import helper
 from event import create_events
 import fitting
 import get_photons
+import ruptures as rpt
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    diameter, int_time, suffix=''):
@@ -75,7 +76,7 @@ def events_lt_avg_pos(event_file, photons_file,
     com_py = np.ones(total_events, dtype=np.float32)
     sdx_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
     sdy_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
-    lt_over_phot = np.ones(total_events, dtype=np.float32)
+    duration_ms_new = np.ones(total_events, dtype=np.float32)
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
 
@@ -123,12 +124,26 @@ def events_lt_avg_pos(event_file, photons_file,
 
             cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
 
-            #column_names = list(cylinder_photons.columns)
-            #print(column_names)
+            #determine start and end of event
+            bin_size = 10
+            bins = np.arange(min(cylinder_photons.ms), max(cylinder_photons.ms) + bin_size, bin_size)
+            counts, _ = np.histogram(cylinder_photons, bins=bins)
+            smoothed_counts_1 = lee_filter_1d(counts, 5)
+            model = "l2"  # Least squares cost function
+            algo = rpt.Binseg(model=model).fit(smoothed_counts_1)
+            change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
+            change_points[0] = change_points[0] # better to be more generous than to miss
+            change_points[1] = change_points[1]
+            change_points_trans = [(x * bin_size + bins[0]) for x in change_points]
+
+            #filter photons according to new bounds
+            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > change_points_trans[0])
+            &(cylinder_photons.ms < change_points_trans[1])]
+
             bg_total = my_event.bg * (diameter / 2) * np.pi
             total_photons = len(cylinder_photons)
             signal_photons = total_photons - bg_total
-            phot_event = pd.DataFrame(data=cylinder_photons)
+            phot_event = pd.DataFrame(data=photons_new_bounds)
             if i == 0:
                 print('FIRST fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
@@ -164,6 +179,10 @@ def events_lt_avg_pos(event_file, photons_file,
             com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
             com_py[i] = fitting.localization_precision(signal_photons, sd_y_bg, my_event.bg)
             total_photons_lin[i] = total_photons
+            start_ms_new[i] = change_points_trans[0]
+            end_ms_new[i] = change_points_trans[1]
+            duration_ms_new[i] = (change_points_trans[1] - change_points_trans[0])
+
         counter += len(events_group)
 
     events['x'] = x_position
@@ -172,6 +191,9 @@ def events_lt_avg_pos(event_file, photons_file,
     events['lpy'] = sdy_sqrtn_w_bg
     events['sdx'] = s_dev_x_w_bg
     events['sdy'] = s_dev_y_w_bg
+    events['s_ms_new'] = start_ms_new
+    events['e_ms_new'] = end_ms_new
+    events['dur_ms_new'] = duration_ms_new
     events['old_lpx'] = lpx_old
     events['old_lpy'] = lpy_old
     events['com_px'] = com_px
@@ -189,3 +211,33 @@ def events_lt_avg_pos(event_file, photons_file,
     print('___________________FINISHED_____________________')
     print('\n', len(events), 'events tagged with lifetime and'
                        ' fitted with avg x,y position.')
+
+
+
+
+def lee_filter_1d(data, window_size=5):
+    """
+    Applies the Lee filter to 1D data for noise reduction.
+
+    Parameters:
+        data (numpy.ndarray): 1D array of data to filter.
+        window_size (int): Size of the sliding window (must be odd).
+
+    Returns:
+        numpy.ndarray: Smoothed data after applying the Lee filter.
+    """
+    # Ensure the window size is odd
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be odd.")
+
+    # Calculate the local mean and variance in the sliding window
+    padded_data = np.pad(data, pad_width=window_size // 2, mode='reflect')
+    local_mean = np.convolve(padded_data, np.ones(window_size) / window_size, mode='valid')
+    local_var = np.convolve(padded_data ** 2, np.ones(window_size) / window_size, mode='valid') - local_mean ** 2
+
+    # Estimate the noise variance (assume it's uniform across the data)
+    noise_var = np.mean(local_var)
+
+    # Apply the Lee filter
+    result = local_mean + (local_var / (local_var + noise_var)) * (data - local_mean)
+    return result

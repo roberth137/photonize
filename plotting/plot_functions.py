@@ -40,6 +40,9 @@ def hist_ms_event(i):
     start_after = (start*bin_size)+bins[0]
     end_after = (end*bin_size)+bins[0]
 
+    print(bins)
+    print(len(counts))
+
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
     plt.plot([], [], ' ', label=f'dist_frames:: {this_event.end_ms-this_event.start_ms}')
     plt.plot([], [], ' ', label=f'dist_thresh: {end_after-start_after}')
@@ -53,10 +56,9 @@ def hist_ms_event(i):
     plt.axvline(start_after, color='magenta')
     plt.axvline(end_after, color='magenta')
     plt.axhline(threshold, color='blue')
-    plt.axhline(5, color='green')
+    #plt.axhline(5, color='green')
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")
-    # plt.ylabel("Y Position")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')  # Adjust the legend position if needed
     plt.show()
