@@ -137,7 +137,7 @@ def events_lt_avg_pos(event_file, photons_file,
             #change_points[0] = change_points[0] # better to be more generous than to miss
             #change_points[1] = change_points[1]
             change_points_trans = np.array(change_points)
-            ms_dur = (change_points_trans[1]-change_points_trans[0])*int_time
+            ms_dur = (change_points_trans[1]-change_points_trans[0])*bin_size
             change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
             change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
             print('bins: ', bins)
