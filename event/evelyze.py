@@ -79,6 +79,8 @@ def events_lt_avg_pos(event_file, photons_file,
     duration_ms_new = np.ones(total_events, dtype=np.float32)
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
+    brightness = np.ones(total_events, dtype=np.float32)
+
 
 
     counter = 0
@@ -135,7 +137,7 @@ def events_lt_avg_pos(event_file, photons_file,
             #change_points[0] = change_points[0] # better to be more generous than to miss
             #change_points[1] = change_points[1]
             change_points_trans = np.array(change_points)
-            duration_ms_new[i] = (change_points_trans[1]-change_points_trans[0])*int_time
+            ms_dur = (change_points_trans[1]-change_points_trans[0])*int_time
             change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
             change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
             print('bins: ', bins)
@@ -188,6 +190,8 @@ def events_lt_avg_pos(event_file, photons_file,
             total_photons_lin[i] = total_photons
             start_ms_new[i] = change_points_trans[0]
             end_ms_new[i] = change_points_trans[1]
+            duration_ms_new[i] = ms_dur
+            brightness[i] = total_photons/ms_dur
 
         counter += len(events_group)
 
@@ -204,6 +208,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events['old_lpy'] = lpy_old
     events['com_px'] = com_px
     events['com_py'] = com_py
+    events['brightness'] = brightness
     events['lifetime'] = lifetime
     events['lt_over_phot'] = total_photons_lin/lifetime
     events['tot_phot_cylinder'] = total_photons_lin
