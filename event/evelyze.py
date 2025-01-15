@@ -107,7 +107,7 @@ def events_lt_avg_pos(event_file, photons_file,
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
                                                                 diameter)
-        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+        all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
         print('__calibrate_peak__')
         peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
