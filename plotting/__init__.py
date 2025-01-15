@@ -4,9 +4,9 @@ import helper
 import get_photons
 
 # Set filenames and parameters
-events_filename = 't/orig58_pf_eventstart_end.hdf5'
-photons_filename = 't/orig58_index.hdf5'
-drift_filename = 't/orig58_drift.txt'
+events_filename = 't/NUPS_pf_more_F20_event.hdf5'
+photons_filename = 't/NUP20k_index.hdf5'
+drift_filename = 't/drift_20k.txt'
 diameter = 4
 pick_group = 0
 
@@ -29,7 +29,7 @@ pick_photons = get_photons.get_pick_photons(group_events,
 all_events_photons = get_photons.photons_of_many_events(group_events,
                                                         pick_photons,
                                                         diameter,
-                                                        200)
+                                                        400)
 
 # Make loaded data available throughout the package
 __all__ = ["events",

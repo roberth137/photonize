@@ -81,7 +81,8 @@ def events_lt_avg_pos(event_file, photons_file,
     end_ms_new = np.ones(total_events, dtype=np.float32)
     brightness = np.ones(total_events, dtype=np.float32)
 
-
+    peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
+    start_dt = peak_arrival_time-0
 
     counter = 0
 
@@ -106,12 +107,13 @@ def events_lt_avg_pos(event_file, photons_file,
 
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
-                                                                diameter)
-        all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+                                                                diameter, 300)
+        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
         print('__calibrate_peak__')
-        peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
-        print('peak arrival time is: ', peak_arrival_time, '_________________')
+        #peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
+        print('peak arrival time: ', peak_arrival_time, '_________________')
+        print('start time: ', start_dt, '_________________')
         print('_______________________________________________________')
 
         # iterating over every event in pick
@@ -124,7 +126,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter)
+            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 300)
 
             #determine start and end of event
             bin_size = 10
@@ -176,7 +178,7 @@ def events_lt_avg_pos(event_file, photons_file,
             phot_event['distance'] = dist_2
 
             lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
-                                                          peak_arrival_time,
+                                                          start_dt,
                                                           diameter)
 
             x_position[i] = x_t

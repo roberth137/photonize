@@ -12,7 +12,7 @@ def hist_ms_event(i):
     this_event_photons = get_photons.crop_event(this_event,
                                                 all_events_photons,
                                                 diameter,
-                                                200)
+                                                400)
     bin_size = 10
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
