@@ -1,3 +1,7 @@
+# This is a file for preparing fluorescent decay data for ML applications
+# Every decay gets histogrammed and this histogram values saved in a hdf5
+# with the corresponding label
+
 import pandas as pd
 import numpy as np
 import helper
@@ -7,10 +11,12 @@ import fitting
 input_events = '/Users/roberthollmann/Desktop/resi-flim/t/c3.hdf5'
 input_photons = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
 drift_file = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
-fluorophore = 'Cy3'
+fluorophore = 'CY3'
 offset = 10
 diameter = 4.5
 int_time = 200
+
+output_filename = f'{fluorophore}_histogram_all.hdf5'
 
 events = helper.process_input(input_events, 'locs')
 photons = helper.process_input(input_photons, 'photons')
@@ -19,11 +25,11 @@ drift = helper.process_input(drift_file, 'drift')
 peak_arrival_time = fitting.calibrate_peak_events(photons[:1000000])
 max_dt = max(photons[:1000000].dt)
 
+events = events.iloc[::2]
 # Parameters
 bin_size = 20  # Bin size for histogramming (in the same units as dt)
 bins = np.arange(peak_arrival_time, max_dt, bin_size)
 
-output_file = "histogram_data.csv"
 
 histograms = pd.DataFrame()
 
@@ -52,9 +58,11 @@ for group in events['group'].unique():
 
         histograms = pd.concat([histograms, hist_df], axis=0, ignore_index=True)
 
-    histograms['label'] = fluorophore
+    histograms['777'] = fluorophore
 
-    print(histograms.head())
+print(histograms.head())
+
+histograms.to_hdf(output_filename, key='hist', mode='w')
 
 
 
