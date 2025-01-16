@@ -9,7 +9,8 @@ from .boundaries import (min_max_box,
                          spatial_boundaries,
                          loc_boundaries,
                          crop_event,
-                         crop_cylinder,
-                         crop_photons)
+                         crop_loc,
+                         crop_photons,
+                         crop_cylinder)
 
 from .undrift import undrift_photons

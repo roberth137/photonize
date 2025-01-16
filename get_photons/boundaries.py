@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+from random_forest.prep_data import diameter
+
+
 def min_max_box(localizations, box_side_length=0):
     '''
     Returns x, y, boundaries + box
@@ -91,9 +94,56 @@ def crop_event(event, photons, diameter, more_ms=0):
 
     return photons_cylinder
 
+def crop_cylinder(x_pos, y_pos, ms_min, ms_max, diameter, photons, more_ms=0):
+    '''
+    Parameters
+    ----------
+    x_pos :
+    y_pos :
+    ms_min : start millisecond
+    ms_max : end millisecond
+    diameter : diameter of ROI
+    photons : photons to be cropped from
+    more_ms : additional photons before and after cylinder
 
-def crop_cylinder(localization, photons, offset,
-                  box_side_length, integration_time):
+    Returns
+    -------
+    photons_cylinder : All photons from the current frame closer than
+    diameter/2 to the position
+    '''
+
+    x_min = x_pos - (diameter/2)
+    x_max = x_pos + (diameter/2)
+    y_min = y_pos - (diameter/2)
+    y_max = y_pos + (diameter/2)
+
+    photons_cropped = pd.DataFrame(data=crop_photons(
+        photons,
+        x_min, x_max,
+        y_min, y_max,
+        (ms_min-more_ms),
+        (ms_max+more_ms)))
+
+    x_distance = (photons_cropped['x'].to_numpy() - x_pos)
+    y_distance = (photons_cropped['y'].to_numpy() - y_pos)
+
+    total_distance_sq = np.square(x_distance) + np.square(y_distance)
+    photons_cropped['distance'] = total_distance_sq
+
+    radius_sq = ((diameter/2) ** 2)
+    photons_cylinder = photons_cropped[
+        photons_cropped.distance < radius_sq]
+
+    if len(photons_cylinder) < 30:
+        print('\nlow photon count for crop_event: ')
+        print('len(pick_photons) : ', len(photons_cylinder))
+        #print('\nthis is the event: \n', event)
+
+    return photons_cylinder
+
+
+def crop_loc(localization, photons, offset,
+             box_side_length, integration_time):
     '''
     Parameters
     ----------

@@ -84,8 +84,8 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                              ' localizations in this group.')
 
             one_loc = locs_group.iloc[i - counter_locs]
-            cylinder_photons = get_photons.crop_cylinder(one_loc, all_events_photons, offset,
-            box_side_length, int_time)
+            cylinder_photons = get_photons.crop_loc(one_loc, all_events_photons, offset,
+                                                    box_side_length, int_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
             bg_total = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
@@ -200,8 +200,8 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                              ' localizations.')
 
             one_loc = locs_group.iloc[i - counter]
-            cylinder_photons = get_photons.crop_cylinder(one_loc, pick_photons, offset,
-            box_side_length, integration_time)
+            cylinder_photons = get_photons.crop_loc(one_loc, pick_photons, offset,
+                                                    box_side_length, integration_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
             total_photons = len(phot_loc)
 
@@ -303,8 +303,8 @@ def locs_lt_40(localizations_file, photons_file,
                              ' localizations.')
 
             one_loc = locs_group.iloc[i - counter]
-            cylinder_photons = get_photons.crop_cylinder(one_loc, pick_photons, offset,
-            box_side_length, integration_time)
+            cylinder_photons = get_photons.crop_loc(one_loc, pick_photons, offset,
+                                                    box_side_length, integration_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
             if i % 200 == 0: print('200 fitted. Number of photons',
