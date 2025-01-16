@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from random_forest.prep_data import diameter
-
-
 def min_max_box(localizations, box_side_length=0):
     '''
     Returns x, y, boundaries + box
