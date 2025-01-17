@@ -36,8 +36,6 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
     # Tag localizations with event number and group them
     localizations_eve = tag_events.connect_locs(localizations, filter_single=filter_single)
     grouped = localizations_eve.groupby('event')
-
-
     events = pd.DataFrame()
     
     for event, eve_group in grouped:
@@ -47,7 +45,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         first = eve_group.iloc[0]
         last = eve_group.iloc[-1]
         
-        peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
+        peak_loc = eve_group.iloc[eve_group['photons'].idxmax()]
         start_ms, end_ms = event_bounds.get_ms_bounds(
             eve_group, offset, int_time)
         start_ms_fr = (first.frame/offset)*int_time
@@ -57,32 +55,32 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         duration_ms = (end_ms-start_ms)
         measured_frames = len(eve_group)  # * int_time
         overlap = measured_frames / event_duration
-        total_photons_estimate = eve_group['total_photons'].sum() / overlap
+        #total_photons_estimate = eve_group['total_photons'].sum() / overlap
 
-        average_bg = eve_group['bg'].mean()
-        bg = average_bg * duration_ms / (int_time*2) # cutting the bg in half seems to give better results
+        #average_bg = eve_group['bg'].mean()
+        #bg = average_bg * duration_ms / (int_time*2) # cutting the bg in half seems to give better results
 
-        event_data = {'frame': peak_event['frame'],
+        event_data = {'frame': peak_loc['frame'],
                  'event': first['event'], 
                  'x': avg_photon_weighted(eve_group, 'x'),
                  'y': avg_photon_weighted(eve_group, 'y'),
-                 'photons': peak_event['photons'],
-                 'total_photons': total_photons_estimate,
-                 'start_ms': start_ms,
-                 'end_ms': end_ms,
-                 'duration_ms': duration_ms,
+                 'photons': peak_loc['photons'],
+                 #'total_photons': total_photons_estimate,
+                 #'start_ms': start_ms,
+                 #'end_ms': end_ms,
+                 #'duration_ms': duration_ms,
                  'start_ms_fr': start_ms_fr,
                  'end_ms_fr': end_ms_fr,
-                 'lpx': peak_event['lpx'],
-                 'lpy': peak_event['lpy'],
+                 'lpx': peak_loc['lpx'],
+                 'lpy': peak_loc['lpy'],
                  'num_frames': (last['frame']-first['frame'])+1,
                  'start_frame': first['frame'],
                  'end_frame': last['frame'],
-                 'bg': bg,
-                 'sx': avg_photon_weighted(eve_group, 'sx'),
-                 'sy': avg_photon_weighted(eve_group, 'sy'),
-                 'net_gradient': avg_photon_weighted(eve_group, 'net_gradient'),
-                 'ellipticity': avg_photon_weighted(eve_group, 'ellipticity'),
+                 'bg': peak_loc['bg'],
+                 'sx': peak_loc['bg'],
+                 'sy': peak_loc['bg'],
+                 'net_gradient': peak_loc['net_gradient'],
+                 'ellipticity': peak_loc['ellipticity'],
                  'group': first['group']
                  }
         event = pd.DataFrame(event_data, index=[0])
@@ -92,10 +90,10 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
                             'x': 'float32',
                             'y': 'float32',
                             'photons': 'float32',
-                            'total_photons': 'float32',
-                            'start_ms': 'float32',
-                            'end_ms': 'float32',
-                            'duration_ms': 'float32',
+                            #'total_photons': 'float32',
+                            #'start_ms': 'float32',
+                            #'end_ms': 'float32',
+                            #'duration_ms': 'float32',
                             'start_ms_fr': 'float32',
                             'end_ms_fr': 'float32',
                             'lpx': 'float32',

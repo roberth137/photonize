@@ -61,21 +61,21 @@ def events_lt_avg_pos(event_file, photons_file,
     print('starting events_lt_avg_pos function.')
     drift = helper.process_input(drift_file, dataset='drift')
 
-    x_old = np.copy(events['x'])
-    y_old = np.copy(events['y'])
-    lpx_old = np.copy(events['lpx'])
-    lpy_old = np.copy(events['lpy'])
+    #x_old = np.copy(events['x'])
+    #y_old = np.copy(events['y'])
+    #lpx_old = np.copy(events['lpx'])
+    #lpy_old = np.copy(events['lpy'])
 
     lifetime = np.ones(total_events, dtype=np.float32)
     total_photons_lin = np.ones(total_events, dtype=np.float32)
     x_position = np.ones(total_events, dtype=np.float32)
     y_position = np.ones(total_events, dtype=np.float32)
-    s_dev_x_w_bg = np.ones(total_events, dtype=np.float32)
-    s_dev_y_w_bg = np.ones(total_events, dtype=np.float32)
-    com_px = np.ones(total_events, dtype=np.float32)
-    com_py = np.ones(total_events, dtype=np.float32)
-    sdx_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
-    sdy_sqrtn_w_bg = np.ones(total_events, dtype=np.float32)
+    sdx = np.ones(total_events, dtype=np.float32)
+    sdy = np.ones(total_events, dtype=np.float32)
+    #com_px = np.ones(total_events, dtype=np.float32)
+    #com_py = np.ones(total_events, dtype=np.float32)
+    sdx_n = np.ones(total_events, dtype=np.float32)
+    sdy_n = np.ones(total_events, dtype=np.float32)
     duration_ms_new = np.ones(total_events, dtype=np.float32)
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
@@ -89,7 +89,7 @@ def events_lt_avg_pos(event_file, photons_file,
     # iterating over every pick in file
     for g in set(events['group']):
         print('\n____________NEW GROUP________________')
-        print(set(events['group']), '\n')
+        #print(set(events['group']), '\n')
         print('this is group: ', g)
 
         events_group = events[(events.group == g)]
@@ -100,10 +100,10 @@ def events_lt_avg_pos(event_file, photons_file,
                                         box_side_length=diameter,
                                         int_time=int_time)
         print('number of picked photons: ', len(pick_photons), '\n')
-        print('picked area:   x - ', min(pick_photons['x']),
-              max(pick_photons['x']))
-        print('picked area:   y - ', min(pick_photons['y']),
-              max(pick_photons['y']))
+        #print('picked area:   x - ', min(pick_photons['x']),
+        #      max(pick_photons['x']))
+        #print('picked area:   y - ', min(pick_photons['y']),
+        #      max(pick_photons['y']))
 
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
@@ -173,12 +173,12 @@ def events_lt_avg_pos(event_file, photons_file,
 
             x_position[i] = x_t
             y_position[i] = y_t
-            s_dev_x_w_bg[i] = sd_x_bg
-            s_dev_y_w_bg[i] = sd_y_bg
-            sdx_sqrtn_w_bg[i] = sd_x_bg/np.sqrt(total_photons)
-            sdy_sqrtn_w_bg[i] = sd_y_bg/np.sqrt(total_photons)
-            com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
-            com_py[i] = fitting.localization_precision(signal_photons, sd_y_bg, my_event.bg)
+            sdx[i] = sd_x_bg
+            sdy[i] = sd_y_bg
+            sdx_n[i] = sd_x_bg/np.sqrt(total_photons)
+            sdy_n[i] = sd_y_bg/np.sqrt(total_photons)
+            #com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
+            #com_py[i] = fitting.localization_precision(signal_photons, sd_y_bg, my_event.bg)
             total_photons_lin[i] = total_photons
             start_ms_new[i] = change_points_trans[0]
             end_ms_new[i] = change_points_trans[1]
@@ -189,17 +189,17 @@ def events_lt_avg_pos(event_file, photons_file,
 
     events['x'] = x_position
     events['y'] = y_position
-    events['lpx'] = sdx_sqrtn_w_bg
-    events['lpy'] = sdy_sqrtn_w_bg
-    events['sdx'] = s_dev_x_w_bg
-    events['sdy'] = s_dev_y_w_bg
+    events['lpx'] = sdx_n
+    events['lpy'] = sdy_n
+    events['sdx'] = sdx
+    events['sdy'] = sdy
     events['s_ms_new'] = start_ms_new
     events['e_ms_new'] = end_ms_new
     events['dur_ms_new'] = duration_ms_new
-    events['old_lpx'] = lpx_old
-    events['old_lpy'] = lpy_old
-    events['com_px'] = com_px
-    events['com_py'] = com_py
+    #events['old_lpx'] = lpx_old
+    #events['old_lpy'] = lpy_old
+    #events['com_px'] = com_px
+    #events['com_py'] = com_py
     events['brightness'] = brightness
     events['lifetime'] = lifetime
     events['lt_over_phot'] = total_photons_lin/lifetime

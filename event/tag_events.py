@@ -86,7 +86,6 @@ def connect_locs_to_picasso(localizations_file, box_side_length=5):
     
 def return_nearby(this_localization, locs_next_frame):
     """
-
     Parameters
     ----------
     this_localization : one localization
@@ -95,32 +94,22 @@ def return_nearby(this_localization, locs_next_frame):
     Returns
     -------
     If the localization has a successor in the next frame
-
     """
     
     has_next = False
-    
     locs_next = locs_next_frame.copy()
-    
     max_distance = 3*(this_localization.lpx+this_localization.lpy)
     
     x_distance = (locs_next['x'].to_numpy() - this_localization.x)
     y_distance = (locs_next['y'].to_numpy() - this_localization.y)
-    
     total_distance_sq = np.square(x_distance) + np.square(y_distance)
 
     locs_next['distance'] = total_distance_sq
-    
     radius_sq = max_distance**2
-    
-    #print('max_distance:', radius_sq)
-    #print(locs_next.distance)
-    
+
     adjacent = locs_next[
         locs_next.distance < radius_sq]
-    
-    
-    
+
     if len(adjacent) == 1:
         #print('similar loc in next frame.')
         has_next = True
