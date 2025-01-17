@@ -7,7 +7,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.ndimage import gaussian_filter
 
 import plotting
-from plotting import group_events, all_events_photons, diameter
+from plotting import group_events, all_events_photons, diameter, peak_arrival_time
+
 
 def hist_ms_event(i):
     this_event = group_events.iloc[i]
@@ -71,7 +72,7 @@ def hist_noise_dt_event(i):
         | ((this_event_photons['ms'] >= bounds_second[0])
         & (this_event_photons['ms'] <= bounds_second[1]))
     ]
-
+    bg_lt = np.mean(filtered_photons.dt)-peak_arrival_time
     bin_size = 5
     bins = np.arange(min(this_event_photons.dt), max(this_event_photons.dt) + bin_size, bin_size)
 
@@ -79,7 +80,9 @@ def hist_noise_dt_event(i):
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.hist(this_event_photons['dt'], bins=bins, alpha=0.5, color='orange', label="All photons")
     ax.hist(filtered_photons['dt'], bins=bins, alpha=1, color='blue', label="Filtered photons")
-    ax.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
+    ax.plot([], [], ' ', label=f'Event photons: {len(this_event_photons)-len(filtered_photons)}')
+    ax.plot([], [], ' ', label=f'Bg photons: {len(filtered_photons)}')
+    ax.plot([], [], ' ', label=f'Eve_lt: {this_event.lifetime}, BG_lt: {bg_lt}')
     ax.axvline(plotting.peak_arrival_time, color='red', label="Peak arrival time")
     ax.set_title("Histogram of dt values")
     ax.set_xlabel("arrival time")
@@ -162,7 +165,7 @@ def scatter_event(i):
 
     prev_x = this_event.x
     prev_y = this_event.y
-    new_x, new_y = fitting.event_position_w_bg(this_event, this_event_photons, diameter, False)
+    new_x, new_y = fitting.event_position(this_event, this_event_photons, diameter, False)
     plt.figure(figsize=(8, 8))
     scatter = plt.scatter(this_event_photons['x'],
                           this_event_photons['y'],

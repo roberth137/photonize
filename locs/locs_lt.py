@@ -94,9 +94,9 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
             if i % 200 == 0: print('200 locs fitted. Number of photons',
                                    ' in last fit: ', len(phot_loc))
 
-            x, y , sd_x, sd_y = fitting.avg_of_roi(one_loc, one_loc.bg,
-                                                   phot_loc, box_side_length,
-                                                   return_sd=True)
+            x, y , sd_x, sd_y = fitting.avg_of_roi_cons_bg(one_loc, one_loc.bg,
+                                                           phot_loc, box_side_length,
+                                                           return_sd=True)
 
             x_position[i] = x
             y_position[i] = y
@@ -213,7 +213,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
             if i % 200 == 0: print('200 fitted. Number of photons',
                                    ' in last fit: ', len(phot_loc))
 
-            x, y , sd_x, sd_y = fitting.avg_of_roi_w_bg(one_loc, one_loc.bg,
+            x, y , sd_x, sd_y = fitting.avg_of_roi(one_loc, one_loc.bg,
                                                    phot_loc, box_side_length,
                                                    return_sd=True)
 

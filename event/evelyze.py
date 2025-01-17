@@ -110,8 +110,6 @@ def events_lt_avg_pos(event_file, photons_file,
                                                                 diameter, 300)
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
 
-        print('__calibrate_peak__')
-        #peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
         print('peak arrival time: ', peak_arrival_time, '_________________')
         print('start time: ', start_dt, '_________________')
         print('_______________________________________________________')
@@ -136,16 +134,10 @@ def events_lt_avg_pos(event_file, photons_file,
             model = "l2"  # Least squares cost function
             algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
             change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-            #change_points[0] = change_points[0] # better to be more generous than to miss
-            #change_points[1] = change_points[1]
             change_points_trans = np.array(change_points)
             ms_dur = (change_points_trans[1]-change_points_trans[0])*bin_size
             change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
             change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
-            #print('bins: ', bins)
-            #print('counts: ', counts)
-            #print('change points: ', change_points)
-            #print('change points trans: ', change_points_trans)
 
             #filter photons according to new bounds
             photons_new_bounds = cylinder_photons[(cylinder_photons.ms > change_points_trans[0])
@@ -161,13 +153,11 @@ def events_lt_avg_pos(event_file, photons_file,
             elif i % 200 == 0:
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
-            #lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
-            #                                               peak_arrival_time, diameter)
 
-            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position_w_bg(my_event,
-                                                                 phot_event,
-                                                                 diameter,
-                                                                 return_sd=True)
+            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position(my_event,
+                                                                phot_event,
+                                                                diameter,
+                                                                return_sd=True)
 
             #calculate photon distances from new center for better lifetime determination:
             phot_x = np.copy(phot_event.x)
@@ -214,9 +204,9 @@ def events_lt_avg_pos(event_file, photons_file,
     events['lifetime'] = lifetime
     events['lt_over_phot'] = total_photons_lin/lifetime
     events['tot_phot_cylinder'] = total_photons_lin
-    events['x_old'] = x_old
-    events['y_old'] = y_old
-    events['delta_x'] = (events['x_old'] - events['x'])
+    #events['x_old'] = x_old
+    #events['y_old'] = y_old
+    #events['delta_x'] = (events['x_old'] - events['x'])
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
