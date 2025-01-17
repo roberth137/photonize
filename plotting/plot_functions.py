@@ -4,6 +4,8 @@ import get_photons
 import fitting
 import ruptures as rpt
 from scipy.ndimage import gaussian_filter
+
+import plotting
 from plotting import group_events, all_events_photons, diameter
 
 def hist_ms_event(i):
@@ -16,20 +18,15 @@ def hist_ms_event(i):
     bin_size = 10
     bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
     counts, _ = np.histogram(this_event_photons, bins=bins)
-    #smoothed_counts_0 = lee_filter_1d(counts, 5)
-    smoothed_counts_1 = counts # lee_filter_1d(counts, 5)
-    smoothed_counts_2 = lee_filter_1d(counts, 7)
-    bg = np.sum((smoothed_counts_1[:(int(200/bin_size))])
-                + np.sum(smoothed_counts_1[:-(int(200/bin_size))])/400)
-    smoothed_counts_3 = lee_filter_1d(counts, 11)
+    smoothed_counts_2 = lee_filter_1d(counts, 5)
     plt.figure(figsize=(8, 6))
     #plt.bar(bins[:-1], smoothed_counts_0, width=bin_size, color='red', alpha=0.5)
-    plt.bar(bins[:-1], smoothed_counts_1, width=bin_size, color='blue', alpha=0.5)
+    plt.bar(bins[:-1], counts, width=bin_size, color='blue', alpha=0.5)
     plt.bar(bins[:-1], smoothed_counts_2, width=bin_size, color='orange', alpha=0.5)
 
     # Fit a step function using change point detection
     model = "l2"  # Least squares cost function
-    algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
+    algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_2)
     change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
     change_points_trans = np.array(change_points)
     change_points_trans[0] = (change_points_trans[0] - 1.5)*bin_size + bins[0]
@@ -37,17 +34,12 @@ def hist_ms_event(i):
     print('change points raw: ', change_points)
     print('change points transf: ', change_points_trans)
 
-    start, end, threshold = detect_signal_threshold(smoothed_counts_1, bg, bin_size)#
-    start_after = (start*bin_size)+bins[0]
-    end_after = (end*bin_size)+bins[0]
-
-    print(bins)
-    print('len bins: ', len(bins))
-    print('len counts: ', len(counts))
+    #print(bins)
+    #print('len bins: ', len(bins))
+    #print('len counts: ', len(counts))
 
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
     plt.plot([], [], ' ', label=f'dist_frames:: {this_event.end_ms-this_event.start_ms}')
-    plt.plot([], [], ' ', label=f'dist_thresh: {end_after-start_after}')
     plt.plot([], [], ' ', label=f'dist_rupt: {change_points_trans[1]-change_points_trans[0]}')
     plt.plot([], [], ' ', label=f'num_frames: {this_event.num_frames}')
     plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime}')
@@ -55,12 +47,39 @@ def hist_ms_event(i):
     plt.axvline(this_event.end_ms, color='red')
     plt.axvline(change_points_trans[0], color='green')
     plt.axvline(change_points_trans[1], color='green')
-    #plt.axvline(start_after, color='magenta')
-    #plt.axvline(end_after, color='magenta')
-    plt.axhline(threshold, color='blue')
-    #plt.axhline(5, color='green')
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.legend(loc='upper left')  # Adjust the legend position if needed
+    plt.show()
+
+def hist_noise_dt_event(i):
+    this_event = group_events.iloc[i]
+
+    more_ms = 400
+    this_event_photons = get_photons.crop_event(this_event,
+                                                all_events_photons,
+                                                diameter,
+                                                more_ms)
+    bounds_first = [(this_event.start_ms_fr - more_ms), this_event.s_ms_new]
+    bounds_second = [this_event.e_ms_new, (this_event.end_ms_fr + more_ms)]
+
+    filtered_photons = this_event_photons[
+        ((this_event_photons['ms'] >= bounds_first[0])
+        & (this_event_photons['ms'] <= bounds_first[1]))
+        |((this_event_photons['ms'] >= bounds_second[0])
+        & (this_event_photons['ms'] <= bounds_second[1]))
+        ]
+
+    bin_size = 5
+    bins = np.arange(min(this_event_photons.dt), max(this_event_photons.dt) + bin_size, bin_size)
+    plt.figure(figsize=(8, 6))
+    plt.hist(this_event_photons['dt'], bins=bins, alpha=0.5, color='orange')
+    plt.hist(filtered_photons['dt'], bins=bins, alpha=1, color='blue')
+    plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
+    plt.axvline(plotting.peak_arrival_time, color='red')
+    plt.title("Histogram of dt values")
+    plt.xlabel("arrival time ")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')  # Adjust the legend position if needed
     plt.show()
@@ -113,6 +132,7 @@ def plot_all_dt(all_events_photons):
     plt.figure(figsize=(8, 6))
     plt.hist(all_events_photons['dt'], bins=bins)
     plt.plot([], [], ' ', label=f'Total number of photons: {len(all_events_photons)}')
+    plt.axvline(plotting.peak_arrival_time, color='red')
     plt.title("Histogram of dt values")
     plt.xlabel("arrival time ")
     plt.grid(True, linestyle='--', alpha=0.6)

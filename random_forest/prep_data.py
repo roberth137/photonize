@@ -57,12 +57,13 @@ for group in events['group'].unique():
         hist_df = pd.DataFrame([hist])
 
         histograms = pd.concat([histograms, hist_df], axis=0, ignore_index=True)
+        print(histograms.head())
 
     histograms['777'] = fluorophore
 
 print(histograms.head())
 
-histograms.to_hdf(output_filename, key='hist', mode='w')
+#histograms.to_hdf(output_filename, key='hist', mode='w')
 
 
 
