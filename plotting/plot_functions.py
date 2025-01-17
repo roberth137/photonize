@@ -3,6 +3,7 @@ import numpy as np
 import get_photons
 import fitting
 import ruptures as rpt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.ndimage import gaussian_filter
 
 import plotting
@@ -67,21 +68,34 @@ def hist_noise_dt_event(i):
     filtered_photons = this_event_photons[
         ((this_event_photons['ms'] >= bounds_first[0])
         & (this_event_photons['ms'] <= bounds_first[1]))
-        |((this_event_photons['ms'] >= bounds_second[0])
+        | ((this_event_photons['ms'] >= bounds_second[0])
         & (this_event_photons['ms'] <= bounds_second[1]))
-        ]
+    ]
 
     bin_size = 5
     bins = np.arange(min(this_event_photons.dt), max(this_event_photons.dt) + bin_size, bin_size)
-    plt.figure(figsize=(8, 6))
-    plt.hist(this_event_photons['dt'], bins=bins, alpha=0.5, color='orange')
-    plt.hist(filtered_photons['dt'], bins=bins, alpha=1, color='blue')
-    plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
-    plt.axvline(plotting.peak_arrival_time, color='red')
-    plt.title("Histogram of dt values")
-    plt.xlabel("arrival time ")
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.legend(loc='upper left')  # Adjust the legend position if needed
+
+    # Main plot
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.hist(this_event_photons['dt'], bins=bins, alpha=0.5, color='orange', label="All photons")
+    ax.hist(filtered_photons['dt'], bins=bins, alpha=1, color='blue', label="Filtered photons")
+    ax.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
+    ax.axvline(plotting.peak_arrival_time, color='red', label="Peak arrival time")
+    ax.set_title("Histogram of dt values")
+    ax.set_xlabel("arrival time")
+    ax.grid(True, linestyle='--', alpha=0.6)
+    ax.legend(loc='upper left')
+
+    # Inset plot for hist_ms_event
+    inset_ax = inset_axes(ax, width="30%", height="30%", loc="upper right")  # Adjust size and position
+    bins_ms = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + 10, 10)
+    counts, _ = np.histogram(this_event_photons.ms, bins=bins_ms)
+    inset_ax.bar(bins_ms[:-1], counts, width=10, color='blue', alpha=0.5)
+    inset_ax.axvline(this_event.s_ms_new, color='green', linestyle='--', label='Start')
+    inset_ax.axvline(this_event.e_ms_new, color='green', linestyle='--', label='End')
+    inset_ax.set_title("ms Histogram", fontsize=10)  # Inset title
+    inset_ax.tick_params(axis='both', which='major', labelsize=8)  # Smaller ticks for inset
+
     plt.show()
 
 
