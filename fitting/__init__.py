@@ -13,3 +13,4 @@ from .fit_pos import (avg_of_roi_cons_bg,
                       event_position,
                       avg_of_roi)
 from .locs_average import avg_photon_weighted
+from .fit_on_off import (lee_filter_1d, get_on_off_dur)

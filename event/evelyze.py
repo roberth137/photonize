@@ -106,22 +106,11 @@ def events_lt_avg_pos(event_file, photons_file,
 
             cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 300)
 
-            #determine start and end of event
-            bin_size = 10
-            bins = np.arange(min(cylinder_photons.ms), max(cylinder_photons.ms) + bin_size, bin_size)
-            counts, _ = np.histogram(cylinder_photons, bins=bins)
-            smoothed_counts_1 = lee_filter_1d(counts, 5)
-            model = "l2"  # Least squares cost function
-            algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
-            change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-            change_points_trans = np.array(change_points)
-            ms_dur = (change_points_trans[1]-change_points_trans[0])*bin_size
-            change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
-            change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
+            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons, 10, 5)
 
             #filter photons according to new bounds
-            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > change_points_trans[0])
-            &(cylinder_photons.ms < change_points_trans[1])]
+            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > start_ms)
+            &(cylinder_photons.ms < end_ms)]
 
             bg_total = my_event.bg * (diameter / 2) * np.pi
             total_photons = len(cylinder_photons)
@@ -158,10 +147,10 @@ def events_lt_avg_pos(event_file, photons_file,
             sdx_n[i] = sd_x_bg/np.sqrt(total_photons)
             sdy_n[i] = sd_y_bg/np.sqrt(total_photons)
             total_photons_lin[i] = total_photons
-            start_ms_new[i] = change_points_trans[0]
-            end_ms_new[i] = change_points_trans[1]
-            duration_ms_new[i] = ms_dur
-            brightness[i] = total_photons/ms_dur
+            start_ms_new[i] = start_ms
+            end_ms_new[i] = end_ms
+            duration_ms_new[i] = duration_ms
+            brightness[i] = total_photons/duration_ms
 
         counter += len(events_group)
 
@@ -171,10 +160,10 @@ def events_lt_avg_pos(event_file, photons_file,
     events.insert(5, 'brightness', brightness)
     events.insert(6, 'lifetime', lifetime)
     events.insert(7, 'duration', duration_ms_new)
+    events.insert(14, 'sdx', sdx)
+    events.insert(15, 'sdy', sdy)
     events['lpx'] = sdx_n
     events['lpy'] = sdy_n
-    events['sdx'] = sdx
-    events['sdy'] = sdy
     events['start_ms'] = start_ms_new
     events['end_ms'] = end_ms_new
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)

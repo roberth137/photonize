@@ -41,7 +41,7 @@ def hist_ms_event(i):
     #print('len counts: ', len(counts))
 
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
-    plt.plot([], [], ' ', label=f'dist_frames:: {this_event.end_ms-this_event.start_ms}')
+    plt.plot([], [], ' ', label=f'dist_frames: {this_event.end_ms-this_event.start_ms}')
     plt.plot([], [], ' ', label=f'dist_rupt: {change_points_trans[1]-change_points_trans[0]}')
     plt.plot([], [], ' ', label=f'num_frames: {this_event.num_frames}')
     plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime}')
