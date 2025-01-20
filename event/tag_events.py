@@ -149,7 +149,7 @@ def filter_unique_events(localizations):
     # Filter out rows with unique events
     filtered_locs = localizations[~localizations['event'].isin(unique_events)]
     
-    print('removed ', (len(localizations)-len(filtered_locs)), 'localizations.')
+    print('removed ', (len(localizations)-len(filtered_locs)), 'individual frame localizations.')
     return filtered_locs
 
 

@@ -62,13 +62,20 @@ def crop_event(event, photons, diameter, more_ms=0):
     '''
 
     x_min, x_max, y_min, y_max = spatial_boundaries(event, diameter)
+    if hasattr(event, 'start_ms') and hasattr(event, 'end_ms'):
+        start, end = event.start_ms, event.end_ms
+    elif hasattr(event, 'start_ms_fr') and hasattr(event, 'end_ms_fr'):
+        start, end = event.start_ms_fr, event.end_ms_fr
+    else:
+        raise AttributeError(
+            "Required attributes are missing. Expected either 'start_ms', 'end_ms' or 'start_ms_fr', 'end_ms_fr'.")
 
     photons_cropped = pd.DataFrame(data=crop_photons(
         photons,
         x_min, x_max,
         y_min, y_max,
-        (event.start_ms_fr-more_ms),
-        (event.end_ms_fr+more_ms)))
+        (start-more_ms),
+        (end+more_ms)))
 
     #total_photons = len(photons_cropped)
 

@@ -13,21 +13,16 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     reads in file of localizations, connects events and analyzes them
 
     """
+    print('Starting event analysis: ...')
     localizations = helper.process_input(localizations_file,
                                          dataset='locs')
-
     photons = helper.process_input(photons_file, dataset='photons')
-
     drift = helper.process_input(drift_file, dataset='drift')
+
     # first localizations to events
     events = create_events.locs_to_events(localizations, offset,
                                   box_side_length=diameter,
                                   int_time=int_time, filter_single=True)
-
-    print('connected locs to events. total events: ', len(events))
-
-    helper.validate_columns(events, ('event'))
-
 
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
@@ -55,16 +50,10 @@ def events_lt_avg_pos(event_file, photons_file,
     events = helper.process_input(event_file, dataset='locs')
     total_events = len(events)
     photons = helper.process_input(photons_file, dataset='photons')
-
+    print(f'starting events_lt_avg_pos... ')
     print(len(photons), ' photons and ', total_events,
           'events read in')
-    print('starting events_lt_avg_pos function.')
     drift = helper.process_input(drift_file, dataset='drift')
-
-    #x_old = np.copy(events['x'])
-    #y_old = np.copy(events['y'])
-    #lpx_old = np.copy(events['lpx'])
-    #lpy_old = np.copy(events['lpy'])
 
     lifetime = np.ones(total_events, dtype=np.float32)
     total_photons_lin = np.ones(total_events, dtype=np.float32)
@@ -72,8 +61,6 @@ def events_lt_avg_pos(event_file, photons_file,
     y_position = np.ones(total_events, dtype=np.float32)
     sdx = np.ones(total_events, dtype=np.float32)
     sdy = np.ones(total_events, dtype=np.float32)
-    #com_px = np.ones(total_events, dtype=np.float32)
-    #com_py = np.ones(total_events, dtype=np.float32)
     sdx_n = np.ones(total_events, dtype=np.float32)
     sdy_n = np.ones(total_events, dtype=np.float32)
     duration_ms_new = np.ones(total_events, dtype=np.float32)
@@ -83,57 +70,41 @@ def events_lt_avg_pos(event_file, photons_file,
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
+    print('peak arrival time:   ', peak_arrival_time)
+    print('start time:          ', start_dt)
 
     counter = 0
-
+    groups = set(events['group'])
     # iterating over every pick in file
-    for g in set(events['group']):
-        print('\n____________NEW GROUP________________')
-        #print(set(events['group']), '\n')
-        print('this is group: ', g)
+    for g in groups:
+        print('_______________________________________________________________')
+        print(f'Analysing group {int(g+1)} of {len(groups)}')
 
         events_group = events[(events.group == g)]
 
-        print('__get_pick_photons___')
         pick_photons = get_photons.get_pick_photons(events_group, photons,
                                         drift, offset,
                                         box_side_length=diameter,
                                         int_time=int_time)
-        print('number of picked photons: ', len(pick_photons), '\n')
-        #print('picked area:   x - ', min(pick_photons['x']),
-        #      max(pick_photons['x']))
-        #print('picked area:   y - ', min(pick_photons['y']),
-        #      max(pick_photons['y']))
+        print('number of picked photons: ', len(pick_photons))
 
         all_events_photons = get_photons.photons_of_many_events(events_group,
                                                                 pick_photons,
                                                                 diameter, 300)
-        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+        print('number of event photons: ', len(all_events_photons))
 
-        print('peak arrival time: ', peak_arrival_time, '_________________')
-        print('start time: ', start_dt, '_________________')
-        print('_______________________________________________________')
+        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+        #print(f'only considering events with dt < 1700')
 
         # iterating over every event in pick
         for i in range(counter, counter + len(events_group)):
             if (i - counter) == 0:
                 print('fitting lifetime of ', len(events_group),
-                      ' events.')
-                i_values = range(counter, counter + len(events_group))
-                print('i counter in range: ', i_values, '\n')
+                      ' events:')
 
             my_event = events.iloc[i]
-            ms_min = my_event.start_frame/offset*int_time
-            ms_max = ((my_event.end_frame/offset)+1)*int_time
 
             cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 300)
-            #cylinder_photons = get_photons.crop_cylinder(my_event.x,
-            #                                             my_event.y,
-            #                                             ms_min,
-            #                                             ms_max,
-            #                                             diameter,
-            #                                             all_events_photons,
-            #                                             300)
 
             #determine start and end of event
             bin_size = 10
@@ -186,8 +157,6 @@ def events_lt_avg_pos(event_file, photons_file,
             sdy[i] = sd_y_bg
             sdx_n[i] = sd_x_bg/np.sqrt(total_photons)
             sdy_n[i] = sd_y_bg/np.sqrt(total_photons)
-            #com_px[i] = fitting.localization_precision(signal_photons, sd_x_bg, my_event.bg)
-            #com_py[i] = fitting.localization_precision(signal_photons, sd_y_bg, my_event.bg)
             total_photons_lin[i] = total_photons
             start_ms_new[i] = change_points_trans[0]
             end_ms_new[i] = change_points_trans[1]
@@ -206,26 +175,15 @@ def events_lt_avg_pos(event_file, photons_file,
     events['lpy'] = sdy_n
     events['sdx'] = sdx
     events['sdy'] = sdy
-    #events['s_ms_new'] = start_ms_new
-    #events['e_ms_new'] = end_ms_new
-    #events['dur_ms_new'] = duration_ms_new
-    #events['old_lpx'] = lpx_old
-    #events['old_lpy'] = lpy_old
-    #events['com_px'] = com_px
-    #events['com_py'] = com_py
-    #events['brightness'] = brightness
-    #events['lifetime'] = lifetime
-    events['lt_over_phot'] = total_photons_lin/lifetime
-    events['tot_phot_cylinder'] = total_photons_lin
-    #events['x_old'] = x_old
-    #events['y_old'] = y_old
-    #events['delta_x'] = (events['x_old'] - events['x'])
+    events['start_ms'] = start_ms_new
+    events['end_ms'] = end_ms_new
+    events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
             events, event_file, 'eve_lt_avgPos')
     print('___________________FINISHED_____________________')
-    print('\n', len(events), 'events tagged with lifetime and'
+    print(f'\n{len(events)} events tagged with lifetime and'
                        ' fitted with avg x,y position.')
 
 

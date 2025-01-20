@@ -38,14 +38,12 @@ def get_pick_photons(
                                 (max_x - 0.53125 + dr_x),
                                 (min_y - 0.53125 - dr_y),
                                 (max_y - 0.53125 + dr_y))
-    print('number of cropped photons: ', len(phot_cr))
+    #print('number of cropped photons: ', len(phot_cr))
     # undrift photons
     phot_cr_und = get_photons.undrift_photons(phot_cr, drift, offset, int_time)
     # crop photons again after drift
     phot_cr_und_cr = get_photons.crop_photons(phot_cr_und,
                                        min_x, max_x, min_y, max_y)
-    print('number of cropped-undrifted-cropped photons: ',
-          len(phot_cr_und_cr))
     return phot_cr_und_cr
 
 

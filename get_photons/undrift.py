@@ -51,7 +51,7 @@ def undrift_photons(photons, drift, offset, int_time=200):
         drift_x_array[i] = drift_x[frame]
         drift_y_array[i] = drift_y[frame]
         if i == 0:
-            print('start undrifting')
+            print(f'start undrifting {number_photons} photons')
         elif i % 10000000 == 0:
             print('100mio undrifted')
 

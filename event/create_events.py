@@ -46,20 +46,8 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         last = eve_group.iloc[-1]
         
         peak_loc = eve_group.iloc[eve_group['photons'].idxmax()]
-        start_ms, end_ms = event_bounds.get_ms_bounds(
-            eve_group, offset, int_time)
         start_ms_fr = (first.frame/offset)*int_time
         end_ms_fr = (last.frame/offset + 1)*int_time
-
-        event_duration = (1 + ((last.frame - first.frame) / offset))  # * int_time ## start_1st frame to end_last frame
-        duration_ms = (end_ms-start_ms)
-        measured_frames = len(eve_group)  # * int_time
-        overlap = measured_frames / event_duration
-        #total_photons_estimate = eve_group['total_photons'].sum() / overlap
-
-        #average_bg = eve_group['bg'].mean()
-        #bg = average_bg * duration_ms / (int_time*2) # cutting the bg in half seems to give better results
-
         event_data = {'frame': peak_loc['frame'],
                  'event': first['event'], 
                  'x': avg_photon_weighted(eve_group, 'x'),
@@ -69,17 +57,17 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
                  'start_ms_fr': start_ms_fr,
                  'end_ms_fr': end_ms_fr,
                  #'duration_ms': duration_ms,
+                 'num_frames': (last['frame'] - first['frame']) + 1,
                  'lpx': peak_loc['lpx'],
                  'lpy': peak_loc['lpy'],
-                 'num_frames': (last['frame']-first['frame'])+1,
-                 'start_frame': first['frame'],
-                 'end_frame': last['frame'],
                  'bg': peak_loc['bg'],
-                 'sx': peak_loc['bg'],
-                 'sy': peak_loc['bg'],
+                 'sx': peak_loc['sx'],
+                 'sy': peak_loc['sy'],
+                 'group': first['group'],
                  'net_gradient': peak_loc['net_gradient'],
                  'ellipticity': peak_loc['ellipticity'],
-                 'group': first['group']
+                 'start_frame': first['frame'],
+                 'end_frame': last['frame']
                  }
         event = pd.DataFrame(event_data, index=[0])
         events = pd.concat([events, event], 
@@ -108,7 +96,6 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
 
     print('Linked ', len(localizations), ' locs to ', 
           len(events), 'events.')
-    print('_______________________________________________')
     return events
 
    
