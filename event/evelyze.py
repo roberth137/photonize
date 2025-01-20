@@ -123,8 +123,17 @@ def events_lt_avg_pos(event_file, photons_file,
                 print('i counter in range: ', i_values, '\n')
 
             my_event = events.iloc[i]
+            ms_min = my_event.start_frame/offset*int_time
+            ms_max = ((my_event.end_frame/offset)+1)*int_time
 
             cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 300)
+            #cylinder_photons = get_photons.crop_cylinder(my_event.x,
+            #                                             my_event.y,
+            #                                             ms_min,
+            #                                             ms_max,
+            #                                             diameter,
+            #                                             all_events_photons,
+            #                                             300)
 
             #determine start and end of event
             bin_size = 10
@@ -189,19 +198,23 @@ def events_lt_avg_pos(event_file, photons_file,
 
     events['x'] = x_position
     events['y'] = y_position
+    events['photons'] = total_photons_lin
+    events.insert(5, 'brightness', brightness)
+    events.insert(6, 'lifetime', lifetime)
+    events.insert(7, 'duration', duration_ms_new)
     events['lpx'] = sdx_n
     events['lpy'] = sdy_n
     events['sdx'] = sdx
     events['sdy'] = sdy
-    events['s_ms_new'] = start_ms_new
-    events['e_ms_new'] = end_ms_new
-    events['dur_ms_new'] = duration_ms_new
+    #events['s_ms_new'] = start_ms_new
+    #events['e_ms_new'] = end_ms_new
+    #events['dur_ms_new'] = duration_ms_new
     #events['old_lpx'] = lpx_old
     #events['old_lpy'] = lpy_old
     #events['com_px'] = com_px
     #events['com_py'] = com_py
-    events['brightness'] = brightness
-    events['lifetime'] = lifetime
+    #events['brightness'] = brightness
+    #events['lifetime'] = lifetime
     events['lt_over_phot'] = total_photons_lin/lifetime
     events['tot_phot_cylinder'] = total_photons_lin
     #events['x_old'] = x_old
