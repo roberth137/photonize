@@ -4,7 +4,7 @@ import helper
 from event import create_events
 import fitting
 import get_photons
-import ruptures as rpt
+
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    diameter, int_time, suffix=''):
@@ -77,7 +77,7 @@ def events_lt_avg_pos(event_file, photons_file,
     groups = set(events['group'])
     # iterating over every pick in file
     for g in groups:
-        print('_______________________________________________________________')
+        print('_______________________________________________________')
         print(f'Analysing group {int(g+1)} of {len(groups)}')
 
         events_group = events[(events.group == g)]
@@ -171,36 +171,6 @@ def events_lt_avg_pos(event_file, photons_file,
     if isinstance(event_file, str):
         helper.dataframe_to_picasso(
             events, event_file, 'eve_lt_avgPos')
-    print('___________________FINISHED_____________________')
+    print('__________________________FINISHED____________________________')
     print(f'\n{len(events)} events tagged with lifetime and'
                        ' fitted with avg x,y position.')
-
-
-
-
-def lee_filter_1d(data, window_size=5):
-    """
-    Applies the Lee filter to 1D data for noise reduction.
-
-    Parameters:
-        data (numpy.ndarray): 1D array of data to filter.
-        window_size (int): Size of the sliding window (must be odd).
-
-    Returns:
-        numpy.ndarray: Smoothed data after applying the Lee filter.
-    """
-    # Ensure the window size is odd
-    if window_size % 2 == 0:
-        raise ValueError("Window size must be odd.")
-
-    # Calculate the local mean and variance in the sliding window
-    padded_data = np.pad(data, pad_width=window_size // 2, mode='reflect')
-    local_mean = np.convolve(padded_data, np.ones(window_size) / window_size, mode='valid')
-    local_var = np.convolve(padded_data ** 2, np.ones(window_size) / window_size, mode='valid') - local_mean ** 2
-
-    # Estimate the noise variance (assume it's uniform across the data)
-    noise_var = np.mean(local_var)
-
-    # Apply the Lee filter
-    result = local_mean + (local_var / (local_var + noise_var)) * (data - local_mean)
-    return result
