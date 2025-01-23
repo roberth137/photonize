@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-from watchdog.observers.fsevents2 import message
-
 import helper
 from event import create_events
 import fitting
