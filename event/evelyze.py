@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from watchdog.observers.fsevents2 import message
+
 import helper
 from event import create_events
 import fitting
@@ -27,8 +29,9 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
     file_extension = '_event'+suffix
+    message = helper.create_append_message('Evelyze', offset, diameter, int_time)
     helper.dataframe_to_picasso(
-        events, localizations_file, file_extension)
+        events, localizations_file, file_extension, message)
 
 
 def events_lt_avg_pos(event_file, photons_file,
