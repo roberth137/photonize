@@ -157,16 +157,16 @@ def events_lt_avg_pos(event_file, photons_file,
 
     events['x'] = x_position
     events['y'] = y_position
-    events['photons'] = total_photons_lin
+    events['photons'] = total_photons_lin.astype(np.int32)
     events.insert(5, 'brightness', brightness)
     events.insert(6, 'lifetime', lifetime)
     events.insert(7, 'duration', duration_ms_new)
-    events.insert(14, 'sdx', sdx)
-    events.insert(15, 'sdy', sdy)
-    events['lpx'] = sdx_n
-    events['lpy'] = sdy_n
-    events['start_ms'] = start_ms_new
-    events['end_ms'] = end_ms_new
+    events.insert(14, 'sdx', sdx.astype(np.int32))
+    events.insert(15, 'sdy', sdy.astype(np.int32))
+    events['lpx'] = sdx_n.astype(np.float32)
+    events['lpy'] = sdy_n.astype(np.float32)
+    events['start_ms'] = start_ms_new.astype(np.int32)
+    events['end_ms'] = end_ms_new.astype(np.int32)
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     if isinstance(event_file, str):
