@@ -5,11 +5,11 @@ import get_photons
 import fitting
 
 # Set filenames and parameters
-events_filename = 't/orig58_pf_event.hdf5'
-photons_filename = 't/orig58_index.hdf5'
-drift_filename = 't/orig58_drift.txt'
+events_filename = 'ml/cy3_all_f_event.hdf5'
+photons_filename = 'ml/cy3_index.hdf5'
+drift_filename = 'ml/cy3_drift.txt'
 diameter = 4.5
-pick_group = 0
+pick_group = 25
 more_ms = 400
 
 # Loading data to memory

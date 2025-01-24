@@ -68,6 +68,8 @@ def events_lt_avg_pos(event_file, photons_file,
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
     brightness = np.ones(total_events, dtype=np.float32)
+    bg = np.ones(total_events, dtype=np.float32)
+    bg_over_on = np.ones(total_events, dtype=np.float32)
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
@@ -105,17 +107,27 @@ def events_lt_avg_pos(event_file, photons_file,
 
             my_event = events.iloc[i]
 
-            cylinder_photons = get_photons.crop_event(my_event, all_events_photons, diameter, 300)
+            cylinder_photons = get_photons.crop_event(my_event,
+                                                      all_events_photons,
+                                                      diameter,
+                                                      300)
 
-            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons, 10, 5)
+            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons,
+                                                                    10,
+                                                                    5)
 
             #filter photons according to new bounds
-            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > start_ms)
-            &(cylinder_photons.ms < end_ms)]
+            num_photons_300_bg = len(cylinder_photons[(cylinder_photons.ms > (start_ms-150))
+                                              &(cylinder_photons.ms < start_ms)
+                                              |(cylinder_photons.ms < (end_ms+150))
+                                              &(cylinder_photons.ms > end_ms)])
 
-            bg_total = my_event.bg * (diameter / 2) * np.pi
-            total_photons = len(cylinder_photons)
-            signal_photons = total_photons - bg_total
+            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > start_ms)
+                                                  &(cylinder_photons.ms < end_ms)]
+
+            #bg_total = my_event.bg * (diameter / 2) * np.pi
+            total_photons = len(photons_new_bounds)
+            #signal_photons = total_photons - bg_total
             phot_event = pd.DataFrame(data=photons_new_bounds)
             if i == 0:
                 print('FIRST fitted. Number of photons',
@@ -152,6 +164,8 @@ def events_lt_avg_pos(event_file, photons_file,
             end_ms_new[i] = end_ms
             duration_ms_new[i] = duration_ms
             brightness[i] = total_photons/duration_ms
+            bg[i] = num_photons_300_bg/300
+            bg_over_on[i] = len(cylinder_photons)/duration_ms
 
         counter += len(events_group)
 
@@ -161,8 +175,10 @@ def events_lt_avg_pos(event_file, photons_file,
     events.insert(5, 'brightness', brightness)
     events.insert(6, 'lifetime', lifetime)
     events.insert(7, 'duration', duration_ms_new)
-    events.insert(14, 'sdx', sdx.astype(np.int32))
-    events.insert(15, 'sdy', sdy.astype(np.int32))
+    events['bg'] = bg.astype(np.float32)
+    events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
+    events.insert(15, 'sdx', sdx.astype(np.float32))
+    events.insert(16, 'sdy', sdy.astype(np.float32))
     #events['lpx'] = sdx_n.astype(np.float32)
     #events['lpy'] = sdy_n.astype(np.float32)
     events['start_ms'] = start_ms_new.astype(np.int32)
