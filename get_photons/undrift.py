@@ -62,6 +62,6 @@ def undrift_photons(photons, drift, offset, int_time=200):
     # create and return new dataframe
     photons_undrifted = pd.DataFrame({'x': undrifted_x,
                                       'y': undrifted_y, 'dt': photons.dt, 'ms': photons.ms})
-
+    print('finished undrifting!')
     return photons_undrifted
 
