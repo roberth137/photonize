@@ -70,6 +70,8 @@ def events_lt_avg_pos(event_file, photons_file,
     brightness = np.ones(total_events, dtype=np.float32)
     bg = np.ones(total_events, dtype=np.float32)
     bg_over_on = np.ones(total_events, dtype=np.float32)
+    delta_x = np.ones(total_events, dtype=np.float32)
+    delta_y = np.ones(total_events, dtype=np.float32)
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
@@ -166,6 +168,8 @@ def events_lt_avg_pos(event_file, photons_file,
             brightness[i] = total_photons/duration_ms
             bg[i] = num_photons_300_bg/300
             bg_over_on[i] = len(cylinder_photons)/duration_ms
+            delta_x[i] = my_event.x - x_t
+            delta_y[i] = my_event.y - y_t
 
         counter += len(events_group)
 
@@ -177,12 +181,15 @@ def events_lt_avg_pos(event_file, photons_file,
     events.insert(7, 'duration', duration_ms_new)
     events['bg'] = bg.astype(np.float32)
     events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
-    events.insert(15, 'sdx', sdx.astype(np.float32))
-    events.insert(16, 'sdy', sdy.astype(np.float32))
+    events.insert(15, 'sdx_n', sdx_n)
+    events.insert(16, 'sdx', sdx.astype(np.float32))
+    events.insert(17, 'sdy', sdy.astype(np.float32))
     #events['lpx'] = sdx_n.astype(np.float32)
     #events['lpy'] = sdy_n.astype(np.float32)
     events['start_ms'] = start_ms_new.astype(np.int32)
     events['end_ms'] = end_ms_new.astype(np.int32)
+    events['delta_x'] = delta_x
+    events['delta_y'] = delta_y
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     if isinstance(event_file, str):

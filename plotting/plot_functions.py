@@ -4,7 +4,6 @@ import get_photons
 import fitting
 import ruptures as rpt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from scipy.ndimage import gaussian_filter
 
 import plotting
 from plotting import group_events, all_events_photons, diameter, peak_arrival_time

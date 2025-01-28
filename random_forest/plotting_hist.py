@@ -20,13 +20,13 @@ else:
     feature_columns = df  # If no label column, use the full dataset
 
 # Calculate average values of each column
-average_values = feature_columns.max()
+average_values = feature_columns.mean()
 
 # Plot the average values as a bar chart
 plt.figure(figsize=(12, 6))
 average_values.plot(kind='bar')
-plt.title('Average Values of Histogram Columns')
+plt.title('Max Values of Histogram Columns')
 plt.xlabel('Column Index')
-plt.ylabel('Average Value')
+plt.ylabel('Max Value')
 plt.grid(axis='y')
 plt.show()

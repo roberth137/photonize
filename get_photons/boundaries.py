@@ -92,9 +92,9 @@ def crop_event(event, photons, diameter, more_ms=0):
     #bg_photons = total_photons - len(photons_cylinder)
 
     if len(photons_cylinder) < 30:
-        print('\nlow photon count for crop_event: ')
-        print('len(pick_photons) : ', len(photons_cylinder))
-        print('\nthis is the event: \n', event)
+        print(f'!!!!!!!!!!\nlow photon count for boundaries.crop_event():'
+              f'\nlen(pick_photons): {len(photons_cylinder)}'
+              f'\nevent_number: {event.event}')
 
     return photons_cylinder
 
@@ -139,8 +139,8 @@ def crop_cylinder(x_pos, y_pos, ms_min, ms_max, diameter, photons, more_ms=0):
         photons_cropped.distance < radius_sq]
 
     if len(photons_cylinder) < 30:
-        print('\nlow photon count for crop_event: ')
-        print('len(pick_photons) : ', len(photons_cylinder))
+        print(f'!!!!!!!!!!\nlow photon count for boundaries.crop_cylinder():'
+              f'\nlen(pick_photons): {len(photons_cylinder)}')
         #print('\nthis is the event: \n', event)
 
     return photons_cylinder
