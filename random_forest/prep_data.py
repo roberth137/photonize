@@ -9,9 +9,9 @@ import get_photons
 import fitting
 import h5py
 
-input_events = '/Users/roberthollmann/Desktop/resi-flim/int_test/cy3_200ms_fp_event.hdf5'
-input_photons = '/Users/roberthollmann/Desktop/resi-flim/int_test/cy3_59_index.hdf5'
-drift_file = '/Users/roberthollmann/Desktop/resi-flim/int_test/cy3_200ms_drift.txt'
+input_events = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_eventmore_ms0.hdf5'
+input_photons = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
+drift_file = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
 fluorophore_name = 'a565'
 fluorophore_number = 2
