@@ -55,7 +55,7 @@ for group in events['group'].unique():
     #print(f'photon bounds [x],[y]: [{min(pick_photons.x):.2f}, {max(pick_photons.x):.2f}], [{min(pick_photons.y):.2f}, {max(pick_photons.y):.2f}]')
     print(f'event photons | filtered photons')
     for i, event in events_group.iterrows():
-        event_photons = get_photons.crop_event(event, pick_photons, diameter, 300)
+        event_photons = get_photons.crop_event(event, pick_photons, diameter)
         if i % 4 ==0: print(f'{int(event.photons)}  |  {len(event_photons)}')
         x_new, y_new = fitting.event_position(event, event_photons, diameter, False)
         #if i % 5 ==0:print(f'delta_x: {(event.x-x_new):.2f}, delta_y: {(event.y-y_new):.2f}')
