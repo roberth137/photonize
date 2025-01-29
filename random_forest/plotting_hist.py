@@ -20,7 +20,7 @@ else:
     feature_columns = df  # If no label column, use the full dataset
 
 # Calculate average values of each column
-average_values = feature_columns.mean()
+average_values = feature_columns.min()
 
 # Plot the average values as a bar chart
 plt.figure(figsize=(12, 6))
