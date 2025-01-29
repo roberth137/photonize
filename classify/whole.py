@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 #from torch.utils.data import DataLoader
-from model import HistogramClassifier
+from model import HistogramClassifier, HistogramCNN
 
 
 
@@ -20,9 +20,8 @@ cy3_np = cy3_df.to_numpy()
 a550_df = a550_df.to_numpy()
 a565_np = a565_df.to_numpy()
 
-a565_np[:, -1] -=2
 
-array_combined = np.vstack((cy3_np, a550_df))#, a565_np))
+array_combined = np.vstack((cy3_np, a565_np, a550_df))#, a565_np))
 
 #df_combined = pd.concat([cy3_np, a565_np], axis=0)  # Stack rows
 #array_combined = df_combined.to_numpy()
@@ -95,10 +94,10 @@ batch_size = 32  # or whatever you prefer
 #train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
-model = HistogramClassifier(num_bins=X.shape[1], num_classes=2)
+model = HistogramCNN(num_bins=X.shape[1], num_classes=3)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
-num_epochs = 1000
+num_epochs = 100
 for epoch in range(num_epochs):  # number of epochs
     model.train()  # training mode
     running_loss = 0.0

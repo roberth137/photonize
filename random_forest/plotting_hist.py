@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the HDF5 file
-file_name = '/Users/roberthollmann/Desktop/resi-flim/ml/a550_histogram.hdf5'  # Update with your actual file path
+file_name = '/Users/roberthollmann/Desktop/resi-flim/classify/training_data/a550_histogram.hdf5'  # Update with your actual file path
 key_name = 'hist'  # Dataset key used during saving
 
 # Read data from HDF5 using h5py
@@ -21,7 +21,7 @@ df = pd.DataFrame(data)
 
 # Calculate average values of each column
 #average_values = feature_columns[:][1]#feature_columns.mean()
-average_values = df.iloc[2]
+average_values = df.iloc[15]
 
 # Plot the average values as a bar chart
 plt.figure(figsize=(12, 6))
