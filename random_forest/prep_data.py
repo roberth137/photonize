@@ -9,11 +9,13 @@ import get_photons
 import fitting
 import h5py
 
-input_events = '/Users/roberthollmann/Desktop/resi-flim/ml/cy3_200ms_fp_event_f.hdf5'
-input_photons = '/Users/roberthollmann/Desktop/resi-flim/ml/cy3_59_index.hdf5'
-drift_file = '/Users/roberthollmann/Desktop/resi-flim/ml/cy3_200ms_drift.txt'
+folder = 'C:/Users/rhollmann/Desktop/resi-flim/local/'
+
+input_events = f'{folder}all3_1701_rf_test_event_roi_phot.hdf5'
+input_photons = f'{folder}all3_1701_index.hdf5'
+drift_file = f'{folder}all3_1701_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
-fluorophore_name = 'cy3'
+fluorophore_name = 'All_test'
 fluorophore_number = 0
 offset = 10
 diameter = 4.5

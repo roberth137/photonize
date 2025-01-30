@@ -96,8 +96,8 @@ def events_lt_avg_pos(event_file, photons_file,
         #all_events_photons = get_photons.photons_of_many_events(events_group,
         #                                                        pick_photons,
         #                                                        diameter, 0)
-        all_events_photons = pick_photons
-        print('number of event photons: ', len(all_events_photons))
+        #all_events_photons = pick_photons
+        #print('number of event photons: ', len(all_events_photons))
 
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
         #print(f'only considering events with dt < 1700')
@@ -111,9 +111,9 @@ def events_lt_avg_pos(event_file, photons_file,
             my_event = events.iloc[i]
 
             cylinder_photons = get_photons.crop_event(my_event,
-                                                      all_events_photons,
+                                                      pick_photons,
                                                       diameter,
-                                                      300)
+                                                      200)
 
             start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons,
                                                                     10,
