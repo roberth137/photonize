@@ -16,13 +16,13 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     print('Starting event analysis: ...')
     localizations = helper.process_input(localizations_file,
                                          dataset='locs')
-    photons = helper.process_input(photons_file, dataset='photons')
-    drift = helper.process_input(drift_file, dataset='drift')
-
     # first localizations to events
     events = create_events.locs_to_events(localizations, offset,
                                   box_side_length=diameter,
                                   int_time=int_time, filter_single=True)
+    # read in photons and drift
+    photons = helper.process_input(photons_file, dataset='photons')
+    drift = helper.process_input(drift_file, dataset='drift')
 
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time)
