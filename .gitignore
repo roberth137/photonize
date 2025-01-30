@@ -3,6 +3,8 @@
 
 #Ignore project files
 
+/local/
+
 #photons_index.hdf5 files (too big)
 both_4xoffset_index.hdf5
 *photons.hdf5

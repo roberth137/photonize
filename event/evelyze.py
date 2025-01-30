@@ -93,9 +93,10 @@ def events_lt_avg_pos(event_file, photons_file,
                                         int_time=int_time)
         print('number of picked photons: ', len(pick_photons))
 
-        all_events_photons = get_photons.photons_of_many_events(events_group,
-                                                                pick_photons,
-                                                                diameter, 0)
+        #all_events_photons = get_photons.photons_of_many_events(events_group,
+        #                                                        pick_photons,
+        #                                                        diameter, 0)
+        all_events_photons = pick_photons
         print('number of event photons: ', len(all_events_photons))
 
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
