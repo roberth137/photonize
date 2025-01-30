@@ -34,7 +34,7 @@ def locs_to_events(localizations_file, offset, box_side_length, int_time, filter
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
     # Tag localizations with event number and group them
-    localizations_eve = tag_events.connect_locs(localizations, filter_single=filter_single)
+    localizations_eve = tag_events.connect_locs_by_group(localizations, filter_single=filter_single)
     grouped = localizations_eve.groupby('event')
     events = pd.DataFrame()
     

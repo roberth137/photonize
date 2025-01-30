@@ -4,4 +4,5 @@ from .create_events import (locs_to_events,
                             locs_to_events_to_picasso,
                             event_average)
 from .tag_events import (connect_locs,
-                         connect_locs_to_picasso)
+                         connect_locs_to_picasso,
+                         connect_locs_by_group)
