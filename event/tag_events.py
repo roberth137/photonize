@@ -79,9 +79,8 @@ def are_nearby(x1, y1, x2, y2, threshold):
     dy = y1 - y2
     return (dx * dx + dy * dy) <= (threshold * threshold)
 
-
 @njit
-def connect_group(group_frames, group_x, group_y, lpx_p_lpy):
+def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
     n = len(group_frames)
     event_ids = np.zeros(n, dtype=np.int32)
     current_event_id = 0
@@ -91,21 +90,23 @@ def connect_group(group_frames, group_x, group_y, lpx_p_lpy):
             current_event_id += 1
             event_ids[i] = current_event_id
 
-        # Compare with localizations in the next frame
+        # Compare with localizations in the next frames within max_dark_frames
         for j in range(i + 1, n):
-            if group_frames[j] > group_frames[i] + 1:
-                break  # Stop if frames are no longer consecutive
+            if group_frames[j] > group_frames[i] + max_dark_frames:
+                break  # Stop if frames are beyond the allowed gap
 
-            if group_frames[j] == group_frames[i] + 1:
+            if group_frames[i] < group_frames[j] <= group_frames[i] + max_dark_frames:
                 if are_nearby(group_x[i], group_y[i], group_x[j], group_y[j], lpx_p_lpy[i]):
                     event_ids[j] = event_ids[i]  # Assign the same event ID
 
     return event_ids
 
-
-def connect_locs_by_group(localizations_dset, filter_single=True, box_side_length=5):
+def connect_locs_by_group(localizations_dset,
+                          filter_single=True,
+                          proximity=2,
+                          max_dark_frames=1):
     """
-    Connect localizations in adjacent frames into events, iterating group by group.
+    Connect localizations in adjacent or nearby frames (up to max_dark_frames) into events, iterating group by group.
 
     Parameters
     ----------
@@ -113,8 +114,10 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
         DataFrame of localizations with columns: frame, group, x, y, etc.
     filter_single : bool, default=True
         If True, remove single localizations that cannot be connected to any multi-localization event.
-    box_side_length : float, default=5
-        Maximum distance threshold for connecting localizations in consecutive frames.
+    proximity : float, default=2
+        Multiplier for the maximum distance threshold for connecting localizations.
+    max_dark_frames : int, default=1
+        Maximum number of frames allowed to be skipped when connecting localizations.
 
     Returns
     -------
@@ -132,12 +135,13 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
     # Global event counter
     global_event_id = 0
     start_time = time.time()
+
     for group_id, group_df in grouped:
         # Convert necessary columns to NumPy arrays for Numba
         frames = group_df['frame'].to_numpy()
         x_coords = group_df['x'].to_numpy()
         y_coords = group_df['y'].to_numpy()
-        lpx_p_lpy = (group_df['lpx']+group_df['lpy']).to_numpy()
+        lpx_p_lpy = (group_df['lpx'] + group_df['lpy']).to_numpy()
 
         # Sort by frame to ensure temporal order
         sort_indices = np.argsort(frames)
@@ -147,12 +151,11 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
         lpx_p_lpy = lpx_p_lpy[sort_indices]
 
         # Call Numba-optimized function to assign event IDs
-        group_event_ids = connect_group(frames, x_coords, y_coords, lpx_p_lpy)
+        group_event_ids = connect_group(frames, x_coords, y_coords, proximity * lpx_p_lpy, max_dark_frames)
 
         # Map local group event IDs to global event IDs
         unique_local_event_ids = np.unique(group_event_ids)
-        local_to_global_map = {local_id: global_event_id + idx + 1 for idx, local_id in
-                               enumerate(unique_local_event_ids)}
+        local_to_global_map = {local_id: global_event_id + idx + 1 for idx, local_id in enumerate(unique_local_event_ids)}
         global_event_id += len(unique_local_event_ids)
 
         # Assign the global event IDs back to the original DataFrame
@@ -161,7 +164,8 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
     # Count the number of localizations per event
     localizations['count'] = localizations['event'].map(localizations['event'].value_counts())
     end_time = time.time()
-    print(f'duration of function: {end_time-start_time}')
+    print(f'Duration of function: {end_time - start_time:.2f} seconds')
+
     # Optionally filter out single-localization events
     if filter_single:
         localizations = localizations[localizations['count'] > 1].reset_index(drop=True)
