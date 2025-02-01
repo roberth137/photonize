@@ -93,12 +93,6 @@ def events_lt_avg_pos(event_file, photons_file,
                                         int_time=int_time)
         print('number of picked photons: ', len(pick_photons))
 
-        #all_events_photons = get_photons.photons_of_many_events(events_group,
-        #                                                        pick_photons,
-        #                                                        diameter, 0)
-        #all_events_photons = pick_photons
-        #print('number of event photons: ', len(all_events_photons))
-
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
         #print(f'only considering events with dt < 1700')
 
@@ -130,7 +124,6 @@ def events_lt_avg_pos(event_file, photons_file,
 
             #bg_total = my_event.bg * (diameter / 2) * np.pi
             total_photons = len(photons_new_bounds)
-            #signal_photons = total_photons - bg_total
             phot_event = pd.DataFrame(data=photons_new_bounds)
             if i == 0:
                 print('FIRST fitted. Number of photons',
@@ -138,10 +131,10 @@ def events_lt_avg_pos(event_file, photons_file,
             elif i % 200 == 0:
                 print('200 fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
-
-            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position(my_event,
-                                                                phot_event,
-                                                                diameter,
+            x_arr = phot_event['x'].to_numpy()
+            y_arr = phot_event['y'].to_numpy()
+            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position(x_arr,
+                                                                y_arr,
                                                                 return_sd=True)
 
             #calculate photon distances from new center for better lifetime determination:
@@ -152,9 +145,13 @@ def events_lt_avg_pos(event_file, photons_file,
             dist_2 = (phot_x**2 + phot_y**2)
             phot_event['distance'] = dist_2
 
-            lifetime[i] = fitting.avg_lifetime_weighted_40(phot_event,
-                                                          start_dt,
-                                                          diameter)
+            arrival_times = phot_event['dt'].to_numpy()
+            distance_sq = phot_event['distance'].to_numpy()
+
+            lifetime[i] = fitting.avg_lifetime_weighted_40(arrival_times,
+                                                           distance_sq,
+                                                           start_dt,
+                                                           diameter)
 
             x_position[i] = x_t
             y_position[i] = y_t

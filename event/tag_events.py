@@ -14,65 +14,6 @@ import helper
 from numba import njit
 import time
 
-
-def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
-    """
-
-    Parameters
-    ----------
-    localizations_dset : picked localizations
-    filter_single : default= True
-        - if single localizations which cant be connected to an event are dropped
-    box_side_length : The default is 5.
-
-    Returns
-    -------
-    localizations with additional columns event and count 
-
-    """
-    localizations = helper.process_input(localizations_dset, 'locs').copy()
-    event_column = np.zeros(len(localizations), dtype=int)
-    event_counter = 0
-    
-    grouped = localizations.groupby('group', sort=False)
-
-    for group_id, group_df in grouped: 
-        idxs = group_df.index.to_numpy()
-        
-        
-    for i in np.arange(len(localizations), dtype=int): 
-        has_follower = False
-        
-        if event_column[i] == 0: #not connected to previous event -> new event
-            event_counter +=1 
-            event_column[i] = event_counter
-                    
-        frame = localizations.frame.iloc[i]
-        group = localizations.group.iloc[i]
-        locs_next_frame = localizations[(localizations.frame == frame+1)
-                                        &(localizations.group == group)]
-        follower_index = None
-        if len(locs_next_frame) != 0:
-            has_follower, follower_index = return_nearby(
-                localizations.iloc[i], locs_next_frame)
-        
-        if has_follower: 
-            event_column[follower_index] = event_column[i] #set to same event
-    
-    if 'event' in localizations.columns:
-        localizations = localizations.drop('event', axis=1)
-
-
-    event_counts = count_localizations(event_column)
-    localizations.insert(4, 'event', event_column)
-    localizations.insert(5, 'count', event_counts)
-    helper.calculate_total_photons(localizations, 5)
-    if filter_single:
-        filtered_locs = filter_unique_events(localizations)
-        return filtered_locs
-    else: return localizations
-
-
 @njit
 def are_nearby(x1, y1, x2, y2, threshold):
     dx = x1 - x2
@@ -134,8 +75,6 @@ def connect_locs_by_group(localizations_dset,
 
     # Global event counter
     global_event_id = 0
-    start_time = time.time()
-
     for group_id, group_df in grouped:
         # Convert necessary columns to NumPy arrays for Numba
         frames = group_df['frame'].to_numpy()
@@ -163,8 +102,6 @@ def connect_locs_by_group(localizations_dset,
 
     # Count the number of localizations per event
     localizations['count'] = localizations['event'].map(localizations['event'].value_counts())
-    end_time = time.time()
-    print(f'Duration of function: {end_time - start_time:.2f} seconds')
 
     # Optionally filter out single-localization events
     if filter_single:
@@ -172,7 +109,62 @@ def connect_locs_by_group(localizations_dset,
 
     return localizations
 
-    
+
+def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
+    """
+
+    Parameters
+    ----------
+    localizations_dset : picked localizations
+    filter_single : default= True
+        - if single localizations which cant be connected to an event are dropped
+    box_side_length : The default is 5.
+
+    Returns
+    -------
+    localizations with additional columns event and count
+
+    """
+    localizations = helper.process_input(localizations_dset, 'locs').copy()
+    event_column = np.zeros(len(localizations), dtype=int)
+    event_counter = 0
+
+    grouped = localizations.groupby('group', sort=False)
+
+    for group_id, group_df in grouped:
+        idxs = group_df.index.to_numpy()
+
+    for i in np.arange(len(localizations), dtype=int):
+        has_follower = False
+
+        if event_column[i] == 0:  # not connected to previous event -> new event
+            event_counter += 1
+            event_column[i] = event_counter
+
+        frame = localizations.frame.iloc[i]
+        group = localizations.group.iloc[i]
+        locs_next_frame = localizations[(localizations.frame == frame + 1)
+                                        & (localizations.group == group)]
+        follower_index = None
+        if len(locs_next_frame) != 0:
+            has_follower, follower_index = return_nearby(
+                localizations.iloc[i], locs_next_frame)
+
+        if has_follower:
+            event_column[follower_index] = event_column[i]  # set to same event
+
+    if 'event' in localizations.columns:
+        localizations = localizations.drop('event', axis=1)
+
+    event_counts = count_localizations(event_column)
+    localizations.insert(4, 'event', event_column)
+    localizations.insert(5, 'count', event_counts)
+    helper.calculate_total_photons(localizations, 5)
+    if filter_single:
+        filtered_locs = filter_unique_events(localizations)
+        return filtered_locs
+    else:
+        return localizations
     
 def return_nearby(this_localization, locs_next_frame):
     """

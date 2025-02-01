@@ -1,4 +1,5 @@
 import numpy as np
+import numba
 
 
 def avg_of_roi_cons_bg(localization, bg_pixel, phot_locs, box_side_length, return_sd=False):
@@ -94,7 +95,7 @@ def calculate_sd_cons_bg(positions, pos_fit, number_phot, bg_total, diameter):
     var = (np.sum((positions - pos_fit) ** 2) - (bg_var * bg_total)) / number_phot
     return 10 if var <= 0 else np.sqrt(var)
 
-def calculate_sd(positions, pos_fit, total_phot):
+def calculate_sd_old(positions, pos_fit, total_phot):
     """
     Calculates 1d std for a center of mass fit, not considering bg
     positions: array with photons positions
@@ -148,23 +149,22 @@ def event_position_cons_bg(event, phot_event, diameter, return_sd=True):
     else:
         return pos_x, pos_y
 
-def event_position(event, phot_event, diameter, return_sd=True):
+@numba.njit
+def calculate_sd(photon_positions, mean_position, total_photons):
+    return np.sqrt(np.sum((photon_positions - mean_position) ** 2) / total_photons)
 
-    x_photons = phot_event['x'].to_numpy()
-    y_photons = phot_event['y'].to_numpy()
+@numba.njit
+def event_position(x_photons, y_photons, return_sd=True):
+    #fit_area = np.pi * ((diameter / 2) ** 2)
+    total_photons = len(x_photons)
 
-    fit_area = np.pi * ((diameter / 2) ** 2)
-    total_photons = len(phot_event)
-    bg = event.bg * fit_area
-
-    pos_x = (np.sum(x_photons))/total_photons
-    pos_y = (np.sum(y_photons))/total_photons
+    pos_x = np.sum(x_photons) / total_photons
+    pos_y = np.sum(y_photons) / total_photons
 
     if return_sd:
         sd_x = calculate_sd(x_photons, pos_x, total_photons)
         sd_y = calculate_sd(y_photons, pos_y, total_photons)
-
         return pos_x, pos_y, sd_x, sd_y
-
     else:
-        return pos_x, pos_y
+        sd_x, sd_y = 0.0, 0.0
+        return pos_x, pos_y, sd_x, sd_y

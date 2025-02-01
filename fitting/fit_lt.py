@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import get_photons
+from numba import njit
+
 
 
 def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
@@ -68,7 +70,44 @@ def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
 def mean_arrival(loc_photons, diameter):
     return np.mean(loc_photons.dt)
 
-def avg_lifetime_weighted_40(loc_photons, peak, diameter):
+@njit
+def avg_lifetime_weighted_40(dt, distance, peak, diameter):
+    """
+    Uses quadratic weights for lifetimes depending on photons' distance from the center of localization.
+
+    Parameters
+    ----------
+    dt : np.ndarray
+        Time difference array (photon timestamps).
+    distance : np.ndarray
+        Distance of each photon from the center of the localization.
+    peak : int
+        The peak time after which the lifetime calculation starts.
+    diameter : float
+        The diameter of the localization region.
+
+    Returns
+    -------
+    float32
+        The weighted average lifetime of the photons.
+    """
+    radius = diameter / 2
+    n = len(dt)
+
+    weighted_sum = 0.0
+    weight_total = 0.0
+
+    for i in range(n):
+        if dt[i] > peak:  # Only consider after the peak
+            ap_dt = dt[i] - peak
+            ap_weight = 0.2 + (1 - (distance[i] / (radius ** 2)))  # Quadratic weighting
+            weighted_sum += ap_dt * ap_weight
+            weight_total += ap_weight
+
+    lifetime = weighted_sum / weight_total if weight_total > 0 else 0.0
+    return np.float32(lifetime)
+
+def avg_lifetime_weighted_40_old(loc_photons, peak, diameter):
     '''
     uses quadratic weights for lifetimes depending on photons distance from center of localization
     '''
