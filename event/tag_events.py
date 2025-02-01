@@ -9,7 +9,11 @@ This module reads in picasso localizations and tags them with their event
 """
 
 import numpy as np
+import pandas as pd
 import helper
+from numba import njit
+import time
+
 
 def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
     """
@@ -67,7 +71,38 @@ def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
         filtered_locs = filter_unique_events(localizations)
         return filtered_locs
     else: return localizations
-    
+
+
+@njit
+def are_nearby(x1, y1, x2, y2, threshold):
+    dx = x1 - x2
+    dy = y1 - y2
+    return (dx * dx + dy * dy) <= (threshold * threshold)
+
+
+@njit
+def connect_group(group_frames, group_x, group_y, lpx_p_lpy):
+    n = len(group_frames)
+    event_ids = np.zeros(n, dtype=np.int32)
+    current_event_id = 0
+
+    for i in range(n):
+        if event_ids[i] == 0:  # If not yet assigned to an event
+            current_event_id += 1
+            event_ids[i] = current_event_id
+
+        # Compare with localizations in the next frame
+        for j in range(i + 1, n):
+            if group_frames[j] > group_frames[i] + 1:
+                break  # Stop if frames are no longer consecutive
+
+            if group_frames[j] == group_frames[i] + 1:
+                if are_nearby(group_x[i], group_y[i], group_x[j], group_y[j], lpx_p_lpy[i]):
+                    event_ids[j] = event_ids[i]  # Assign the same event ID
+
+    return event_ids
+
+
 def connect_locs_by_group(localizations_dset, filter_single=True, box_side_length=5):
     """
     Connect localizations in adjacent frames into events, iterating group by group.
@@ -75,11 +110,7 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
     Parameters
     ----------
     localizations_dset : pd.DataFrame
-        DataFrame of localizations with (at least) columns:
-          - frame (int)
-          - group (int)
-          - x, y (floats, or whatever coordinates you use)
-          - ...
+        DataFrame of localizations with columns: frame, group, x, y, etc.
     filter_single : bool, default=True
         If True, remove single localizations that cannot be connected to any multi-localization event.
     box_side_length : float, default=5
@@ -91,88 +122,52 @@ def connect_locs_by_group(localizations_dset, filter_single=True, box_side_lengt
         A copy of the localizations with additional columns:
           - 'event': an integer label for the connected event
           - 'count': total number of localizations in that event
-          - possibly other columns as needed
     """
     localizations = localizations_dset.copy()
-    
-    # Prepare an array to store the event ID for each localization
-    event_column = np.zeros(len(localizations), dtype=int)
-    
-    # Global counter that increments each time we discover a new event
-    event_counter = 0
-    
-    # Group by 'group' (which implies spatial proximity) and iterate
+    localizations['event'] = 0  # Initialize event column
+
+    # Group by 'group' and iterate
     grouped = localizations.groupby('group', sort=False)
-    print(f'connecting {len(localizations)} localizations of {len(grouped)} groups.')
+
+    # Global event counter
+    global_event_id = 0
+    start_time = time.time()
     for group_id, group_df in grouped:
-        if group_id % 10 == 0 and group_id != 0: print(f'{group_id} of {len(grouped)} groups connected.')
-        # Extract the row indices for this group (so we can assign event IDs correctly)
-        idxs = group_df.index.to_numpy()
-        
-        # Sort the group’s localizations by frame to process in temporal order
-        group_df_sorted = group_df.sort_values(by='frame')
-        sorted_idxs = group_df_sorted.index.to_numpy()
-        
-        # We’ll keep track of each row’s event ID in this group separately at first
-        group_event_ids = np.zeros(len(sorted_idxs), dtype=int)
-        
-        # Loop through localizations in ascending frame order
-        for i, row_idx in enumerate(sorted_idxs):
-            if group_event_ids[i] == 0:
-                # If this localization does not yet belong to an event, start a new event
-                event_counter += 1
-                group_event_ids[i] = event_counter
-            
-            # Compare with localizations in the next frame for the same group
-            current_frame = group_df.loc[row_idx, 'frame']
-            
-            # We only look at localizations in the subsequent positions (since sorted by frame)
-            # that have frame == current_frame + 1
-            j = i + 1
-            while j < len(sorted_idxs):
-                next_row_idx = sorted_idxs[j]
-                next_frame = group_df.loc[next_row_idx, 'frame']
-                
-                # If the next localization’s frame is more than 1 ahead, break early
-                if next_frame > current_frame + 1:
-                    break
-                
-                # If the next localization’s frame is exactly current_frame + 1, check distance
-                if next_frame == current_frame + 1:
-                    # Check if they are within distance
-                    if are_nearby(group_df.loc[row_idx], group_df.loc[next_row_idx], box_side_length):
-                        # Assign the same event ID
-                        group_event_ids[j] = group_event_ids[i]
-                j += 1
-        
-        # Now, assign these group_event_ids back to the main event_column array
-        for k, row_idx in enumerate(sorted_idxs):
-            event_column[row_idx] = group_event_ids[k]
-    
-    # Insert the 'event' column
-    localizations['event'] = event_column
-    
-    # Optionally count how many localizations belong to each event
-    # (a simple way is to do value_counts on 'event' and then map back)
-    event_counts = localizations['event'].value_counts()
-    localizations['count'] = localizations['event'].map(event_counts)
-    
-    # (Optional) Filter out single-localization events
+        # Convert necessary columns to NumPy arrays for Numba
+        frames = group_df['frame'].to_numpy()
+        x_coords = group_df['x'].to_numpy()
+        y_coords = group_df['y'].to_numpy()
+        lpx_p_lpy = (group_df['lpx']+group_df['lpy']).to_numpy()
+
+        # Sort by frame to ensure temporal order
+        sort_indices = np.argsort(frames)
+        frames = frames[sort_indices]
+        x_coords = x_coords[sort_indices]
+        y_coords = y_coords[sort_indices]
+        lpx_p_lpy = lpx_p_lpy[sort_indices]
+
+        # Call Numba-optimized function to assign event IDs
+        group_event_ids = connect_group(frames, x_coords, y_coords, lpx_p_lpy)
+
+        # Map local group event IDs to global event IDs
+        unique_local_event_ids = np.unique(group_event_ids)
+        local_to_global_map = {local_id: global_event_id + idx + 1 for idx, local_id in
+                               enumerate(unique_local_event_ids)}
+        global_event_id += len(unique_local_event_ids)
+
+        # Assign the global event IDs back to the original DataFrame
+        localizations.loc[group_df.index[sort_indices], 'event'] = [local_to_global_map[e] for e in group_event_ids]
+
+    # Count the number of localizations per event
+    localizations['count'] = localizations['event'].map(localizations['event'].value_counts())
+    end_time = time.time()
+    print(f'duration of function: {end_time-start_time}')
+    # Optionally filter out single-localization events
     if filter_single:
-        localizations = localizations[localizations['count'] > 1]
-        localizations = localizations.reset_index(drop=True)
-    
-    # Return your final result
+        localizations = localizations[localizations['count'] > 1].reset_index(drop=True)
+
     return localizations
-    
-# We will define a helper function to check if two localizations are “nearby”
-def are_nearby(loc1, loc2, threshold):
-    """
-    Returns True if loc1 and loc2 are within 'threshold' distance in (x,y), else False.
-    """
-    dx = loc1['x'] - loc2['x']
-    dy = loc1['y'] - loc2['y']
-    return (dx*dx + dy*dy) <= (threshold * threshold)
+
     
     
 def return_nearby(this_localization, locs_next_frame):
