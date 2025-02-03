@@ -37,10 +37,10 @@ def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
 
         # Compare with localizations in the next frames within max_dark_frames
         for j in range(i + 1, n):
-            if group_frames[j] > group_frames[i] + max_dark_frames:
+            if group_frames[j] > group_frames[i] + 1 + max_dark_frames:
                 break  # Stop if frames are beyond the allowed gap
 
-            if group_frames[i] < group_frames[j] <= group_frames[i] + max_dark_frames:
+            if group_frames[i] < group_frames[j] <= group_frames[i] + 1 + max_dark_frames:
                 if are_nearby(group_x[i], group_y[i], group_x[j], group_y[j], lpx_p_lpy[i]):
                     event_ids[j] = event_ids[i]  # Assign the same event ID
 
