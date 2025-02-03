@@ -149,11 +149,11 @@ def event_position_cons_bg(event, phot_event, diameter, return_sd=True):
     else:
         return pos_x, pos_y
 
-@numba.njit
+#numba.njit
 def calculate_sd(photon_positions, mean_position, total_photons):
     return np.sqrt(np.sum((photon_positions - mean_position) ** 2) / total_photons)
 
-@numba.njit
+#@numba.njit
 def event_position(x_photons, y_photons, return_sd=True):
     #fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(x_photons)

@@ -70,7 +70,7 @@ def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
 def mean_arrival(loc_photons, diameter):
     return np.mean(loc_photons.dt)
 
-@njit
+#@njit
 def avg_lifetime_weighted_40(dt, distance, peak, diameter):
     """
     Uses quadratic weights for lifetimes depending on photons' distance from the center of localization.

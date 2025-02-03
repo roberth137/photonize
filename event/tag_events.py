@@ -14,13 +14,17 @@ import helper
 from numba import njit
 import time
 
-@njit
+def connect_locs_picasso_new(localizations_file, filter_single=True, proximity=2, max_dark_frames=1, suffix=''):
+    localizations = helper.process_input(localizations_file, 'locs')
+    localizations = connect_locs_by_group(localizations, filter_single=filter_single, proximity=proximity, max_dark_frames=max_dark_frames)
+    helper.dataframe_to_picasso(localizations, localizations_file, f'event_tagged{suffix}')
+#@njit
 def are_nearby(x1, y1, x2, y2, threshold):
     dx = x1 - x2
     dy = y1 - y2
     return (dx * dx + dy * dy) <= (threshold * threshold)
 
-@njit
+#@njit
 def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
     n = len(group_frames)
     event_ids = np.zeros(n, dtype=np.int32)
@@ -68,7 +72,7 @@ def connect_locs_by_group(localizations_dset,
           - 'count': total number of localizations in that event
     """
     localizations = localizations_dset.copy()
-    localizations['event'] = 0  # Initialize event column
+    localizations.insert(1, 'event', 0)  # Initialize event column
 
     # Group by 'group' and iterate
     grouped = localizations.groupby('group', sort=False)
@@ -101,11 +105,14 @@ def connect_locs_by_group(localizations_dset,
         localizations.loc[group_df.index[sort_indices], 'event'] = [local_to_global_map[e] for e in group_event_ids]
 
     # Count the number of localizations per event
-    localizations['count'] = localizations['event'].map(localizations['event'].value_counts())
+    localizations.insert(2, 'count', localizations['event'].map(localizations['event'].value_counts()))
 
     # Optionally filter out single-localization events
     if filter_single:
+        locs_before = len(localizations)
         localizations = localizations[localizations['count'] > 1].reset_index(drop=True)
+        locs_after = len(localizations)
+        print(f'removed {locs_before-locs_after} single frame localizations.')
 
     return localizations
 

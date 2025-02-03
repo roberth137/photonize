@@ -3,7 +3,7 @@ import pandas as pd
 import numba
 
 
-@numba.njit
+#@numba.njit
 def apply_drift_correction(x, y, frames, drift_x, drift_y, num_photons, max_frame_drift):
     undrifted_x = np.empty(num_photons)
     undrifted_y = np.empty(num_photons)
