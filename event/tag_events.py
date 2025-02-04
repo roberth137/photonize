@@ -49,7 +49,7 @@ def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
 def connect_locs_by_group(localizations_dset,
                           filter_single=True,
                           proximity=2,
-                          max_dark_frames=0):
+                          max_dark_frames=1):
     """
     Connect localizations in adjacent or nearby frames (up to max_dark_frames) into events, iterating group by group.
 
