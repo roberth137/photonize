@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 #from torch.utils.data import DataLoader
-from model import HistogramClassifier, HistogramCNN
+from models import HistogramClassifier, HistogramCNN
 
 
 
@@ -66,6 +66,8 @@ class HistogramDataset(Dataset):
     def __getitem__(self, idx):
         # Return one sample + label pair
         return self.X[idx], self.y[idx]
+
+
 def validate(model, loader):
     """Return average loss & accuracy on a given DataLoader."""
     model.eval()
@@ -88,10 +90,8 @@ def validate(model, loader):
     accuracy = correct / total
     return avg_loss, accuracy
 
-#dataset = HistogramDataset(X, y)
 batch_size = 32  # or whatever you prefer
 
-#train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
 model = HistogramCNN(num_bins=X.shape[1], num_classes=3)

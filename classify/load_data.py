@@ -6,7 +6,6 @@ from torch.utils.data import Dataset, DataLoader
 #from torch.utils.data import DataLoader
 
 
-
 ##Load data
 cy3_df = pd.read_hdf('training_data/cy3_histogram.hdf5', key='hist')
 a550_df = pd.read_hdf('training_data/a550_histogram.hdf5', key='hist')

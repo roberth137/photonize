@@ -20,10 +20,6 @@ class HistogramClassifier(nn.Module):
         return self.network(x)
 
 
-# Instantiate model
-#model = HistogramClassifier(num_bins=120, num_classes=3)
-
-
 class HistogramCNN(nn.Module):
     def __init__(self, num_bins, num_classes):
         super(HistogramCNN, self).__init__()
@@ -34,7 +30,7 @@ class HistogramCNN(nn.Module):
         self.conv3 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, stride=1, padding=2)
 
         # Pooling layer
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.pool = nn.AvgPool1d(kernel_size=2, stride=2)
 
         # Compute the final feature size dynamically
         with torch.no_grad():
@@ -68,5 +64,3 @@ class HistogramCNN(nn.Module):
         x = self.fc2(x)  # No activation here, handled by loss function
 
         return x
-
-model = HistogramCNN(num_bins=120, num_classes=3)
