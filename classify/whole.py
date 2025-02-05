@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 #from torch.utils.data import DataLoader
-from models import HistogramClassifier, HistogramCNN
+from models import HistogramClassifier, HistogramCNN, HistogramClassifierWithAttention
 
 
 
@@ -91,8 +91,6 @@ def validate(model, loader):
     return avg_loss, accuracy
 
 batch_size = 32  # or whatever you prefer
-
-
 
 model = HistogramCNN(num_bins=X.shape[1], num_classes=3)
 criterion = nn.CrossEntropyLoss()

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
+#import torch.optim as optim
 import torch.nn.functional as F
 
 
@@ -64,3 +64,57 @@ class HistogramCNN(nn.Module):
         x = self.fc2(x)  # No activation here, handled by loss function
 
         return x
+
+
+class HistogramClassifierWithAttention(nn.Module):
+    def __init__(self, num_bins=120, num_classes=3):
+        super(HistogramClassifierWithAttention, self).__init__()
+
+        # Convolutional layers to extract features
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2)
+        self.conv2 = nn.Conv1d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=2)
+
+        # Attention pooling layer
+        self.attention_pooling = AttentionPooling(input_dim=num_bins)
+
+        # Fully connected output layer for classification
+        self.fc = nn.Linear(32, num_classes)  # Output from pooled features to num_classes
+
+    def forward(self, x):
+        # Unsqueeze if input has no channel dimension
+        if len(x.shape) == 2:  # Shape (batch_size, num_bins)
+            x = x.unsqueeze(1)  # Shape (batch_size, 1, num_bins)
+
+        # Apply convolutional layers
+        x = F.relu(self.conv1(x))  # Shape (batch_size, 16, num_bins)
+        x = F.relu(self.conv2(x))  # Shape (batch_size, 32, num_bins)
+
+        # Reduce 32 channels to 1 using global average pooling
+        x = x.mean(dim=1)  # Shape: (batch_size, num_bins)
+
+        # Apply attention pooling
+        pooled_output, attention_scores = self.attention_pooling(x)  # Shape (batch_size,)
+
+        # Classification
+        logits = self.fc(pooled_output)  # Shape (batch_size, num_classes)
+
+        return logits, attention_scores
+
+
+
+class AttentionPooling(nn.Module):
+    def __init__(self, input_dim):
+        super(AttentionPooling, self).__init__()
+        # Learnable layer to compute attention scores
+        self.attention_weights = nn.Linear(input_dim, 1)  # Output 1 attention score per bin
+
+    def forward(self, x):
+        # x shape: (batch_size, num_bins)
+
+        # Compute attention scores and normalize them using softmax
+        attention_scores = torch.softmax(self.attention_weights(x).squeeze(-1), dim=1)  # (batch_size, num_bins)
+
+        # Weighted sum of the input using the attention scores
+        pooled_output = (attention_scores * x).sum(dim=1)  # (batch_size,)
+
+        return pooled_output, attention_scores  # Return pooled output and attention scores for analysis
