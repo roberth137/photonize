@@ -34,10 +34,10 @@ def get_pick_photons(
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
     min_x, max_x, min_y, max_y = get_photons.min_max_box(locs_group, box_side_length)
     phot_cr = get_photons.crop_photons(photons,
-                                (min_x - 0.53125 - dr_x),
-                                (max_x - 0.53125 + dr_x),
-                                (min_y - 0.53125 - dr_y),
-                                (max_y - 0.53125 + dr_y))
+                                (min_x - 0.46875 - dr_x),
+                                (max_x - 0.46875 + dr_x),
+                                (min_y - 0.46875 - dr_y),
+                                (max_y - 0.46875 + dr_y))
     #print('number of cropped photons: ', len(phot_cr))
     # undrift photons
     phot_cr_und = get_photons.undrift_photons(phot_cr, drift, offset, int_time)
@@ -145,10 +145,10 @@ def crop_undrift_crop(
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
     min_x, max_x, min_y, max_y = get_photons.min_max_box(locs_group, box_side_length)
     phot_cr = get_photons.crop_photons(photons,
-                          (min_x-0.53125-dr_x),
-                          (max_x-0.53125+dr_x),
-                          (min_y-0.53125-dr_y),
-                          (max_y-0.53125+dr_y))
+                          (min_x-0.46875-dr_x),
+                          (max_x-0.46875+dr_x),
+                          (min_y-0.46875-dr_y),
+                          (max_y-0.46875+dr_y))
     print('number of cropped photons: ', len(phot_cr))
     # undrift photons 
     phot_cr_und = (get_photons.undrift_photons(phot_cr, drift, offset, int_time))
