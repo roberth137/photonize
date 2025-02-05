@@ -1,5 +1,5 @@
 # This is a file for preparing fluorescent decay data for ML applications
-# Every decay gets histogrammed and this histogram values saved in a hdf5
+# Every decay gets histogramed and this histogram values saved in a hdf5
 # with the corresponding label
 
 import pandas as pd
@@ -9,17 +9,19 @@ import get_photons
 import fitting
 import h5py
 
-folder = 'C:/Users/rhollmann/Desktop/resi-flim/local/'
+folder = '/Users/roberthollmann/Desktop/resi-flim/ml/event_data/'
 
-input_events = f'{folder}all3_1701_rf_test_event_roi_phot.hdf5'
-input_photons = f'{folder}all3_1701_index.hdf5'
-drift_file = f'{folder}all3_1701_drift.txt'
+input_events = f'{folder}cy3_200ms_fp_event_f.hdf5'
+input_photons = f'{folder}cy3_59_index.hdf5'
+drift_file = f'{folder}cy3_200ms_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
-fluorophore_name = 'All_test'
+fluorophore_name = 'Cy3_test'
 fluorophore_number = 0
 offset = 10
 diameter = 4.5
 int_time = 200
+bin_size = 20  # Bin size for histogramming (in the same units as dt)
+
 
 output_filename = f'{fluorophore_name}_histogram.hdf5'
 
@@ -32,12 +34,10 @@ max_dt = max(photons[:1000000].dt)
 
 #events = events[events.group == 0]
 # Parameters
-bin_size = 20  # Bin size for histogramming (in the same units as dt)
 bins = np.arange(peak_arrival_time, max_dt, bin_size)
+num_bins = len(bins) - 1  # np.histogram returns bins+1 edges
 print(f'peak arrival time: {peak_arrival_time}')
 print(f'first bins: {bins[:5]}, . . . last bins: {bins[-5:]}')
-
-num_bins = len(bins) - 1  # np.histogram returns bins+1 edges
 
 # Define column names
 column_names = [f'bin_{i}' for i in range(num_bins)] + ['label']
