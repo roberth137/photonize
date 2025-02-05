@@ -122,11 +122,13 @@ def events_lt_avg_pos(event_file, photons_file,
         start_pick = time.time()
         events_group = events[(events.group == g)]
 
-        pick_photons = get_photons.get_pick_photons(events_group, photons,
-                                        drift, offset,
-                                        box_side_length=diameter,
-                                        int_time=int_time)
+        pick_photons = get_photons.get_pick_photons(
+            events_group, photons, drift, offset,
+            box_side_length=diameter, int_time=int_time)
+
         print('number of picked photons: ', len(pick_photons))
+        print(pick_photons.head())
+
         end_pick = time.time()
         print(f'picking and undrifting time: {end_pick-start_pick}')
         #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
@@ -143,8 +145,7 @@ def events_lt_avg_pos(event_file, photons_file,
 
             cylinder_photons = get_photons.crop_event(my_event,
                                                       pick_photons,
-                                                      diameter,
-                                                      200)
+                                                      diameter, 0)
 
             start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons,
                                                                     10,
@@ -156,8 +157,8 @@ def events_lt_avg_pos(event_file, photons_file,
                                               |(cylinder_photons.ms < (end_ms+150))
                                               &(cylinder_photons.ms > end_ms)])
 
-            photons_new_bounds = cylinder_photons[(cylinder_photons.ms > start_ms)
-                                                  &(cylinder_photons.ms < end_ms)]
+            photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
+                                                  &(cylinder_photons.ms <= end_ms)]
 
             #bg_total = my_event.bg * (diameter / 2) * np.pi
             total_photons = len(photons_new_bounds)
@@ -209,8 +210,8 @@ def events_lt_avg_pos(event_file, photons_file,
         print(f'time for loooping over events: {end_loop - start_loop}.')
         counter += len(events_group)
 
-    events['x'] = x_position
-    events['y'] = y_position
+    #events['x'] = x_position
+    #events['y'] = y_position
     events['photons'] = total_photons_lin.astype(np.int32)
     events.insert(5, 'brightness', brightness)
     events.insert(6, 'lifetime', lifetime)

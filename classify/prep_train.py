@@ -9,13 +9,13 @@ import get_photons
 import fitting
 import h5py
 
-folder = '/Users/roberthollmann/Desktop/resi-flim/ml/event_data/'
+folder = '/Users/roberthollmann/Desktop/resi-flim/ml/'
 
-input_events = f'{folder}cy3_200ms_fp_event_f.hdf5'
-input_photons = f'{folder}cy3_59_index.hdf5'
-drift_file = f'{folder}cy3_200ms_drift.txt'
+input_events = f'{folder}backup/cy3_200ms_fp_eventno_pos.hdf5'
+input_photons = f'{folder}event_data/cy3_59_index.hdf5'
+drift_file = f'{folder}event_data/cy3_200ms_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
-fluorophore_name = 'Cy3_test'
+fluorophore_name = 'Tesssst'
 fluorophore_number = 0
 offset = 10
 diameter = 4.5
@@ -50,27 +50,38 @@ histogram_list = []
 
 # Initialize delta tracking variables
 delta_x, delta_y, delta_phot, delta_phot_2 = 0, 0, 0, 0
+delta_events = 0
+wrong_event_list = []
 
 for group in events['group'].unique():
     events_group = events[events.group == group]
 
-    print('_______________')
-    print('this is group: ', group)
-    print('number of events in group: ', len(events_group))
+    #print('_______________')
+    #print('this is group: ', group)
+    #print('number of events in group: ', len(events_group))
 
     pick_photons = get_photons.get_pick_photons(
         events_group, photons, drift, offset,
         box_side_length=diameter, int_time=int_time
     )
+    #print(pick_photons.head())
 
-    print(f'event photons | filtered photons')
+    #print(f'event photons | filtered photons')
 
     # Process all events in this group
     for i, event in events_group.iterrows():
         event_photons = get_photons.crop_event(event, pick_photons, diameter)
 
-        if i % 4 == 0:
-            print(f'{int(event.photons)}  |  {len(event_photons)}')
+        #if i % 4 == 0:
+        #    print(f'{int(event.photons)}  |  {len(event_photons)}')
+        if event.photons != len(event_photons):
+            print('__________MISSMATCH_____________')
+            print('this is group: ', group)
+            print(event)
+            print(f'photons evelyze: {event.photons}, photons now: {len(event_photons)}')
+            print('_________________________________')
+            delta_events +=1
+            wrong_event_list.append(event.event)
 
         # Compute histogram
         hist, _ = np.histogram(event_photons.dt, bins=bins)
@@ -98,6 +109,8 @@ else:
     avg_delta_x = avg_delta_y = avg_delta_phot = std_phot = 0
 
 print(f'delta phot mean: {avg_delta_phot}, std_phot: {std_phot}')
+print(f'delta events: {delta_events}')
+print(f'wrong event list: {wrong_event_list}')
 
 # Display the first few rows
 print(histograms.head())
