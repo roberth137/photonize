@@ -15,13 +15,15 @@ import os
 
 
 
-def dataframe_to_picasso(dataframe, filename, extension='_lt', add_content=None):
+def dataframe_to_picasso(dataframe, filename, extension=None, yaml_dump=None):
     '''
 
     Parameters
     ----------
     dataframe : dataframe in picasso format (with all necessary columns)
     filename : name with which the file will be saved
+    extension : extension to filename
+    add_content
 
     DO: takes a dataframe and saves it to picasso format
     The corresponding yaml file has to be in the same directory and will be copied
@@ -33,15 +35,20 @@ def dataframe_to_picasso(dataframe, filename, extension='_lt', add_content=None)
     locs = df_picasso.to_records(index=False)
 
     # Saving data
-    yaml_old = (path + '/' + filename[:-4] + 'yaml')
-    yaml_new = (yaml_old[:-5] + extension + '.yaml')
-    shutil.copyfile(yaml_old, yaml_new)
+    try:
+        yaml_old = (path + '/' + filename[:-4] + 'yaml')
+        yaml_new = (yaml_old[:-5] + extension + '.yaml')
+        shutil.copyfile(yaml_old, yaml_new)
+        if yaml_dump:
+            with open(yaml_new, 'a') as file:
+                # file.write("\n# Added lines\n")  # Optional comment to indicate additions
+                for line in yaml_dump.split('\n'):
+                    file.write(f"{line.strip()}\n")
+    except FileNotFoundError:
+        print(f"Error: The file '{yaml_old}' was not found.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
-    if add_content:
-        with open(yaml_new, 'a') as file:
-            #file.write("\n# Added lines\n")  # Optional comment to indicate additions
-            for line in add_content.split('\n'):
-                file.write(f"{line.strip()}\n")
 
     hf = h5py.File(path + '/' + filename[:-5] + extension + '.hdf5', 'w')
     hf.create_dataset('locs', data=locs)

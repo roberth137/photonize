@@ -206,7 +206,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
             total_photons = len(phot_loc)
 
             bg_total = one_loc.bg * (box_side_length/2) * np.pi # calculates bg photons
-            #my_bg_total = my_bg * (box_side_length/2) * np.pi # calculates new bg photons
+            #my_bg_total = my_bg * (diameter/2) * np.pi # calculates new bg photons
             signal_photons = len(phot_loc) - bg_total
             #signal_photons_new = len(phot_loc) - my_bg_total
 
@@ -363,7 +363,7 @@ def locs_lt_to_picasso_80(localizations_file, photons_file,
             box_side_length, integration_time)
 
         #peak_arrival_time = fitting.calibrate_peak(locs_group, pick_photons,
-        #    offset, box_side_length,
+        #    offset, diameter,
         #    integration_time)
 
         # iterating over every localization in pick

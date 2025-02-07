@@ -14,7 +14,7 @@ import helper
 
 def get_pick_photons(
         locs_group, photons, drift, offset,
-        box_side_length, int_time):
+        diameter, int_time):
     '''
     Parameters
     ----------
@@ -22,17 +22,17 @@ def get_pick_photons(
     photons : photons as pd dataframe
     drift : drift as pd dataframe
     integration time: camera integration time
-    box_side_length: size of the PSF in pixels
+    diameter: size of the PSF in pixels
 
     Returns
     -------
     All driftcorrected photons in the area
-    of the pick +- box_side_length/2
+    of the pick +- diameter/2
     '''
     # set dimensions of the region and crop photons
     # -0.53125 because: -> see undrift (pixel conversion)
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
-    min_x, max_x, min_y, max_y = get_photons.min_max_box(locs_group, box_side_length)
+    min_x, max_x, min_y, max_y = get_photons.min_max_box(locs_group, diameter+1)
     phot_cr = get_photons.crop_photons(photons,
                                 (min_x - 0.46875 - dr_x),
                                 (max_x - 0.46875 + dr_x),
@@ -138,7 +138,7 @@ def crop_undrift_crop(
     Returns
     -------
     All driftcorrected photons in the area 
-    of the pick +- box_side_length/2
+    of the pick +- diameter/2
     '''
     # set dimensions of the region and crop photons 
     # -0.53125 because: -> see undrift (pixel conversion)

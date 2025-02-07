@@ -15,28 +15,28 @@ def min_max_box(localizations, box_side_length=0):
 
 
 def spatial_boundaries(event, diameter):
-    x_min = event.x - (diameter / 2)
+    x_min = event['x'] - (diameter / 2)
     x_max = x_min + diameter
 
-    y_min = event.y - (diameter / 2)
+    y_min = event['y'] - (diameter / 2)
     y_max = y_min + diameter
 
     return x_min, x_max, y_min, y_max
 
 
 def loc_boundaries(localization, offset,
-                   box_side_length, integration_time):
+                   diameter, integration_time):
     '''
     Returns boundaries in x, y, ms of a single localization (pd Series)
     as a rectangular box
 
     '''
 
-    x_min = localization.x - (box_side_length / 2)
-    x_max = x_min + box_side_length
+    x_min = localization.x - (diameter / 2)
+    x_max = x_min + diameter
 
-    y_min = localization.y - (box_side_length / 2)
-    y_max = y_min + box_side_length
+    y_min = localization.y - (diameter / 2)
+    y_max = y_min + diameter
 
     ms_min = (localization.frame / offset) * integration_time
     ms_max = ms_min + integration_time
@@ -51,13 +51,13 @@ def crop_event(event, photons, diameter, more_ms=0):
     localization : single localization as pd Series
     photons : photons as pd DataFrame
     offset :
-    box_side_length :
+    diameter :
     integration_time :
 
     Returns
     -------
     photons_cylinder : All photons from the current frame closer than
-    box_side_length/2 to the localization position
+    diameter/2 to the localization position
 
     '''
 
@@ -69,6 +69,8 @@ def crop_event(event, photons, diameter, more_ms=0):
     else:
         raise AttributeError(
             "Required attributes are missing. Expected either 'start_ms', 'end_ms' or 'start_ms_fr', 'end_ms_fr'.")
+    print(f'inside crop event! '
+          f'x_min dtype: {type(x_min)}')
 
     photons_cropped = pd.DataFrame(data=crop_photons(
         photons,
@@ -87,15 +89,16 @@ def crop_event(event, photons, diameter, more_ms=0):
 
     radius_sq = ((diameter/2) ** 2)
     photons_cylinder = photons_cropped[
-        photons_cropped.distance < radius_sq]
+        photons_cropped.distance <= radius_sq]
 
     #bg_photons = total_photons - len(photons_cylinder)
 
     if len(photons_cylinder) < 30:
-        print(f'!!!!!!!!!!\nlow photon count for boundaries.crop_event():'
+        try: print(f'!!!!!!!!!!\nlow photon count for boundaries.crop_event():'
               f'\nlen(pick_photons): {len(photons_cylinder)}'
               f'\nevent_number: {event.event}')
-
+        except:
+            pass
     return photons_cylinder
 
 def crop_cylinder(x_pos, y_pos, ms_min, ms_max, diameter, photons, more_ms=0):
@@ -160,7 +163,7 @@ def crop_loc(localization, photons, offset,
     Returns
     -------
     photons_cylinder : All photons from the current frame closer than
-    box_side_length/2 to the localization position
+    diameter/2 to the localization position
 
     '''
 
@@ -207,7 +210,7 @@ def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0,
     cropped photons as pd dataframe
 
     '''
-
+    print(f'photons dtype: {type(photons.x)}, x_min dtype: {type(x_min)}')
     photons_cropped = photons[
         (photons.x >= x_min)
         & (photons.x <= x_max)

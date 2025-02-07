@@ -8,6 +8,8 @@ import helper
 import get_photons
 import fitting
 import h5py
+import event
+import time
 
 folder = '/Users/roberthollmann/Desktop/resi-flim/ml/'
 
@@ -52,18 +54,16 @@ histogram_list = []
 delta_x, delta_y, delta_phot, delta_phot_2 = 0, 0, 0, 0
 delta_events = 0
 wrong_event_list = []
+prep_return_values = pd.DataFrame(columns=['start', 'end', 'x', 'y'])
 
 for group in events['group'].unique():
     events_group = events[events.group == group]
 
-    #print('_______________')
-    #print('this is group: ', group)
-    #print('number of events in group: ', len(events_group))
-
     pick_photons = get_photons.get_pick_photons(
         events_group, photons, drift, offset,
-        box_side_length=diameter, int_time=int_time
+        diameter=diameter, int_time=int_time
     )
+
     #print(pick_photons.head())
 
     #print(f'event photons | filtered photons')
@@ -71,17 +71,6 @@ for group in events['group'].unique():
     # Process all events in this group
     for i, event in events_group.iterrows():
         event_photons = get_photons.crop_event(event, pick_photons, diameter)
-
-        #if i % 4 == 0:
-        #    print(f'{int(event.photons)}  |  {len(event_photons)}')
-        if event.photons != len(event_photons):
-            print('__________MISSMATCH_____________')
-            print('this is group: ', group)
-            print(event)
-            print(f'photons evelyze: {event.photons}, photons now: {len(event_photons)}')
-            print('_________________________________')
-            delta_events +=1
-            wrong_event_list.append(event.event)
 
         # Compute histogram
         hist, _ = np.histogram(event_photons.dt, bins=bins)
@@ -92,29 +81,11 @@ for group in events['group'].unique():
         # Append to list as dictionary (efficient for DataFrame creation)
         histogram_list.append(dict(zip(column_names[:-1], hist), label=fluorophore_number))
 
-        # Track photon deltas
-        delta_phot += event.photons - len(event_photons)
-        delta_phot_2 += (event.photons - len(event_photons)) ** 2
-
 # Convert list to DataFrame in one operation (much faster)
 histograms = pd.DataFrame(histogram_list, columns=column_names)
 
-# Compute statistics safely
-if len(events) > 0:
-    avg_delta_x = delta_x / len(events)
-    avg_delta_y = delta_y / len(events)
-    avg_delta_phot = delta_phot / len(events)
-    std_phot = np.sqrt(delta_phot_2 / len(events))
-else:
-    avg_delta_x = avg_delta_y = avg_delta_phot = std_phot = 0
-
-print(f'delta phot mean: {avg_delta_phot}, std_phot: {std_phot}')
-print(f'delta events: {delta_events}')
-print(f'wrong event list: {wrong_event_list}')
-
 # Display the first few rows
 print(histograms.head())
-
 
 labels = list(histograms.keys())
 df_pd = histograms.reindex(columns=labels, fill_value=1)
