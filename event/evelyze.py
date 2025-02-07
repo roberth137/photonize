@@ -58,7 +58,6 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                            position_fitting='averge_roi')
     helper.dataframe_to_picasso(
         events, localizations_file, file_extension, message)
-    #return test_photons
 
 
 def events_lt_avg_pos(event_file, photons_file,
@@ -116,8 +115,6 @@ def events_lt_avg_pos(event_file, photons_file,
     counter = 0
     groups = set(events['group'])
     # iterating over every pick in file
-    return_values = pd.DataFrame(columns=['start', 'end', 'x', 'y'])
-
     for g in groups:
         print('_______________________________________________________')
         print(f'Analysing group {int(g+1)} of {len(groups)}')
@@ -135,7 +132,6 @@ def events_lt_avg_pos(event_file, photons_file,
         #print(f'only considering events with dt < 1700')
 
         # iterating over every event in pick
-        start_loop = time.time()
         for i in range(counter, counter + len(events_group)):
             if (i - counter) == 0:
                 print('fitting lifetime of ', len(events_group),
@@ -157,20 +153,14 @@ def events_lt_avg_pos(event_file, photons_file,
                                               |(cylinder_photons.ms < (end_ms+150))
                                               &(cylinder_photons.ms > end_ms)])
 
-            #photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
-            #                                      &(cylinder_photons.ms <= end_ms)]
-            new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
-            this_eve = new_eve.iloc[0]
-            photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
+            photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
+                                                  &(cylinder_photons.ms <= end_ms)]
+            #new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
+            #this_eve = new_eve.iloc[0]
+            #photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
 
-            #bg_total = my_event.bg * (diameter / 2) * np.pi
             total_photons = len(photons_new_bounds)
             phot_event = pd.DataFrame(data=photons_new_bounds)
-            #if g == 53:
-            #    print('!!!!!!!!!!!!!!!!HERE!!!!!!!!!!!!!')
-            #    this_eve = pd.DataFrame([{'start': start_ms, 'end': end_ms, 'x': my_event.x, 'y': my_event.y}])
-            #    print(this_eve)
-            #    return_values = pd.concat([return_values, this_eve], ignore_index=True)
             if i == 0:
                 print('FIRST fitted. Number of photons',
                       ' in phot_event: ', len(phot_event))
@@ -214,8 +204,6 @@ def events_lt_avg_pos(event_file, photons_file,
             bg_over_on[i] = len(cylinder_photons)/duration_ms
             delta_x[i] = my_event.x - x_t
             delta_y[i] = my_event.y - y_t
-        end_loop = time.time()
-        print(f'time for loooping over events: {end_loop - start_loop}.')
         counter += len(events_group)
 
     events['x'] = x_position
@@ -227,7 +215,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events['bg'] = bg.astype(np.float32)
     events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
     events.insert(15, 'sdx_n', sdx_n)
-    events.insert(16, 'sdx_n', sdx_n)
+    events.insert(16, 'sdy_n', sdy_n)
     events.insert(17, 'sdx', sdx.astype(np.float32))
     events.insert(18, 'sdy', sdy.astype(np.float32))
     #events['lpx'] = sdx_n.astype(np.float32)

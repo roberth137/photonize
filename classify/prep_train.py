@@ -8,8 +8,6 @@ import helper
 import get_photons
 import fitting
 import h5py
-import event
-import time
 
 folder = '/Users/roberthollmann/Desktop/resi-flim/ml/'
 

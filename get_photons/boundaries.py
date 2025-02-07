@@ -67,10 +67,7 @@ def crop_event(event, photons, diameter, more_ms=0):
     elif hasattr(event, 'start_ms_fr') and hasattr(event, 'end_ms_fr'):
         start, end = event.start_ms_fr, event.end_ms_fr
     else:
-        raise AttributeError(
-            "Required attributes are missing. Expected either 'start_ms', 'end_ms' or 'start_ms_fr', 'end_ms_fr'.")
-    print(f'inside crop event! '
-          f'x_min dtype: {type(x_min)}')
+        raise AttributeError("Required attributes are missing. Expected either 'start_ms', 'end_ms' or 'start_ms_fr', 'end_ms_fr'.")
 
     photons_cropped = pd.DataFrame(data=crop_photons(
         photons,
@@ -78,8 +75,6 @@ def crop_event(event, photons, diameter, more_ms=0):
         y_min, y_max,
         (start-more_ms),
         (end+more_ms)))
-
-    #total_photons = len(photons_cropped)
 
     x_distance = (photons_cropped['x'].to_numpy() - event.x)
     y_distance = (photons_cropped['y'].to_numpy() - event.y)
@@ -90,8 +85,6 @@ def crop_event(event, photons, diameter, more_ms=0):
     radius_sq = ((diameter/2) ** 2)
     photons_cylinder = photons_cropped[
         photons_cropped.distance <= radius_sq]
-
-    #bg_photons = total_photons - len(photons_cylinder)
 
     if len(photons_cylinder) < 30:
         try: print(f'!!!!!!!!!!\nlow photon count for boundaries.crop_event():'
@@ -210,7 +203,6 @@ def crop_photons(photons, x_min=0, x_max=float('inf'), y_min=0,
     cropped photons as pd dataframe
 
     '''
-    print(f'photons dtype: {type(photons.x)}, x_min dtype: {type(x_min)}')
     photons_cropped = photons[
         (photons.x >= x_min)
         & (photons.x <= x_max)
