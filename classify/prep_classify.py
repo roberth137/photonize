@@ -2,6 +2,8 @@
 # Every decay gets histogrammed and this histogram values saved in a hdf5
 # with the corresponding label
 
+##### PREDICTION
+
 import pandas as pd
 import numpy as np
 import helper
@@ -16,7 +18,7 @@ input_photons = f'{folder}all3_1701_index.hdf5'
 drift_file = f'{folder}all3_1701_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
 fluorophore_name = 'All_test'
-fluorophore_number = 0
+#fluorophore_number = 0
 offset = 10
 diameter = 4.5
 int_time = 200
@@ -60,7 +62,7 @@ for group in events['group'].unique():
 
     pick_photons = get_photons.get_pick_photons(
         events_group, photons, drift, offset,
-        box_side_length=diameter, int_time=int_time
+        diameter=diameter, int_time=int_time
     )
 
     print(f'event photons | filtered photons')
@@ -79,25 +81,14 @@ for group in events['group'].unique():
         hist = np.log1p(hist) / 3
 
         # Append to list as dictionary (efficient for DataFrame creation)
-        histogram_list.append(dict(zip(column_names[:-1], hist), label=fluorophore_number))
-
-        # Track photon deltas
-        delta_phot += event.photons - len(event_photons)
-        delta_phot_2 += (event.photons - len(event_photons)) ** 2
+        histogram_list.append({
+            'event_number': event.event,  # Assuming event.event holds the event number
+            **dict(zip(column_names[:-1], hist))  # Histogram values mapped to columns
+        })
 
 # Convert list to DataFrame in one operation (much faster)
 histograms = pd.DataFrame(histogram_list, columns=column_names)
 
-# Compute statistics safely
-if len(events) > 0:
-    avg_delta_x = delta_x / len(events)
-    avg_delta_y = delta_y / len(events)
-    avg_delta_phot = delta_phot / len(events)
-    std_phot = np.sqrt(delta_phot_2 / len(events))
-else:
-    avg_delta_x = avg_delta_y = avg_delta_phot = std_phot = 0
-
-print(f'delta phot mean: {avg_delta_phot}, std_phot: {std_phot}')
 
 # Display the first few rows
 print(histograms.head())
