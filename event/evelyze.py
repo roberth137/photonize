@@ -155,9 +155,9 @@ def events_lt_avg_pos(event_file, photons_file,
 
             photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
                                                   &(cylinder_photons.ms <= end_ms)]
-            #new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
-            #this_eve = new_eve.iloc[0]
-            #photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
+            new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
+            this_eve = new_eve.iloc[0]
+            photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
 
             total_photons = len(photons_new_bounds)
             phot_event = pd.DataFrame(data=photons_new_bounds)

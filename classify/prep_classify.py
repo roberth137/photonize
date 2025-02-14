@@ -1,7 +1,4 @@
-# This is a file for preparing fluorescent decay data for ML applications
-# Every decay gets histogrammed and this histogram values saved in a hdf5
-# with the corresponding label
-
+##### This is a script preparing event data for classifying events based on their decay histogram
 ##### PREDICTION
 
 import pandas as pd
@@ -11,16 +8,16 @@ import get_photons
 import fitting
 import h5py
 
-folder = 'C:/Users/rhollmann/Desktop/resi-flim/local/'
+folder = '/Users/roberthollmann/Desktop/resi-flim/ml/event_data/'
 
-input_events = f'{folder}all3_1701_rf_test_event_roi_phot.hdf5'
-input_photons = f'{folder}all3_1701_index.hdf5'
-drift_file = f'{folder}all3_1701_drift.txt'
+input_events = f'{folder}cy3_200ms_fp_event_diam1p5.hdf5'
+input_photons = f'{folder}cy3_59_index.hdf5'
+drift_file = f'{folder}cy3_200ms_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
-fluorophore_name = 'All_test'
+fluorophore_name = 'cy3_test_1402'
 #fluorophore_number = 0
 offset = 10
-diameter = 4.5
+diameter = 1.5
 int_time = 200
 
 output_filename = f'{fluorophore_name}_histogram.hdf5'
@@ -42,7 +39,7 @@ print(f'first bins: {bins[:5]}, . . . last bins: {bins[-5:]}')
 num_bins = len(bins) - 1  # np.histogram returns bins+1 edges
 
 # Define column names
-column_names = [f'bin_{i}' for i in range(num_bins)] + ['label']
+column_names = [f'bin_{i}' for i in range(num_bins)] + ['event']
 
 # Initialize an empty DataFrame with pre-defined columns
 histograms = pd.DataFrame(columns=column_names)
@@ -51,8 +48,9 @@ histograms = pd.DataFrame(columns=column_names)
 histogram_list = []
 
 # Initialize delta tracking variables
-delta_x, delta_y, delta_phot, delta_phot_2 = 0, 0, 0, 0
-
+#delta_x, delta_y, delta_phot, delta_phot_2 = 0, 0, 0, 0
+delta_phot = 0
+missmatch = []
 for group in events['group'].unique():
     events_group = events[events.group == group]
 
@@ -73,26 +71,29 @@ for group in events['group'].unique():
 
         if i % 4 == 0:
             print(f'{int(event.photons)}  |  {len(event_photons)}')
-
+        #if event.photons != len(event_photons):
+        #    print(event)
+        #    missmatch.append(event.event)
+        delta_phot += (len(event_photons) - event.photons)
         # Compute histogram
         hist, _ = np.histogram(event_photons.dt, bins=bins)
-
-        # Compute log-normalized histogram
         hist = np.log1p(hist) / 3
-
+        hist = np.append(hist, event.event)#hist.append(event.event)
         # Append to list as dictionary (efficient for DataFrame creation)
         histogram_list.append({
-            'event_number': event.event,  # Assuming event.event holds the event number
-            **dict(zip(column_names[:-1], hist))  # Histogram values mapped to columns
+            #'event_number': event.event,  # Assuming event.event holds the event number
+            **dict(zip(column_names, hist))  # Histogram values mapped to columns
         })
 
 # Convert list to DataFrame in one operation (much faster)
 histograms = pd.DataFrame(histogram_list, columns=column_names)
-
+histograms['event'] = histograms['event'].astype(np.int32)
 
 # Display the first few rows
 print(histograms.head())
 
+print(f'now {delta_phot/len(events)} more photons per event')
+print(missmatch)
 
 labels = list(histograms.keys())
 df_pd = histograms.reindex(columns=labels, fill_value=1)

@@ -1,5 +1,7 @@
 import numpy as np
 import ruptures as rpt
+from ruptures.exceptions import BadSegmentationParameters
+
 
 def get_on_off_dur(photons, bin_size, smoothing_size):
     bins = np.arange(min(photons.ms), max(photons.ms) + bin_size, bin_size)
@@ -7,11 +9,17 @@ def get_on_off_dur(photons, bin_size, smoothing_size):
     smoothed_counts_1 = lee_filter_1d(counts, smoothing_size)
     model = "l2"  # Least squares cost function
     algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_1)
-    change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-    change_points_trans = np.array(change_points)
-    start = (change_points_trans[0] - 1.5) * bin_size + bins[0]
-    end = (change_points_trans[1] + 0.5) * bin_size + bins[0]
-    duration = (change_points_trans[1] - change_points_trans[0]) * bin_size
+    try:
+        change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
+        change_points_trans = np.array(change_points)
+        start = (change_points_trans[0] - 1.5) * bin_size + bins[0]
+        end = (change_points_trans[1] + 0.5) * bin_size + bins[0]
+        duration = (change_points_trans[1] - change_points_trans[0]) * bin_size
+    except BadSegmentationParameters:
+        # Handle the case where there aren't enough data points
+        start = min(photons.ms)
+        end = max(photons.ms)
+        duration = end - start
 
     return start, end, duration
 
