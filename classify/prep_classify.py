@@ -10,14 +10,14 @@ import h5py
 
 folder = '/Users/roberthollmann/Desktop/resi-flim/ml/event_data/'
 
-input_events = f'{folder}cy3_200ms_fp_event_diam1p5.hdf5'
+input_events = f'{folder}cy3_200ms_fp_event_f.hdf5'
 input_photons = f'{folder}cy3_59_index.hdf5'
 drift_file = f'{folder}cy3_200ms_drift.txt'
 # For start: R1 Cy3 is 0, R2 A550 is 1, R4, A565 is 2
-fluorophore_name = 'cy3_test_1402'
+fluorophore_name = 'cy3_1402_4p5'
 #fluorophore_number = 0
 offset = 10
-diameter = 1.5
+diameter = 4.5
 int_time = 200
 
 output_filename = f'{fluorophore_name}_histogram.hdf5'

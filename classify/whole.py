@@ -8,6 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 #from torch.utils.data import DataLoader
 from models import HistogramClassifier, HistogramCNN, HistogramClassifierWithAttention
+import time
 
 
 
@@ -20,8 +21,9 @@ cy3_np = cy3_df.to_numpy()
 a550_df = a550_df.to_numpy()
 a565_np = a565_df.to_numpy()
 
+print('here')
 
-array_combined = np.vstack((cy3_np, a565_np, a550_df))#, a565_np))
+array_combined = np.vstack((cy3_np, a565_np, a550_df))
 
 #df_combined = pd.concat([cy3_np, a565_np], axis=0)  # Stack rows
 #array_combined = df_combined.to_numpy()
@@ -42,12 +44,12 @@ X_train, X_val, y_train, y_val = train_test_split(
     stratify=y      # optional but recommended for classification
 )
 
+# Convert to tensors and create PyTorch datasets
 X_train_t = torch.tensor(X_train, dtype=torch.float32)
 y_train_t = torch.tensor(y_train, dtype=torch.long)
 X_val_t = torch.tensor(X_val, dtype=torch.float32)
 y_val_t = torch.tensor(y_val, dtype=torch.long)
 
-# Create Datasets
 train_dataset = TensorDataset(X_train_t, y_train_t)
 val_dataset = TensorDataset(X_val_t, y_val_t)
 
@@ -114,4 +116,6 @@ for epoch in range(num_epochs):  # number of epochs
     print(f"Epoch [{epoch + 1}/{num_epochs}] "
           f"Train Loss: {train_loss:.4f} | "
           f"Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy * 100:.2f}%")
+
+torch.save(model.state_dict(), "histogram_model_test.pt")
 

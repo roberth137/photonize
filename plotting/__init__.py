@@ -5,9 +5,9 @@ import get_photons
 import fitting
 
 # Set filenames and parameters
-events_filename = 'ml/cy3_all_f_event.hdf5'
-photons_filename = 'ml/cy3_index.hdf5'
-drift_filename = 'ml/cy3_drift.txt'
+events_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_event.hdf5'
+photons_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
+drift_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
 diameter = 4.5
 pick_group = 25
 more_ms = 400
