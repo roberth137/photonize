@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
+from dataset import HistogramDataset
 
 #Load training data (labeled)
 cy3_df = pd.read_hdf('training_data/cy3_histogram.hdf5', key='hist')

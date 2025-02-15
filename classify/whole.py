@@ -72,50 +72,56 @@ class HistogramDataset(Dataset):
 
 def validate(model, loader):
     """Return average loss & accuracy on a given DataLoader."""
-    model.eval()
-    correct = 0
-    total = 0
-    total_loss = 0.0
+    model.eval() #to evaluation mode
+    correct = 0             #just
+    total = 0               #some
+    total_loss = 0.0        #metrics
 
-    with torch.no_grad():
-        for inputs, labels in loader:
-            outputs = model(inputs)
-            loss = F.cross_entropy(outputs, labels)  # or your chosen loss
-            total_loss += loss.item()
+    with torch.no_grad():               #no gradient computation since only evaluating!
+        for inputs, labels in loader:                   #grabs inputs and labels from loader
+            outputs = model(inputs)                     #makes predictions
+            loss = F.cross_entropy(outputs, labels)     #compares predictions with ground truth
+                                                        #cross_entropy most common for classification
+            total_loss += loss.item()                   #adds up the loss as python integer
 
             # Predictions
-            _, preds = torch.max(outputs, 1)
-            correct += (preds == labels).sum().item()
-            total += labels.size(0)
+            _, preds = torch.max(outputs, 1)            #return highest probability as output class
+            correct += (preds == labels).sum().item()   #element wise comparison of preds and labels, summed up and converted to integer
+            total += labels.size(0)                     #returns the size of teh training sample
 
-    avg_loss = total_loss / len(loader)
-    accuracy = correct / total
-    return avg_loss, accuracy
+    avg_loss = total_loss / len(loader)                 # calculates average loss
+    accuracy = correct / total                          # calculates accuracy
+    return avg_loss, accuracy                           # returns loss and accuracy
 
-batch_size = 32  # or whatever you prefer
+# Set hyperparameters and create model
+#batch_size = 32                                         # use powers of 2 since GPUs are optimized for 2^n batch sized
+model = HistogramCNN(num_bins=X.shape[1], num_classes=3)    # choose model class to be trained and define parameters
+criterion = nn.CrossEntropyLoss()                       # define CrossEntropy loss
+optimizer = optim.Adam(model.parameters(), lr=1e-3)     # define optimizer
+num_epochs = 10                                       # number of training epochs
 
-model = HistogramCNN(num_bins=X.shape[1], num_classes=3)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
-num_epochs = 100
-for epoch in range(num_epochs):  # number of epochs
-    model.train()  # training mode
-    running_loss = 0.0
 
-    for histograms, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(histograms)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-    train_loss = running_loss / len(train_loader)
+for epoch in range(num_epochs):                         # iterate over training epochs
+    model.train()                                       # sets model to training mode
+    running_loss = 0.0                                  # tracking cumulative loss over all batches in one epoch
 
-    val_loss, val_accuracy = validate(model, val_loader)
+    for histograms, labels in train_loader:             # iterate over batches of data provided by train_loader
+        optimizer.zero_grad()                           # sets all gradients to 0, since loss.backward() adds to existing gradients
+        outputs = model(histograms)                     # inference: Making the actual prediction and assigning it to output
+        loss = criterion(outputs, labels)               # Calculate the loss for the predictions
+        loss.backward()                                 # Backpropagation: calculate gradient of loss wrt to trainable parameters
+        optimizer.step()                                # Adapt network weights -> going one step towards the loss minimum in multidimensional hyperspace
+        running_loss += loss.item()                     # Add loss from current batch to running loss over epoch
+    train_loss = running_loss / len(train_loader)       # Calculates average loss for this epoch
 
-    print(f"Epoch [{epoch + 1}/{num_epochs}] "
+    val_loss, val_accuracy = validate(model, val_loader)    # Validates the model on unseen data
+
+    print(f"Epoch [{epoch + 1}/{num_epochs}] "      # Print progress: Helpful to see what's actually happening 
           f"Train Loss: {train_loss:.4f} | "
           f"Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy * 100:.2f}%")
 
-torch.save(model.state_dict(), "histogram_model_test.pt")
+torch.save(model.state_dict(), "histogram_model_test.pt")    # saves the model weights and biases in file.
+                                                                # NO saving of model architecture -> define model structure before loading again!!! 
+
+print(model.state_dict().keys())  # See what’s stored
 
