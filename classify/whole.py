@@ -121,7 +121,7 @@ for epoch in range(num_epochs):                         # iterate over training 
           f"Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy * 100:.2f}%")
 
 torch.save(model.state_dict(), "histogram_model_test.pt")    # saves the model weights and biases in file.
-                                                                # NO saving of model architecture -> define model structure before loading again!!! 
+                                                                # NO saving of model architecture -> define model structure before loading again!!!
 
 print(model.state_dict().keys())  # See what’s stored
 
