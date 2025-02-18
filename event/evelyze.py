@@ -8,7 +8,7 @@ import time
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
-                   diameter, int_time, suffix='', max_dark_frames=1, proximity=2, filter_single=True):
+                   diameter, int_time, suffix='', max_dark_frames=1, proximity=2, filter_single=True, **kwargs):
     """
 
     reads in file of localizations, connects events and analyzes them
@@ -40,7 +40,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     end_read_drift = time.time()
     print(f'time to read drift: {end_read_drift-start_read_drift}')
     events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
-                      int_time=int_time)
+                      int_time=int_time, **kwargs)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -62,7 +62,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
 def events_lt_avg_pos(event_file, photons_file,
                       drift_file, offset, diameter=5,
-                      int_time=200):
+                      int_time=200, **tailcut):
     """
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
@@ -181,6 +181,8 @@ def events_lt_avg_pos(event_file, photons_file,
             dist_2 = (phot_x**2 + phot_y**2)
             phot_event['distance'] = dist_2
 
+            if tailcut:
+                phot_event = phot_event[(phot_event['dt']<tailcut)]
             arrival_times = phot_event['dt'].to_numpy()
             distance_sq = phot_event['distance'].to_numpy()
 
