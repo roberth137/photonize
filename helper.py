@@ -29,28 +29,36 @@ def dataframe_to_picasso(dataframe, filename, extension=None, yaml_dump=None):
     The corresponding yaml file has to be in the same directory and will be copied
     '''
 
-    path = str(Path.cwd())
+    path = Path.cwd()
     labels = list(dataframe.keys())
     df_picasso = dataframe.reindex(columns=labels, fill_value=1)
     locs = df_picasso.to_records(index=False)
 
-    # Saving data
+    # Get the full path of the original YAML file
+    yaml_old = Path(filename).with_suffix('.yaml')  # Ensures correct extension handling
+
+    # Construct new YAML filename
+    if extension:
+        yaml_new = yaml_old.with_name(f"{yaml_old.stem}{extension}.yaml")
+    else:
+        yaml_new = yaml_old
+
     try:
-        yaml_old = (path + '/' + filename[:-4] + 'yaml')
-        yaml_new = (yaml_old[:-5] + extension + '.yaml')
+        # Ensure the original YAML file exists
+        if not yaml_old.exists():
+            print(f"Error: The file '{yaml_old}' was not found.")
+            return
+
+        # Copy and optionally modify the YAML file
         shutil.copyfile(yaml_old, yaml_new)
         if yaml_dump:
             with open(yaml_new, 'a') as file:
-                # file.write("\n# Added lines\n")  # Optional comment to indicate additions
-                for line in yaml_dump.split('\n'):
-                    file.write(f"{line.strip()}\n")
-    except FileNotFoundError:
-        print(f"Error: The file '{yaml_old}' was not found.")
+                file.writelines([f"{line.strip()}\n" for line in yaml_dump.split('\n')])
+
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-
-    hf = h5py.File(path + '/' + filename[:-5] + extension + '.hdf5', 'w')
+    hf = h5py.File(path / f"{filename[:-5]}{extension}.hdf5", 'w')
     hf.create_dataset('locs', data=locs)
     hf.close()
     print('\ndataframe succesfully saved in picasso format.')
