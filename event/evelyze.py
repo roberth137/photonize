@@ -62,7 +62,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
 def events_lt_avg_pos(event_file, photons_file,
                       drift_file, offset, diameter=5,
-                      int_time=200, **tailcut):
+                      int_time=200, **kwargs):
     """
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
@@ -86,6 +86,7 @@ def events_lt_avg_pos(event_file, photons_file,
     drift = helper.process_input(drift_file, dataset='drift')
     end_i_o = time.time()
     print(f'time for i/o: {end_i_o-start_i_o}')
+    tailcut = kwargs.get('tailcut')
 
     lifetime = np.ones(total_events, dtype=np.float32)
     total_photons_lin = np.ones(total_events, dtype=np.float32)
@@ -181,7 +182,7 @@ def events_lt_avg_pos(event_file, photons_file,
             dist_2 = (phot_x**2 + phot_y**2)
             phot_event['distance'] = dist_2
 
-            if tailcut:
+            if tailcut is not None:
                 phot_event = phot_event[(phot_event['dt']<tailcut)]
             arrival_times = phot_event['dt'].to_numpy()
             distance_sq = phot_event['distance'].to_numpy()

@@ -3,9 +3,9 @@ import time
 
 
 start_time = time.time()
-event.event_analysis(localizations_file='ml/event_data/a550_fp.hdf5',
-                     photons_file='ml/event_data/a550_index.hdf5',
-                     drift_file='ml/event_data/a550_drift.txt',
+event.event_analysis(localizations_file='ml/event_data/a565_200ms_pf.hdf5',
+                     photons_file='ml/event_data/a565_index.hdf5',
+                     drift_file='ml/event_data/a565_200ms_drift.txt',
                      offset=10,
                      diameter=4.5,
                      int_time=200,
