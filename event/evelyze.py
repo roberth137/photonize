@@ -39,7 +39,8 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     drift = helper.process_input(drift_file, dataset='drift')
     end_read_drift = time.time()
     print(f'time to read drift: {end_read_drift-start_read_drift}')
-    events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
+    peak_dt = {}
+    events_lt_avg_pos(events, photons, drift, peak_dt, offset, diameter=diameter,
                       int_time=int_time)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
@@ -55,13 +56,14 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                            start_stop_event='ruptures-static',
                                            background='150ms-static',
                                            lifetime_fitting='quadratic_weight-static',
-                                           position_fitting='averge_roi')
+                                           position_fitting='averge_roi',
+                                           peak_dt = peak_dt['value'])
     helper.dataframe_to_picasso(
         events, localizations_file, file_extension, message)
 
 
 def events_lt_avg_pos(event_file, photons_file,
-                      drift_file, offset, diameter=5,
+                      drift_file, peak_dt=None, offset=10, diameter=5,
                       int_time=200):
     """
     tagging list of events with lifetime and avg of roi position
@@ -106,6 +108,7 @@ def events_lt_avg_pos(event_file, photons_file,
     start_arr_time = time.time()
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
+    peak_dt['value'] = start_dt
     end_arr_time = time.time()
     print(f'arrival time calc: {end_arr_time-start_arr_time}.')
 

@@ -3,13 +3,14 @@ import time
 
 
 start_time = time.time()
-event.event_analysis(localizations_file='ml/backup/cy3_200ms_fp.hdf5',
-                     photons_file='ml/event_data/cy3_59_index.hdf5',
-                     drift_file='ml/event_data/cy3_200ms_drift.txt',
+folder = f'local/1902/a550/'
+event.event_analysis(localizations_file=f'{folder}a550_rfp.hdf5',
+                     photons_file=f'{folder}a550_dt1_index.hdf5',
+                     drift_file=f'{folder}a550_drift.txt',
                      offset=10,
-                     diameter=6,
+                     diameter=4.5,
                      int_time=200,
-                     suffix='_diam6',
+                     suffix='',
                      max_dark_frames=1,
                      proximity=2)
 end_time = time.time()
