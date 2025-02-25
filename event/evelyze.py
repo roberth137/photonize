@@ -108,6 +108,8 @@ def events_lt_avg_pos(event_file, photons_file,
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
     end_arr_time = time.time()
+    lpx_arr = np.copy(events.lpx)
+    lpy_arr = np.copy(events.lpy)
     print(f'arrival time calc: {end_arr_time-start_arr_time}.')
 
     print('peak arrival time:   ', peak_arrival_time)
@@ -212,13 +214,15 @@ def events_lt_avg_pos(event_file, photons_file,
     events['x'] = x_position
     events['y'] = y_position
     events['photons'] = total_photons_lin.astype(np.int32)
+    events['lpx'] = sdx_n
+    events['lpy'] = sdy_n
     events.insert(5, 'brightness', brightness)
     events.insert(6, 'lifetime', lifetime)
     events.insert(7, 'duration', duration_ms_new)
     events['bg'] = bg.astype(np.float32)
     events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
-    events.insert(15, 'sdx_n', sdx_n)
-    events.insert(16, 'sdy_n', sdy_n)
+    events.insert(15, 'old_lpx', lpx_arr)
+    events.insert(16, 'old_lpy', lpy_arr)
     events.insert(17, 'sdx', sdx.astype(np.float32))
     events.insert(18, 'sdy', sdy.astype(np.float32))
     #events['lpx'] = sdx_n.astype(np.float32)
