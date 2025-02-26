@@ -6,9 +6,12 @@ import fitting
 import get_photons
 import time
 
+from fitting import normalize_brightness
+
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
-                   diameter, int_time, suffix='', max_dark_frames=1, proximity=2, filter_single=True, **kwargs):
+                   diameter, int_time, suffix='', max_dark_frames=1,
+                   proximity=2, filter_single=True, norm_brightness=False, **kwargs):
     """
 
     reads in file of localizations, connects events and analyzes them
@@ -39,8 +42,12 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     drift = helper.process_input(drift_file, dataset='drift')
     end_read_drift = time.time()
     print(f'time to read drift: {end_read_drift-start_read_drift}')
-    events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
+    events = events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
                       int_time=int_time, **kwargs)
+    if norm_brightness:
+        print('Normalizing brightness...')
+        laser_profile = fitting.get_laser_profile(localizations)
+        events = normalize_brightness(events, laser_profile)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -189,7 +196,7 @@ def events_lt_avg_pos(event_file, photons_file,
             arrival_times = phot_event['dt'].to_numpy()
             distance_sq = phot_event['distance'].to_numpy()
 
-            lifetime[i] = fitting.fit_weighted_exponential(arrival_times,
+            lifetime[i] = fitting.avg_lifetime_weighted_40(arrival_times,
                                                            distance_sq,
                                                            start_dt,
                                                            diameter)
@@ -239,3 +246,4 @@ def events_lt_avg_pos(event_file, photons_file,
     print('__________________________FINISHED____________________________')
     print(f'\n{len(events)} events tagged with lifetime and'
                        ' fitted with avg x,y position.')
+    return events

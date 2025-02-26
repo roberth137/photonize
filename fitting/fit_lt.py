@@ -110,12 +110,12 @@ def avg_lifetime_weighted_40(dt, distance, peak, diameter):
     return np.float32(lifetime)
 
 
-def exp_decay(t, A, tau, offset):
+def exp_decay(t, A, tau):
     """Exponential decay function."""
-    return A * np.exp(-t / tau) + offset
+    return A * np.exp(-t / tau)
 
 
-def fit_weighted_exponential(dt, distance, peak, diameter, bin_size=100, plot=False):
+def fit_weighted_exponential(dt, distance, peak, diameter, bin_size=150, plot=False):
     """
     Fits an exponential decay function to arrival time values (dt) weighted by a
     quadratic distance weighting scheme. Only dt values > peak are used (with peak subtracted).
@@ -171,8 +171,8 @@ def fit_weighted_exponential(dt, distance, peak, diameter, bin_size=100, plot=Fa
     # offset_guess ~ minimum weighted count.
     A_guess = np.max(ydata)
     tau_guess = (xdata.max() - xdata.min()) / 2.0
-    offset_guess = np.min(ydata)
-    initial_guess = (A_guess, tau_guess, offset_guess)
+    #offset_guess = np.min(ydata)
+    initial_guess = (A_guess, tau_guess)
 
     # Fit the exponential function to the weighted histogram data.
     try:

@@ -4,6 +4,75 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
+def get_laser_profile(localizations):
+    """
+    Returns parameters describing the laser profile using compute_bg_map and fit_gaussian_to_bg
+    Parameters:
+        localizations
+    Returns:
+        dict of gaussian parameters: return {
+        "amplitude": amplitude,
+        "x0": x0,
+        "y0": y0,
+        "sigma_x": sigma_x,
+        "sigma_y": sigma_y,
+        "offset": offset,
+        "fitted_map": fitted_gauss
+    }
+    """
+    bg_map = compute_bg_map(localizations)
+    fit_result = fit_gaussian_to_bg(bg_map)
+    return fit_result
+
+def normalize_brightness(events, laser_profile):
+    """
+    Takes in events and the laser profile and normalizes the 'bg' and 'brightness'
+    of each event by dividing by the 2D Gaussian value at its (x, y) coordinate.
+
+    Parameters
+    ----------
+    events : pd.DataFrame
+        Must contain columns: ['x', 'y', 'bg', 'brightness']
+    laser_profile : dict
+        Dictionary with keys:
+           {
+             "amplitude": float,
+             "x0": float,
+             "y0": float,
+             "sigma_x": float,
+             "sigma_y": float,
+             "offset": float
+           }
+
+    Returns
+    -------
+    pd.DataFrame
+        The same DataFrame with two new columns added:
+        ['bg_norm', 'brightness_norm'].
+    """
+
+    # Extract the parameters from the laser_profile
+    amplitude = laser_profile["amplitude"]
+    x0 = laser_profile["x0"]
+    y0 = laser_profile["y0"]
+    sigma_x = laser_profile["sigma_x"]
+    sigma_y = laser_profile["sigma_y"]
+    offset = laser_profile["offset"]
+
+    # Calculate the 2D Gaussian value for each event’s (x, y).
+    # This is vectorized, so it works quickly on the entire columns.
+    gauss_values = amplitude * np.exp(
+        -(
+            ((events['x'] - x0) ** 2) / (2 * sigma_x ** 2)
+            + ((events['y'] - y0) ** 2) / (2 * sigma_y ** 2)
+        )
+    ) + offset
+
+    # Add normalized columns to the events DataFrame:
+    events['bg_norm'] = events['bg'] / gauss_values
+    events['brightness_norm'] = events['brightness_phot_ms'] / gauss_values
+
+    return events
 
 def compute_bg_map(localizations):
     """
@@ -173,7 +242,7 @@ def fit_gaussian_to_bg(bg_map):
 
 # Example usage:
 if __name__ == "__main__":
-    filename = 't/orig58_all_f.hdf5'
+    filename = '../t/orig58_all_f.hdf5'
     localizations = pd.read_hdf(filename, key='locs')
 
     # Compute background map using 1.0 pixel size and floor indexing
