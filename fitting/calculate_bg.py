@@ -242,7 +242,7 @@ def fit_gaussian_to_bg(bg_map):
 
 # Example usage:
 if __name__ == "__main__":
-    filename = '../t/orig58_all_f.hdf5'
+    filename = '../ml/backup/a565_200ms_pf.hdf5'
     localizations = pd.read_hdf(filename, key='locs')
 
     # Compute background map using 1.0 pixel size and floor indexing

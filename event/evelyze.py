@@ -24,29 +24,21 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     end_read_locs = time.time()
     print(f'time to read in locs: {end_read_locs-start_read_locs}')
     # first localizations to events
-    start_create_events = time.time()
     events = create_events.locs_to_events(localizations,
                                           offset=offset,
                                           int_time=int_time,
                                           max_dark_frames=max_dark_frames,
                                           proximity=proximity,
                                           filter_single=filter_single)
-    end_create_events = time.time()
-    print(f'time to create events: {end_create_events-start_create_events}')
     # read in photons and drift
-    start_read_photons = time.time()
     photons = helper.process_input(photons_file, dataset='photons')
-    end_read_photons = time.time()
-    print(f'time to read photons: {end_read_photons-start_read_photons}')
-    start_read_drift = time.time()
     drift = helper.process_input(drift_file, dataset='drift')
-    end_read_drift = time.time()
-    print(f'time to read drift: {end_read_drift-start_read_drift}')
+    arrival_time = {}
     events = events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
-                      int_time=int_time, **kwargs)
+                      int_time=int_time, arrival_time=arrival_time, **kwargs)
     if norm_brightness:
         print('Normalizing brightness...')
-        laser_profile = fitting.get_laser_profile(localizations)
+        laser_profile = fitting.get_laser_profile(localizations[::offset])
         events = normalize_brightness(events, laser_profile)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
@@ -62,14 +54,15 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                            start_stop_event='ruptures-static',
                                            background='150ms-static',
                                            lifetime_fitting='quadratic_weight-static',
-                                           position_fitting='averge_roi')
+                                           position_fitting='averge_roi',
+                                           peak_arrival_time=arrival_time['start'])
     helper.dataframe_to_picasso(
         events, localizations_file, file_extension, message)
 
 
 def events_lt_avg_pos(event_file, photons_file,
                       drift_file, offset, diameter=5,
-                      int_time=200, **kwargs):
+                      int_time=200, arrival_time={}, **kwargs):
     """
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
@@ -114,6 +107,7 @@ def events_lt_avg_pos(event_file, photons_file,
     start_arr_time = time.time()
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
+    arrival_time['start'] = start_dt
     end_arr_time = time.time()
     lpx_arr = np.copy(events.lpx)
     lpy_arr = np.copy(events.lpy)
