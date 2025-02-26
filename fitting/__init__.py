@@ -5,7 +5,8 @@ from .fit_lt import (avg_lifetime_sergi_40,
                      avg_lifetime_no_bg_40,
                      avg_lifetime_weighted_40,
                      avg_lifetime_gauss_w_40,
-                     mean_arrival)
+                     mean_arrival,
+                     fit_weighted_exponential)
 from .fit_pos import (avg_of_roi_cons_bg,
                       event_position_cons_bg,
                       calculate_sd_cons_bg,

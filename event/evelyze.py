@@ -189,7 +189,7 @@ def events_lt_avg_pos(event_file, photons_file,
             arrival_times = phot_event['dt'].to_numpy()
             distance_sq = phot_event['distance'].to_numpy()
 
-            lifetime[i] = fitting.avg_lifetime_weighted_40(arrival_times,
+            lifetime[i] = fitting.fit_weighted_exponential(arrival_times,
                                                            distance_sq,
                                                            start_dt,
                                                            diameter)
@@ -216,9 +216,9 @@ def events_lt_avg_pos(event_file, photons_file,
     events['photons'] = total_photons_lin.astype(np.int32)
     events['lpx'] = sdx_n
     events['lpy'] = sdy_n
-    events.insert(5, 'brightness', brightness)
-    events.insert(6, 'lifetime', lifetime)
-    events.insert(7, 'duration', duration_ms_new)
+    events.insert(5, 'brightness_phot_ms', brightness)
+    events.insert(6, 'lifetime_10ps', lifetime)
+    events.insert(7, 'duration_ms', duration_ms_new)
     events['bg'] = bg.astype(np.float32)
     events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
     events.insert(15, 'old_lpx', lpx_arr)
