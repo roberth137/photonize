@@ -3,11 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Step 1: Read the HDF5 file into a DataFrame (replace 'your_file.h5' and 'your_key')
-file_path = 't/clustering/cy3_clustered.hdf5'  # Replace with your actual file path
+file_path = 't/third/a550_clustered.hdf5'  # Replace with your actual file path
 df = pd.read_hdf(file_path, key='locs')  # Replace 'your_key' with the correct key if needed
 
 # Step 2: Ensure required columns exist
-required_columns = {'group', 'x', 'y', 'lifetime', 'photons', 'brightness', 'bg', 'bg_over_on'}
+required_columns = {'group', 'x', 'y', 'lifetime_10ps', 'photons', 'brightness_norm', 'bg', 'bg_over_on'}
 missing_columns = required_columns - set(df.columns)
 if missing_columns:
     raise ValueError(f"The following required columns are missing in the HDF5 file: {missing_columns}")
@@ -17,7 +17,7 @@ if missing_columns:
 def calculate_group_stats(group):
     # Mean center of the group
     x_center, y_center = group['x'].mean(), group['y'].mean()
-    lifetime_center = group['lifetime'].mean()
+    lifetime_center = group['lifetime_10ps'].mean()
 
     # Calculate statistics
     stats = {
@@ -25,9 +25,9 @@ def calculate_group_stats(group):
         'std_y': group['y'].std(),
         'distance_from_center': np.sqrt((group['x'] - x_center) ** 2 + (group['y'] - y_center) ** 2).mean(),
         'lifetime_center': lifetime_center,
-        'std_lifetime': group['lifetime'].std(),
+        'std_lifetime': group['lifetime_10ps'].std(),
         'mean_photons': group['photons'].mean(),
-        'mean_brightness': group['brightness'].mean(),
+        'mean_brightness': group['brightness_norm'].mean(),
         'mean_bg': group['bg'].mean(),
         'mean_bg_over_on': group['bg_over_on'].mean()
     }
