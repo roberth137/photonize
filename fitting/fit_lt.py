@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import get_photons
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
 from numba import njit
 
 
@@ -199,6 +199,78 @@ def fit_weighted_exponential(dt, distance, peak, diameter, bin_size=150, plot=Fa
         plt.show()
 
     return popt[1]#, pcov
+
+
+def mle_exponential_lifetime(dt, distance, peak, diameter, plot=False):
+    """
+    Performs Maximum Likelihood Estimation (MLE) to fit an exponential decay function
+    to photon arrival times (dt), weighted by a quadratic distance scheme.
+
+    Parameters
+    ----------
+    dt : np.ndarray
+        Array of photon arrival times.
+    distance : np.ndarray
+        Array of distances for each photon from the center of localization.
+    peak : float or int
+        The start time (peak) after which dt values are considered.
+    diameter : float
+        The diameter of the localization region (used to compute weights).
+    plot : bool, optional
+        If True, plots the histogram of arrival times with the MLE-estimated exponential decay.
+
+    Returns
+    -------
+    tau_mle : float
+        Estimated exponential decay lifetime using MLE.
+    """
+    # Only consider dt values greater than the peak and shift them to start at zero
+    valid_idx = dt > peak
+    dt_valid = dt[valid_idx] - peak
+    distance_valid = distance[valid_idx]
+
+    # Compute weights using quadratic weighting with a 0.2 offset.
+    radius = diameter / 2.0
+    weights = 0.2 + (1 - (distance_valid / (radius ** 2)))
+
+    # Precompute sums for efficiency
+    sum_w = np.sum(weights)
+    sum_wt = np.sum(weights * dt_valid)
+
+    # Negative log-likelihood (NLL) for the weighted exponential distribution
+    #
+    # For each data point i:
+    #   log(f_i) = log(lambda) - lambda * t_i
+    # Weighted sum: sum_i w_i * log(f_i)
+    # NLL = - sum_i w_i * log(f_i)
+    # => NLL = - sum_i w_i [ log(lambda) - lambda * t_i ]
+    # => NLL = - ( sum_i w_i ) log(lambda ) + lambda * sum_i w_i t_i
+    def neg_log_likelihood(lmbd):
+        # Ensure lambda > 0
+        if lmbd <= 0:
+            return np.inf
+        return - (sum_w * np.log(lmbd) - lmbd * sum_wt)
+
+    # Initial guess: lambda ~ 1 / mean(dt)
+    if np.mean(dt_valid) == 0:
+        # fallback in case all dt_valid are 0 (unlikely but safe)
+        lambda_guess = 1.0
+    else:
+        lambda_guess = 1.0 / np.mean(dt_valid)
+
+    # Use scipy's 'minimize' with a bound to ensure lambda > 0
+    result = minimize(
+        neg_log_likelihood,
+        x0=[lambda_guess],
+        method='L-BFGS-B',
+        bounds=[(1e-12, None)]
+    )
+
+    # Extract the MLE estimate of lambda
+    lambda_mle = result.x[0]
+    tau_mle = 1.0 / lambda_mle
+
+    return tau_mle
 
 def avg_lifetime_weighted_40_old(loc_photons, peak, diameter):
     '''
