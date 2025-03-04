@@ -5,7 +5,6 @@ from event import create_events
 import fitting
 import get_photons
 import time
-
 from fitting import normalize_brightness
 
 
@@ -132,7 +131,7 @@ def events_lt_avg_pos(event_file, photons_file,
         print('number of picked photons: ', len(pick_photons))
         end_pick = time.time()
         print(f'picking and undrifting time: {end_pick-start_pick}')
-        #all_events_photons = all_events_photons[(all_events_photons.dt<1700)]
+        pick_photons = pick_photons[(pick_photons.dt<1680)]
         #print(f'only considering events with dt < 1700')
 
         # iterating over every event in pick

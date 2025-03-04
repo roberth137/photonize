@@ -71,6 +71,7 @@ def normalize_brightness(events, laser_profile):
     # Add normalized columns to the events DataFrame:
     events['bg_norm'] = events['bg'] / gauss_values
     events['brightness_norm'] = events['brightness_phot_ms'] / gauss_values
+    events['lt_over_bright'] = events['lifetime_10ps']/events['brightness_norm']
 
     return events
 
@@ -242,7 +243,7 @@ def fit_gaussian_to_bg(bg_map):
 
 # Example usage:
 if __name__ == "__main__":
-    filename = ('../t/third/picks.hdf5')
+    filename = ('../local/4colors_2/picks.hdf5')
     localizations = pd.read_hdf(filename, key='locs')
 
     # Compute background map using 1.0 pixel size and floor indexing
