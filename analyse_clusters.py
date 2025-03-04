@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Step 1: Read the HDF5 file into a DataFrame (replace 'your_file.h5' and 'your_key')
-file_path = 't/third/a550_clustered.hdf5'  # Replace with your actual file path
+file_path = 'local/4colors_2/a550_clustered.hdf5'  # Replace with your actual file path
 df = pd.read_hdf(file_path, key='locs')  # Replace 'your_key' with the correct key if needed
 
 # Step 2: Ensure required columns exist
