@@ -4,11 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-<<<<<<< HEAD
     <orderEntry type="jdk" jdkName="evelyze" jdkType="Python SDK" />
-=======
     <orderEntry type="jdk" jdkName="Python 3.10 (resi-flim)" jdkType="Python SDK" />
->>>>>>> 54fac5f11aa1851c8a5b0d47cb1d44d3f4791fff
+    <orderEntry type="jdk" jdkName="Python 3.10 (resi-flim)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
