@@ -6,14 +6,14 @@ import ruptures as rpt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import plotting
-from plotting import group_events, all_events_photons, diameter, peak_arrival_time
+from plotting import group_events, pick_photons, diameter, peak_arrival_time
 
 
 def hist_ms_event(i):
     this_event = group_events.iloc[i]
 
     this_event_photons = get_photons.crop_event(this_event,
-                                                all_events_photons,
+                                                pick_photons,
                                                 diameter,
                                                 400)
     bin_size = 10
@@ -37,10 +37,10 @@ def hist_ms_event(i):
     #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
     plt.plot([], [], ' ', label=f'duration_ms: {this_event.end_ms-this_event.start_ms}')
     plt.plot([], [], ' ', label=f'number_photons: {len(this_event_photons)}')
-    plt.plot([], [], ' ', label=f'brightness: {this_event.brightness:.3f}')
+    #plt.plot([], [], ' ', label=f'brightness: {this_event.brightness:.3f}')
     plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime:.3f}')
-    plt.axvline(this_event.start_ms, color='red')
-    plt.axvline(this_event.end_ms, color='red')
+    plt.axvline(this_event.start_ms+30, color='red')
+    plt.axvline(this_event.end_ms-30, color='red')
     #plt.axvline(change_points_trans[0], color='green')
     #plt.axvline(change_points_trans[1], color='green')
     plt.title("Histogram of ms")
@@ -54,7 +54,7 @@ def hist_noise_dt_event(i):
 
     more_ms = 400
     this_event_photons = get_photons.crop_event(this_event,
-                                                all_events_photons,
+                                                pick_photons,
                                                 diameter,
                                                 more_ms)
     bounds_first = [(this_event.start_ms_fr - more_ms), this_event.s_ms_new]
@@ -154,12 +154,14 @@ def plot_all_dt(all_events_photons):
 def scatter_event(i):
     this_event = group_events.iloc[i]
 
-    this_event_photons = get_photons.crop_event(this_event, all_events_photons, diameter)
+    this_event_photons = get_photons.crop_event(this_event, pick_photons, diameter)
     print(this_event_photons)
 
     prev_x = this_event.x
     prev_y = this_event.y
-    new_x, new_y = fitting.event_position(this_event, this_event_photons, diameter, False)
+    x_array = this_event_photons['x'].to_numpy()
+    y_array = this_event_photons['y'].to_numpy()
+    new_x, new_y, sx, sy = fitting.event_position(x_array, y_array, False)
     plt.figure(figsize=(8, 8))
     scatter = plt.scatter(this_event_photons['x'],
                           this_event_photons['y'],
@@ -183,7 +185,7 @@ def scatter_event(i):
 def hist_dt_event(i):
     this_event = group_events.iloc[i]
 
-    this_event_photons = get_photons.crop_event(this_event, all_events_photons, diameter)
+    this_event_photons = get_photons.crop_event(this_event, pick_photons, diameter)
 
     bin_size = 5
     bins = np.arange(min(this_event_photons.dt), max(this_event_photons.dt) + bin_size, bin_size)
@@ -201,7 +203,7 @@ def hist_dt_event(i):
 def hist_x_event(i):
     this_event = group_events.iloc[i]
 
-    this_event_photons = get_photons.crop_event(this_event, all_events_photons, diameter)
+    this_event_photons = get_photons.crop_event(this_event, pick_photons, diameter)
     print(this_event_photons)
     bin_size = 0.05
     bins = np.arange(min(this_event_photons.x), max(this_event_photons.x) + bin_size, bin_size)
@@ -213,3 +215,7 @@ def hist_x_event(i):
     # plt.ylabel("Y Position")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.show()
+
+if __name__ == "__main__":
+    # Try calling one of your functions to produce the plot:
+    hist_dt_event(1)

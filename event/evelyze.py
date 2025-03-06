@@ -88,6 +88,7 @@ def events_lt_avg_pos(event_file, photons_file,
     tailcut = kwargs.get('tailcut')
 
     lifetime = np.ones(total_events, dtype=np.float32)
+    lplt = np.ones(total_events, dtype=np.float32)
     total_photons_lin = np.ones(total_events, dtype=np.float32)
     x_position = np.ones(total_events, dtype=np.float32)
     y_position = np.ones(total_events, dtype=np.float32)
@@ -103,14 +104,13 @@ def events_lt_avg_pos(event_file, photons_file,
     bg_over_on = np.ones(total_events, dtype=np.float32)
     delta_x = np.ones(total_events, dtype=np.float32)
     delta_y = np.ones(total_events, dtype=np.float32)
-    start_arr_time = time.time()
+
+
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
     start_dt = peak_arrival_time-0
     arrival_time['start'] = start_dt
-    end_arr_time = time.time()
     lpx_arr = np.copy(events.lpx)
     lpy_arr = np.copy(events.lpy)
-    print(f'arrival time calc: {end_arr_time-start_arr_time}.')
 
     print('peak arrival time:   ', peak_arrival_time)
     print('start time:          ', start_dt)
@@ -193,7 +193,6 @@ def events_lt_avg_pos(event_file, photons_file,
                                                            distance_sq,
                                                            start_dt,
                                                            diameter)
-
             x_position[i] = x_t
             y_position[i] = y_t
             sdx[i] = sd_x_bg
@@ -219,6 +218,7 @@ def events_lt_avg_pos(event_file, photons_file,
     events.insert(5, 'brightness_phot_ms', brightness)
     events.insert(6, 'lifetime_10ps', lifetime)
     events.insert(7, 'duration_ms', duration_ms_new)
+    events.insert(8, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
     events['bg'] = bg.astype(np.float32)
     events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
     events.insert(15, 'old_lpx', lpx_arr)

@@ -15,10 +15,10 @@ def min_max_box(localizations, box_side_length=0):
 
 
 def spatial_boundaries(event, diameter):
-    x_min = event['x'] - (diameter / 2)
+    x_min = event.x - (diameter / 2)
     x_max = x_min + diameter
 
-    y_min = event['y'] - (diameter / 2)
+    y_min = event.y - (diameter / 2)
     y_max = y_min + diameter
 
     return x_min, x_max, y_min, y_max

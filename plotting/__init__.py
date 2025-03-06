@@ -5,11 +5,11 @@ import get_photons
 import fitting
 
 # Set filenames and parameters
-events_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_event.hdf5'
+events_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_event_legend.hdf5'
 photons_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
 drift_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
 diameter = 4.5
-pick_group = 25
+pick_group = 1
 more_ms = 400
 
 # Loading data to memory
@@ -29,10 +29,10 @@ pick_photons = get_photons.get_pick_photons(group_events,
                                             10,
                                             diameter,
                                             200)
-all_events_photons = get_photons.photons_of_many_events(group_events,
-                                                        pick_photons,
-                                                        diameter,
-                                                        more_ms)
+#all_events_photons = get_photons.photons_of_many_events(group_events,
+#                                                        pick_photons,
+#                                                        diameter,
+#                                                        more_ms)
 
 print('peak arrival time is: ', peak_arrival_time)
 # Make loaded data available throughout the package
@@ -41,7 +41,6 @@ __all__ = ["events",
            "drift",
            "group_events",
            "pick_photons",
-           "all_events_photons",
            "diameter",
            "peak_arrival_time"]
 
