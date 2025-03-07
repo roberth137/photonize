@@ -41,8 +41,8 @@ def interpolate_background(x_query, y_query, gp):
 
 # Function to generate a 2D grid for interpolation
 def create_grid(coords, grid_size=1.0):
-    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
-    y_min, y_max = np.min(coords[:, 1]), np.max(coords[:, 1])
+    x_min, x_max = 0, 256#np.min(coords[:, 0]), np.max(coords[:, 0])
+    y_min, y_max = 0, 256#np.min(coords[:, 1]), np.max(coords[:, 1])
 
     x_grid = np.arange(x_min, x_max, grid_size)
     y_grid = np.arange(y_min, y_max, grid_size)

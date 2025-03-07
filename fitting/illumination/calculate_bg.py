@@ -5,6 +5,49 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.ndimage import gaussian_filter
 
+def compute_bg_map(localizations, pixels=256):
+    """
+    Create a 2D map of average background values from localization data.
+
+    Parameters
+    ----------
+    localizations
+
+    Returns
+    -------
+    bg_map : 2D numpy.ndarray
+        A 2D array of average background values per pixel.
+        Shape is determined by the max of the computed pixel indices.
+    """
+    x = np.asarray(localizations.x, dtype=np.float64)
+    y = np.asarray(localizations.y, dtype=np.float64)
+    bg = np.asarray(localizations.bg, dtype=np.float64)
+
+    px_x = np.round(x).astype(int)
+    px_y = np.round(y).astype(int)
+
+    # Determine the shape of the output matrix
+    max_x = pixels#px_x.max()
+    max_y = pixels#px_y.max()
+    # If indices start at 0, the size is max_index + 1
+    bg_map = np.zeros((max_x + 1, max_y + 1), dtype=np.float64)
+    count_map = np.zeros((max_x + 1, max_y + 1), dtype=np.int64)
+
+    # Accumulate sums of background and counts using a fast NumPy approach
+    np.add.at(bg_map, (px_x, px_y), bg)
+    np.add.at(count_map, (px_x, px_y), 1)
+
+    # Convert summed values to averages where count > 0
+    mask = (count_map > 0)
+    bg_map[mask] /= count_map[mask]
+
+    return bg_map
+
+
+
+
+
+
 def get_laser_profile(localizations):
     """
     Returns parameters describing the laser profile using compute_bg_map and fit_gaussian_to_bg
@@ -124,44 +167,6 @@ def normalize_brightness_smooth(events, sigma=3):
     events['lt_over_bright'] = events['lifetime_10ps'] / events['brightness_norm']
 
     return events
-
-def compute_bg_map(localizations):
-    """
-    Create a 2D map of average background values from localization data.
-
-    Parameters
-    ----------
-    localizations
-
-    Returns
-    -------
-    bg_map : 2D numpy.ndarray
-        A 2D array of average background values per pixel.
-        Shape is determined by the max of the computed pixel indices.
-    """
-    x = np.asarray(localizations.x, dtype=np.float64)
-    y = np.asarray(localizations.y, dtype=np.float64)
-    bg = np.asarray(localizations.bg, dtype=np.float64)
-
-    px_x = np.round(x).astype(int)
-    px_y = np.round(y).astype(int)
-
-    # Determine the shape of the output matrix
-    max_x = px_x.max()
-    max_y = px_y.max()
-    # If indices start at 0, the size is max_index + 1
-    bg_map = np.zeros((max_x + 1, max_y + 1), dtype=np.float64)
-    count_map = np.zeros((max_x + 1, max_y + 1), dtype=np.int64)
-
-    # Accumulate sums of background and counts using a fast NumPy approach
-    np.add.at(bg_map, (px_x, px_y), bg)
-    np.add.at(count_map, (px_x, px_y), 1)
-
-    # Convert summed values to averages where count > 0
-    mask = (count_map > 0)
-    bg_map[mask] /= count_map[mask]
-
-    return bg_map
 
 def compute_smoothed_bg_map(localizations, sigma=2):
     x = np.asarray(localizations.x, dtype=np.float64)
@@ -324,7 +329,7 @@ if __name__ == "__main__":
     localizations = pd.read_hdf(filename, key='locs')
 
     # Compute background map using 1.0 pixel size and floor indexing
-    bg_map = compute_smoothed_bg_map(localizations)
+    bg_map = compute_bg_map(localizations)
 
     print(bg_map)
     print(bg_map.shape)

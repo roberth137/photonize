@@ -4,9 +4,9 @@ import time
 
 start_time = time.time()
 folder = 'data/ml/single/'
-event.event_analysis(localizations_file=f'{folder}a550_fp.hdf5',
-                     photons_file=f'{folder}a550_index.hdf5',
-                     drift_file=f'{folder}a550_drift.txt',
+event.event_analysis(localizations_file=f'{folder}cy3_200ms_fp.hdf5',
+                     photons_file=f'{folder}cy3_59_index.hdf5',
+                     drift_file=f'{folder}cy3_200ms_drift.txt',
                      offset=10,
                      diameter=4.5,
                      int_time=200,

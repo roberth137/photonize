@@ -5,8 +5,7 @@ from event import create_events
 import fitting
 import get_photons
 import time
-from fitting import normalize_brightness_smooth
-from fitting.calculate_bg import normalize_brightness_smooth
+from fitting.illumination.calculate_bg import normalize_brightness_smooth
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
