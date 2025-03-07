@@ -41,8 +41,8 @@ def interpolate_background(x_query, y_query, gp):
 
 # Function to generate a 2D grid for interpolation
 def create_grid(coords, grid_size=1.0):
-    x_min, x_max = 0, 256 #np.min(coords[:, 0]), np.max(coords[:, 0])
-    y_min, y_max = 0, 256 #np.min(coords[:, 1]), np.max(coords[:, 1])
+    x_min, x_max = np.min(coords[:, 0]), np.max(coords[:, 0])
+    y_min, y_max = np.min(coords[:, 1]), np.max(coords[:, 1])
 
     x_grid = np.arange(x_min, x_max, grid_size)
     y_grid = np.arange(y_min, y_max, grid_size)
@@ -103,7 +103,7 @@ def plot_gp_background(coords, interpolate_background, gp, grid_size=1.0):
 # Example usage:
 if __name__ == "__main__":
     # Load localization data
-    filename = 'C:/Users/rhollmann/Desktop/resi-flim/local/4/3green_rfp.hdf5'
+    filename = '/Users/roberthollmann/Desktop/resi-flim/data/ml/single/a565_200ms_pf.hdf5'
     localizations = pd.read_hdf(filename, key='locs')
     coords = localizations[['x', 'y']].values
     gp = define_gaussian_model(localizations)

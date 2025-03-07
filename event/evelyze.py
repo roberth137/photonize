@@ -5,12 +5,13 @@ from event import create_events
 import fitting
 import get_photons
 import time
-from fitting import normalize_brightness
+from fitting import normalize_brightness_smooth
+from fitting.calculate_bg import normalize_brightness_smooth
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
                    diameter, int_time, suffix='', max_dark_frames=1,
-                   proximity=2, filter_single=True, norm_brightness=False, **kwargs):
+                   proximity=2, filter_single=True, norm_brightness=False, dt_window=None, **kwargs):
     """
 
     reads in file of localizations, connects events and analyzes them
@@ -34,11 +35,12 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     drift = helper.process_input(drift_file, dataset='drift')
     arrival_time = {}
     events = events_lt_avg_pos(events, photons, drift, offset, diameter=diameter,
-                      int_time=int_time, arrival_time=arrival_time, **kwargs)
+                      int_time=int_time, arrival_time=arrival_time, dt_window=dt_window,
+                               **kwargs)
     if norm_brightness:
         print('Normalizing brightness...')
         laser_profile = fitting.get_laser_profile(localizations[::offset])
-        events = normalize_brightness(events, laser_profile)
+        events = normalize_brightness_smooth(events)#, laser_profile)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -61,7 +63,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
 def events_lt_avg_pos(event_file, photons_file,
                       drift_file, offset, diameter=5,
-                      int_time=200, arrival_time={}, **kwargs):
+                      int_time=200, arrival_time={}, dt_window=None, **kwargs):
     """
     tagging list of events with lifetime and avg of roi position
     and returning as picasso files
@@ -131,7 +133,9 @@ def events_lt_avg_pos(event_file, photons_file,
         print('number of picked photons: ', len(pick_photons))
         end_pick = time.time()
         print(f'picking and undrifting time: {end_pick-start_pick}')
-        pick_photons = pick_photons[(pick_photons.dt<1680)]
+        if dt_window:
+            pick_photons = pick_photons[(pick_photons.dt>dt_window[0])&
+                                        (pick_photons.dt<dt_window[1])]
         #print(f'only considering events with dt < 1700')
 
         # iterating over every event in pick

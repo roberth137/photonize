@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+from scipy.ndimage import gaussian_filter
 
 def get_laser_profile(localizations):
     """
@@ -24,7 +25,7 @@ def get_laser_profile(localizations):
     fit_result = fit_gaussian_to_bg(bg_map)
     return fit_result
 
-def normalize_brightness(events, laser_profile):
+def normalize_brightness_gaussian(events, laser_profile):
     """
     Takes in events and the laser profile and normalizes the 'bg' and 'brightness'
     of each event by dividing by the 2D Gaussian value at its (x, y) coordinate.
@@ -75,6 +76,55 @@ def normalize_brightness(events, laser_profile):
 
     return events
 
+
+def normalize_brightness_smooth(events, sigma=3):
+    """
+    Normalizes the 'bg' and 'brightness' of each event using a smoothed
+    background map computed from the event data.
+
+    This function computes the smoothed background map (via a Gaussian filter)
+    and then uses the value at each event’s (x, y) coordinate to normalize its
+    'bg' and 'brightness_phot_ms' (and compute lifetime/brightness).
+
+    Parameters
+    ----------
+    events : pd.DataFrame
+        Must contain columns: ['x', 'y', 'bg', 'brightness_phot_ms', 'lifetime_10ps'].
+    sigma : float, optional
+        Standard deviation for the Gaussian filter (in pixels) used to smooth the background map.
+        Default is 3, corresponding roughly to a lengthscale of 3 pixels.
+
+    Returns
+    -------
+    pd.DataFrame
+        The same DataFrame with three new columns added:
+        ['bg_norm', 'brightness_norm', 'lt_over_bright'].
+    """
+    # Compute the smoothed background map directly from events.
+    bg_map = compute_bg_map(events)#, sigma=sigma)
+
+    # Convert event coordinates to pixel indices (same rounding as used in compute_smoothed_bg_map)
+    px_x = np.round(events['x']).astype(int)
+    px_y = np.round(events['y']).astype(int)
+
+    # In case some events are outside the computed map, clip indices to valid range.
+    max_x, max_y = bg_map.shape
+    px_x = np.clip(px_x, 0, max_x - 1)
+    px_y = np.clip(px_y, 0, max_y - 1)
+
+    # Extract normalization values from the smoothed background map
+    norm_values = bg_map[px_x, px_y]
+
+    # Prevent division by zero by replacing any zeros with 1 (or handle as appropriate)
+    norm_values_safe = np.where(norm_values == 0, 1, norm_values)
+
+    # Normalize the background and brightness
+    events['bg_norm'] = events['bg'] / norm_values_safe
+    events['brightness_norm'] = events['brightness_phot_ms'] / norm_values_safe
+    events['lt_over_bright'] = events['lifetime_10ps'] / events['brightness_norm']
+
+    return events
+
 def compute_bg_map(localizations):
     """
     Create a 2D map of average background values from localization data.
@@ -112,6 +162,33 @@ def compute_bg_map(localizations):
     bg_map[mask] /= count_map[mask]
 
     return bg_map
+
+def compute_smoothed_bg_map(localizations, sigma=2):
+    x = np.asarray(localizations.x, dtype=np.float64)
+    y = np.asarray(localizations.y, dtype=np.float64)
+    bg = np.asarray(localizations.bg, dtype=np.float64)
+
+    px_x = np.round(x).astype(int)
+    px_y = np.round(y).astype(int)
+
+    max_x = px_x.max()
+    max_y = px_y.max()
+    # Create arrays for accumulated background sum and counts
+    bg_sum = np.zeros((max_x + 1, max_y + 1), dtype=np.float64)
+    count_map = np.zeros((max_x + 1, max_y + 1), dtype=np.float64)
+
+    np.add.at(bg_sum, (px_x, px_y), bg)
+    np.add.at(count_map, (px_x, px_y), 1)
+
+    # Smooth both the background sum and the count maps
+    smoothed_bg_sum = gaussian_filter(bg_sum, sigma=sigma)
+    smoothed_count = gaussian_filter(count_map, sigma=sigma)
+
+    # Avoid division by zero by setting the background to 0 where counts are 0
+    smoothed_bg_map = np.where(smoothed_count > 0,
+                               smoothed_bg_sum / smoothed_count,
+                               0)
+    return smoothed_bg_map
 
 
 def twoD_Gaussian(coords, amplitude, x0, y0, sigma_x, sigma_y, offset):
@@ -243,11 +320,14 @@ def fit_gaussian_to_bg(bg_map):
 
 # Example usage:
 if __name__ == "__main__":
-    filename = ('../local/4colors_2/picks.hdf5')
+    filename = ('/Users/roberthollmann/Desktop/resi-flim/data/ml/single/cy3_200ms_fp.hdf5')
     localizations = pd.read_hdf(filename, key='locs')
 
     # Compute background map using 1.0 pixel size and floor indexing
-    bg_map = compute_bg_map(localizations)
+    bg_map = compute_smoothed_bg_map(localizations)
+
+    print(bg_map)
+    print(bg_map.shape)
 
     # ------------------------------------------------------------------
     # 2. Fit a 2D Gaussian to the BG map
