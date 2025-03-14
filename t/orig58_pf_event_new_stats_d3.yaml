@@ -60,7 +60,7 @@ localizations_file (full path): /Users/roberthollmann/Desktop/resi-flim/t/orig58
 photons_file (full path): /Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5
 drift_file (full path): /Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt
 offset: 10
-diameter: 4.5
+diameter: 3
 int_time: 200
 link_proximity: 2
 max_dark_frames: 1
@@ -70,4 +70,4 @@ background: 150ms-static
 lifetime_fitting: quadratic_weight-static
 position_fitting: averge_roi
 peak_arrival_time: 85
-Timestamp: 2025-03-14 12:07:51
+Timestamp: 2025-03-14 13:53:57

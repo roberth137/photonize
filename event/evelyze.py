@@ -105,6 +105,7 @@ def events_lt_avg_pos(event_file, photons_file,
     bg_over_on = np.ones(total_events, dtype=np.float32)
     delta_x = np.ones(total_events, dtype=np.float32)
     delta_y = np.ones(total_events, dtype=np.float32)
+    phot_no_bg = np.ones(total_events, dtype=np.float32)
 
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
@@ -116,6 +117,7 @@ def events_lt_avg_pos(event_file, photons_file,
     print('peak arrival time:   ', peak_arrival_time)
     print('start time:          ', start_dt)
 
+    fit_area = 16 * (diameter/2)**2 * np.pi
     counter = 0
     groups = set(events['group'])
     # iterating over every pick in file
@@ -203,11 +205,12 @@ def events_lt_avg_pos(event_file, photons_file,
             sdx_n[i] = sd_x_bg/np.sqrt(total_photons)
             sdy_n[i] = sd_y_bg/np.sqrt(total_photons)
             total_photons_lin[i] = total_photons
+            phot_no_bg[i] = total_photons - (num_photons_300_bg*(duration_ms/300))
             start_ms_new[i] = start_ms
             end_ms_new[i] = end_ms
             duration_ms_new[i] = duration_ms
             brightness[i] = total_photons/duration_ms
-            bg[i] = num_photons_300_bg/300
+            bg[i] = num_photons_300_bg*(duration_ms/300)/fit_area
             bg_over_on[i] = len(cylinder_photons)/duration_ms
             delta_x[i] = my_event.x - x_t
             delta_y[i] = my_event.y - y_t
@@ -216,14 +219,19 @@ def events_lt_avg_pos(event_file, photons_file,
     events['x'] = x_position
     events['y'] = y_position
     events['photons'] = total_photons_lin.astype(np.int32)
-    events['lpx'] = sdx_n
-    events['lpy'] = sdy_n
-    events.insert(5, 'brightness_phot_ms', brightness)
-    events.insert(6, 'lifetime_10ps', lifetime)
-    events.insert(7, 'duration_ms', duration_ms_new)
-    events.insert(8, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
+    events['lpx'] = np.sqrt(((4*events.sx)**2 +(1/12))/phot_no_bg +
+                            (8 * np.pi * (4*events.sx)**4 *(bg**2)/(phot_no_bg**2)))/4
+    events['lpy'] = np.sqrt(((4*events.sy)**2 +(1/12))/phot_no_bg +
+                            (8 * np.pi * (4*events.sy)**4 *(bg**2)/(phot_no_bg**2)))/4
     events['bg'] = bg.astype(np.float32)
-    events.insert(14, 'bg_over_on', bg_over_on.astype(np.float32))
+    events.insert(12, 'brightness_phot_ms', brightness)
+    events.insert(13, 'lifetime_10ps', lifetime)
+    events.insert(14, 'duration_ms', duration_ms_new)
+    events.insert(8, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
+    events.insert(9, 'phot_no_bg', phot_no_bg.astype(np.float32))
+    events.insert(10, 'sdx_n', sdx_n)
+    events.insert(11, 'sdy_n', sdy_n)
+    events.insert(19, 'bg_over_on', bg_over_on.astype(np.float32))
     events.insert(15, 'old_lpx', lpx_arr)
     events.insert(16, 'old_lpy', lpy_arr)
     events.insert(17, 'sdx', sdx.astype(np.float32))
