@@ -40,15 +40,6 @@ def avg_lifetime_no_bg_40(loc_photons, peak, dt_offset=0):
     '''
     Not considering bg
     '''
-
-    #counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 2500))
-    #counts_bgsub = counts - background
-    #weights = np.arange(1, (2500 - (peak + dt_offset)))
-    #considered_bgsub = counts_bgsub[(peak + dt_offset):2500]
-    #if len(loc_photons) < 70:
-    #    print('\nphotons for fitting: ', len(loc_photons))
-    #    print('good photons: ', sum(considered_bgsub))
-    #lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
     arr_times = np.copy(loc_photons.dt)
     arr_times_normalized = arr_times[arr_times > peak]
     lifetime = np.mean(arr_times_normalized-peak)

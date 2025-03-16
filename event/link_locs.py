@@ -13,23 +13,44 @@ import pandas as pd
 from utilities import helper
 
 
-def connect_locs_picasso_new(localizations_file, filter_single=True, proximity=2, max_dark_frames=1, suffix=''):
-    localizations = helper.process_input(localizations_file, 'locs')
-    localizations = connect_locs_by_group(localizations, filter_single=filter_single, proximity=proximity, max_dark_frames=max_dark_frames)
-    helper.dataframe_to_picasso(localizations, localizations_file, f'event_tagged{suffix}')
 #@njit
 def are_nearby(x1, y1, x2, y2, threshold):
+    """
+    Determines if 2 points are nearby based on Euclidean distance
+    Numba optimized
+
+    Input:
+        coordinates: x1, y1, x2, y2 (float)
+        threshold: max allowed distance
+    Output: True if distance is smaller than threshold, False if larger
+    """
     dx = x1 - x2
     dy = y1 - y2
     return (dx * dx + dy * dy) <= (threshold * threshold)
 
 #@njit
-def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
-    n = len(group_frames)
+def link_group(group_frames, group_x, group_y, max_distance, max_dark_frames):
+    """
+    Link localizations to events within a group
+
+    Parameters:
+    group_frames : 1D array, localizations frames (int)
+    group_x : 1D array, localizations x-coordinates (float)
+    group_y : 1D array, localizations y-coordinates (float)
+    lpx_p_lpy : 1D array, distance threshold for every localization (typically proximity * lpx+lpy)
+    max_dark_frames : int, max number of frames that can be skipped while still considering localizations as part the same event.
+
+    Returns:
+    event_ids: np.ndarray, A 1D array of event IDs for each localization. Localizations connected into the same event share
+        the same event ID.
+    """
+    n = len(group_frames) #len localizations
     event_ids = np.zeros(n, dtype=np.int32)
     current_event_id = 0
 
+    # Loop over all group localizations
     for i in range(n):
+
         if event_ids[i] == 0:  # If not yet assigned to an event
             current_event_id += 1
             event_ids[i] = current_event_id
@@ -40,12 +61,14 @@ def connect_group(group_frames, group_x, group_y, lpx_p_lpy, max_dark_frames):
                 break  # Stop if frames are beyond the allowed gap
 
             if group_frames[i] < group_frames[j] <= group_frames[i] + 1 + max_dark_frames:
-                if are_nearby(group_x[i], group_y[i], group_x[j], group_y[j], lpx_p_lpy[i]):
+                if are_nearby(group_x[i], group_y[i], group_x[j], group_y[j], max_distance[i]):
                     event_ids[j] = event_ids[i]  # Assign the same event ID
+                    break
 
     return event_ids
 
-def connect_locs_by_group(localizations_dset,
+
+def link_locs_by_group(localizations_dset,
                           filter_single=True,
                           proximity=2,
                           max_dark_frames=1):
@@ -93,7 +116,7 @@ def connect_locs_by_group(localizations_dset,
         lpx_p_lpy = lpx_p_lpy[sort_indices]
 
         # Call Numba-optimized function to assign event IDs
-        group_event_ids = connect_group(frames, x_coords, y_coords, proximity * lpx_p_lpy, max_dark_frames)
+        group_event_ids = link_group(frames, x_coords, y_coords, proximity * lpx_p_lpy, max_dark_frames)
 
         # Map local group event IDs to global event IDs
         unique_local_event_ids = np.unique(group_event_ids)
@@ -115,8 +138,44 @@ def connect_locs_by_group(localizations_dset,
 
     return localizations
 
+def link_locs_picasso(localizations_file,
+                             filter_single=True,
+                             proximity=2,
+                             max_dark_frames=1,
+                             suffix=''):
+    localizations = helper.process_input(localizations_file, 'locs')
+    localizations = link_locs_by_group(localizations,
+                                          filter_single=filter_single,
+                                          proximity=proximity,
+                                          max_dark_frames=max_dark_frames)
+    helper.dataframe_to_picasso(localizations, localizations_file, f'_event_tagged{suffix}')
 
-def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
+
+def filter_unique_events(localizations):
+    """Filters a DataFrame, removing localizations
+    that are not connected to other events.
+
+    Args:
+      localizations: The DataFrame to filter.
+    Returns:
+      A new DataFrame with the filtered rows.
+    """
+
+    # Extract unique event values and their counts
+    event_counts = localizations['event'].value_counts()
+
+    # Identify events that occur only once
+    unique_events = event_counts[event_counts == 1].index
+
+    # Filter out rows with unique events
+    filtered_locs = localizations[~localizations['event'].isin(unique_events)]
+
+    print('removed ', (len(localizations) - len(filtered_locs)), 'single frame localizations.')
+    return filtered_locs
+
+
+
+def connect_locs_old(localizations_dset, filter_single=True, box_side_length=5):
     """
 
     Parameters
@@ -171,7 +230,8 @@ def connect_locs(localizations_dset, filter_single=True, box_side_length=5):
         return filtered_locs
     else:
         return localizations
-    
+
+
 def return_nearby(this_localization, locs_next_frame):
     """
     Parameters
@@ -215,41 +275,7 @@ def return_nearby(this_localization, locs_next_frame):
         #print('Number of locs in next frame were: ', len(locs_next), 
         #      'no similar loc in next frame.')
         return has_next, float('nan')
-    
-    
-    
-def filter_unique_events(localizations):
-    """Filters a DataFrame, removing localizations 
-    that are not connected to other events.
-    
-    Args:
-      localizations: The DataFrame to filter.
-    Returns:
-      A new DataFrame with the filtered rows.
-    """
-    
-    # Extract unique event values and their counts
-    event_counts = localizations['event'].value_counts()
-    
-    # Identify events that occur only once
-    unique_events = event_counts[event_counts == 1].index
-    
-    # Filter out rows with unique events
-    filtered_locs = localizations[~localizations['event'].isin(unique_events)]
-    
-    print('removed ', (len(localizations)-len(filtered_locs)), 'single frame localizations.')
-    return filtered_locs
 
-
-def calculate_total_photons(localizations, box_side_length):
-    if {'photons', 'bg'}.issubset(localizations.columns):
-        photons_arr = localizations['photons'].to_numpy()
-        bg_arr = localizations['bg'].to_numpy()
-        total_photons = photons_arr + (bg_arr * box_side_length ** 2)
-        localizations.insert(5, 'total_photons', total_photons)
-        return localizations
-    else:
-        raise ValueError("DataFrame must contain 'photons', 'bg', and 'roi' columns.")
 
 def count_localizations(events):
     """
@@ -273,7 +299,7 @@ def count_localizations(events):
 
     return number_locs
 
-def connect_locs_to_picasso(localizations_file, box_side_length=5):
+def connect_locs_to_picasso_old(localizations_file, box_side_length=5):
     localizations = helper.process_input(localizations_file, 'locs')
     event_column = np.zeros(len(localizations), dtype=int)
     event_counter = 0

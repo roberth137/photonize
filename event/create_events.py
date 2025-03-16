@@ -5,14 +5,14 @@ Created on Tue Nov 19 15:08:39 2024
 
 @author: roberthollmann
 
-This is a python script to create events from individual localizations.
-One event has the key coordinates: start_ms, end_ms, x and y.
+This is a python script to create events from linked localizations.
+One event has the key coordinates: start_ms_frame, end_ms_frame, x and y.
 It should be used only with filtered localizations
 """
 
 import pandas as pd
 import numpy as np
-from event import tag_events
+from event import link_locs
 from event import event_bounds
 from utilities import helper
 from fitting.locs_average import avg_photon_weighted
@@ -21,7 +21,14 @@ from fitting.locs_average import avg_photon_weighted
 
 def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, proximity=2, filter_single=True):
     """
-    Converts a DataFrame of localizations into a list of Event objects.
+    Connects a DataFrame of Localization to Events (linked Locs)
+    Input:
+        localizations: rendered, filtered, picked
+        offset: offset used for frame video
+        int_time:
+        max_dark_frames: Number of frames where no loc is found that can be skipped
+        proximity: max distance between adjacent locs, in units of lpx+lpy
+        filter_single: Filters single localizaitions that cant be connected to an event
 
     Returns:
         list of Event: List of Event objects.
@@ -34,7 +41,7 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
     # Tag localizations with event number and group them
-    localizations_eve = tag_events.connect_locs_by_group(localizations,
+    localizations_eve = link_locs.link_locs_by_group(localizations,
                                                          max_dark_frames=max_dark_frames,
                                                          proximity=proximity,
                                                          filter_single=filter_single)
@@ -56,10 +63,8 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
                  'x': avg_photon_weighted(eve_group, 'x'),
                  'y': avg_photon_weighted(eve_group, 'y'),
                  'photons': peak_loc['photons'],
-                 #'total_photons': total_photons_estimate,
                  'start_ms_fr': start_ms_fr,
                  'end_ms_fr': end_ms_fr,
-                 #'duration_ms': duration_ms,
                  'num_frames': (last['frame'] - first['frame']) + 1,
                  'lpx': peak_loc['lpx'],
                  'lpy': peak_loc['lpy'],
@@ -80,10 +85,6 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
                             'x': 'float32',
                             'y': 'float32',
                             'photons': 'float32',
-                            #'total_photons': 'float32',
-                            #'start_ms': 'float32',
-                            #'end_ms': 'float32',
-                            #'duration_ms': 'float32',
                             'start_ms_fr': 'float32',
                             'end_ms_fr': 'float32',
                             'lpx': 'float32',
@@ -106,7 +107,11 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
 def locs_to_events_to_picasso(localizations_file, 
                               offset, box_side_length, int_time):
     """
-    Converts a DataFrame of localizations into a list of Event objects.
+
+    OLD FUNCTION
+
+
+    Converts a DataFrame of localizations into a list of Event objects and saves it as picasso file
 
     Returns:
         list of Event: List of Event objects.
@@ -118,7 +123,7 @@ def locs_to_events_to_picasso(localizations_file,
         raise ValueError(f"DataFrame must contain columns: {required_columns}")
 
     # Tag localizations with event number and group them
-    localizations_eve = tag_events.connect_locs(localizations, False)
+    localizations_eve = link_locs.link_locs_by_group(localizations, False)
     grouped = localizations_eve.groupby('event')
 
     events = pd.DataFrame()
@@ -167,12 +172,13 @@ def locs_to_events_to_picasso(localizations_file,
                                   ignore_index=True)
     helper.dataframe_to_picasso(events, localizations_file,
                                 extension='_locs_to_events')
-    #return events
-
 
         
 def event_average(localizations_file):
     """
+    OLD FUNCTION
+
+
     Parameters
     ----------
     localizations_file : localizations_file, tagged with event
