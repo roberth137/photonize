@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Nov 19 15:08:39 2024
 
@@ -9,11 +7,9 @@ This is a python script to create events from linked localizations.
 One event has the key coordinates: start_ms_frame, end_ms_frame, x and y.
 It should be used only with filtered localizations
 """
-
 import pandas as pd
 import numpy as np
 from event import link_locs
-from event import event_bounds
 from utilities import helper
 from fitting.locs_average import avg_photon_weighted
     
@@ -135,8 +131,11 @@ def locs_to_events_to_picasso(localizations_file,
         last = eve_group.iloc[-1]
 
         peak_event = eve_group.iloc[eve_group['photons'].idxmax()]
-        start_ms, end_ms = event_bounds.get_ms_bounds(
-            eve_group, offset, int_time)
+
+        #start_ms, end_ms = event_bounds.get_ms_bounds(
+        #    eve_group, offset, int_time)
+        start_ms = (first.frame/offset)*int_time
+        end_ms = (last.frame/offset + 1)*int_time
         duration_ms = (end_ms-start_ms)
 
         event_duration = (1 + ((last.frame - first.frame)/offset)) #* int_time ## start_1st frame to end_last frame
