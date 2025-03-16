@@ -116,7 +116,11 @@ def link_locs_by_group(localizations_dset,
         lpx_p_lpy = lpx_p_lpy[sort_indices]
 
         # Call Numba-optimized function to assign event IDs
-        group_event_ids = link_group(frames, x_coords, y_coords, proximity * lpx_p_lpy, max_dark_frames)
+        group_event_ids = link_group(frames,
+                                     x_coords,
+                                     y_coords,
+                                     proximity * lpx_p_lpy,
+                                     max_dark_frames)
 
         # Map local group event IDs to global event IDs
         unique_local_event_ids = np.unique(group_event_ids)

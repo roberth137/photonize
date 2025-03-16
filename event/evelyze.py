@@ -17,11 +17,8 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
     """
     print('Starting event analysis: ...')
-    start_read_locs = time.time()
     localizations = helper.process_input(localizations_file,
                                          dataset='locs')
-    end_read_locs = time.time()
-    print(f'time to read in locs: {end_read_locs-start_read_locs}')
     # first localizations to events
     events = create_events.locs_to_events(localizations,
                                           offset=offset,
@@ -76,7 +73,6 @@ def events_lt_avg_pos(event_file, photons_file,
     - yaml file
     """
     # read in files
-    start_i_o = time.time()
     events = helper.process_input(event_file, dataset='locs')
     total_events = len(events)
     photons = helper.process_input(photons_file, dataset='photons')
@@ -84,9 +80,6 @@ def events_lt_avg_pos(event_file, photons_file,
     print(len(photons), ' photons and ', total_events,
           'events read in')
     drift = helper.process_input(drift_file, dataset='drift')
-    end_i_o = time.time()
-    print(f'time for i/o: {end_i_o-start_i_o}')
-    tailcut = kwargs.get('tailcut')
 
     lifetime = np.ones(total_events, dtype=np.float32)
     lplt = np.ones(total_events, dtype=np.float32)
@@ -188,13 +181,10 @@ def events_lt_avg_pos(event_file, photons_file,
             phot_y -= y_t
             dist_2 = (phot_x**2 + phot_y**2)
             phot_event['distance'] = dist_2
-
-            if tailcut is not None:
-                phot_event = phot_event[(phot_event['dt']<tailcut)]
             arrival_times = phot_event['dt'].to_numpy()
             distance_sq = phot_event['distance'].to_numpy()
 
-            lifetime[i] = fitting.avg_lifetime_weighted_40(arrival_times,
+            lifetime[i] = fitting.avg_lifetime_weighted(arrival_times,
                                                            distance_sq,
                                                            start_dt,
                                                            diameter)

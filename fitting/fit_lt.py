@@ -6,65 +6,17 @@ from scipy.optimize import curve_fit, minimize
 from numba import njit
 
 
-
-def avg_lifetime_sergi_40(loc_photons, peak, dt_offset=0):
+def avg_lifetime(loc_photons, peak, dt_offset=0):
     '''
-    Fit lifetimes of individual localizations with 40mhz laser frequency
-    Parameters
-    ----------
-    loc_photons : all photons from one localization
-    peak : position of the maximum of arrival times for this pick of
-    localizations, calibrated from calibrate_peak_locs()
-    dt_offset : the offset from the peak where arrival times are considered
-    for fitting the lifetime.The default is 50.
-
-    Returns
-    -------
-    average arrival time of photons, in units of arrival time bin size.
-    Usually 10ps
-
-    '''
-
-    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 2500))
-    background = np.sum(counts[-300:]) / 300
-    counts_bgsub = counts - background
-    weights = np.arange(1, (2500 - (peak + dt_offset)))
-    considered_bgsub = counts_bgsub[(peak + dt_offset):2500]
-    #if len(loc_photons) < 70:
-    #    print('\nphotons for fitting: ', len(loc_photons))
-    #    print('good photons: ', sum(considered_bgsub))
-    lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
-    return lifetime
-
-def avg_lifetime_no_bg_40(loc_photons, peak, dt_offset=0):
-    '''
-    Not considering bg
+    Returns the average lifetime value, starting at the peak
     '''
     arr_times = np.copy(loc_photons.dt)
     arr_times_normalized = arr_times[arr_times > peak]
     lifetime = np.mean(arr_times_normalized-peak)
     return lifetime
 
-def avg_lifetime_gauss_w_40(loc_photons, peak, diameter, sigma=1 ,dt_offset=0):
-    '''
-    use weights for fluorophores position
-    '''
-    radius = diameter/2
-    after_peak = loc_photons[loc_photons.dt>peak]
-    ap_dt = np.copy(after_peak.dt)
-    ap_dt = ap_dt.astype('int64')
-    ap_dist = np.copy(after_peak.distance)
-    ap_dt -= peak
-    ap_weight = np.exp(-(ap_dist/sigma**2))
-    weighted_dt = np.multiply(ap_dt,ap_weight)
-    lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
-    return lifetime
-
-def mean_arrival(loc_photons, diameter):
-    return np.mean(loc_photons.dt)
-
 #@njit
-def avg_lifetime_weighted_40(dt, distance, peak, diameter):
+def avg_lifetime_weighted(dt, distance, peak, diameter):
     """
     Uses quadratic weights for lifetimes depending on photons' distance from the center of localization.
 
@@ -162,7 +114,6 @@ def fit_weighted_exponential(dt, distance, peak, diameter, bin_size=150, plot=Fa
     # offset_guess ~ minimum weighted count.
     A_guess = np.max(ydata)
     tau_guess = (xdata.max() - xdata.min()) / 2.0
-    #offset_guess = np.min(ydata)
     initial_guess = (A_guess, tau_guess)
 
     # Fit the exponential function to the weighted histogram data.
@@ -263,68 +214,6 @@ def mle_exponential_lifetime(dt, distance, peak, diameter, plot=False):
 
     return tau_mle
 
-def avg_lifetime_weighted_40_old(loc_photons, peak, diameter):
-    '''
-    uses quadratic weights for lifetimes depending on photons distance from center of localization
-    '''
-    radius = diameter/2
-    after_peak = loc_photons[loc_photons.dt>peak]
-    ap_dt = np.copy(after_peak.dt)
-    ap_dt = ap_dt.astype('int64')
-    ap_dist = np.copy(after_peak.distance)
-    ap_dt -= peak
-    ap_weight = (0.2+(1-ap_dist/(radius**2)))
-    weighted_dt = np.multiply(ap_dt,ap_weight)
-    lifetime = np.sum(weighted_dt)/np.sum(ap_weight)
-    return lifetime.astype(np.float32)
-
-
-def avg_lifetime_sergi_80(loc_photons, peak, dt_offset=50):
-    '''
-    Fit lifetimes of individual localizations with 80mhz laser frequency
-    Parameters
-    ----------
-    loc_photons : all photons from one localization
-    peak : position of the maximum of arrival times for this pick of
-    localizations, calibrated from calibrate_peak_locs()
-    dt_offset : the offset from the peak where arrival times are considered
-    for fitting the lifetime.The default is 50.
-
-    Returns
-    -------
-    average arrival time of photons, in units of arrival time bin size.
-    Usually 10ps
-
-    '''
-    counts, bins = np.histogram(loc_photons.dt, bins=np.arange(0, 1250))
-    background = np.sum(counts[-300:]) / 300
-    counts_bgsub = counts - background
-    weights = np.arange(1, (1250 - (peak + dt_offset)))
-    considered_bgsub = counts_bgsub[(peak + dt_offset):1250]
-    lifetime = np.sum(np.multiply(considered_bgsub, weights)) / np.sum(considered_bgsub)
-    return lifetime
-
-def calibrate_peak_locs(locs_group, pick_photons, offset,
-                   box_side_length, int_time):
-    '''
-    Parameters
-    ----------
-    locs_group : localizations of this pick as pd dataframe
-    pick_photons : photons of this pick as pd dataframe
-    offset : how many offsetted frames
-    Returns
-    -------
-    Position of arrival time histogram peak
-    '''
-    group_photons = pd.DataFrame()
-    for i in range(len(locs_group)):
-        phot_loc = get_photons.photons_of_one_localization(locs_group.iloc[i], pick_photons, offset,
-                                                           box_side_length, int_time)
-        group_photons = pd.concat([group_photons, phot_loc],
-                                  ignore_index=True)
-    counts, bins = np.histogram(group_photons.dt, bins=np.arange(0, 2500))
-    print('len photons for calib_peak: ', len(group_photons))
-    return np.argmax(counts)
 
 def calibrate_peak_events(event_photons):
     '''
