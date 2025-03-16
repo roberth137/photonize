@@ -7,9 +7,37 @@ from get_photons import boundaries
 import pandas as pd
 import numpy as np
 
+def crop_rectangle(
+    photons,
+    x_min=0, x_max=float('inf'),
+    y_min=0, y_max=float('inf')):
+    """
+        Takes a DataFrame of photons and returns a x and y filtered subset.
+
+        Parameters
+        ----------
+        photons : pandas.DataFrame
+            Input DataFrame, expected to have columns: x, y, ms.
+        x_min, x_max : float, optional
+            Bounds on x. If None, that bound is ignored.
+        y_min, y_max : float, optional
+            Bounds on y. If None, that bound is ignored.
+        Returns
+        -------
+        pandas.DataFrame
+            The subset of photons within the specified ranges.
+        """
+    mask = ((photons.x >= x_min)
+        & (photons.x <= x_max)
+        & (photons.y >= y_min)
+        & (photons.y <= y_max))
+
+    return photons[mask]
+
+
 def crop_cuboid(photons, x_min=0, x_max=float('inf'), y_min=0,
                  y_max=float('inf'), ms_min=0, ms_max=float('inf')):
-    '''
+    """
     Takes photons as input and return 3d cropped photons as output
     Parameters
     ----------
@@ -25,16 +53,14 @@ def crop_cuboid(photons, x_min=0, x_max=float('inf'), y_min=0,
     -------
     cropped photons as pd dataframe
 
-    '''
-    photons_cropped = photons[
-        (photons.x >= x_min)
-        & (photons.x <= x_max)
-        & (photons.y >= y_min)
-        & (photons.y <= y_max)
-        & (photons.ms >= ms_min)
-        & (photons.ms <= ms_max)]
-
-    return photons_cropped
+    """
+    mask = ((photons.x >= x_min)
+            & (photons.x <= x_max)
+            & (photons.y >= y_min)
+            & (photons.y <= y_max)
+            & (photons.ms >= ms_min)
+            & (photons.ms <= ms_max))
+    return photons[mask]
 
 def crop_event(event, photons, diameter, more_ms=0):
     '''

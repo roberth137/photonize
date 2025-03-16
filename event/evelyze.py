@@ -117,15 +117,13 @@ def events_lt_avg_pos(event_file, photons_file,
     for g in groups:
         print('_______________________________________________________')
         print(f'Analysing group {int(g+1)} of {len(groups)}')
-        start_pick = time.time()
         events_group = events[(events.group == g)]
-
+        start_pick = time.perf_counter()
         pick_photons = get_photons.get_pick_photons(
             events_group, photons, drift, offset,
             diameter=diameter, int_time=int_time)
-
         print('number of picked photons: ', len(pick_photons))
-        end_pick = time.time()
+        end_pick = time.perf_counter()
         print(f'picking and undrifting time: {end_pick-start_pick}')
         if dt_window:
             pick_photons = pick_photons[(pick_photons.dt>dt_window[0])&
