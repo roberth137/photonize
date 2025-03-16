@@ -11,8 +11,6 @@ import pandas as pd
 import numpy as np
 from event import link_locs
 from utilities import helper
-from fitting.locs_average import avg_photon_weighted
-    
     
 
 def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, proximity=2, filter_single=True):
@@ -171,6 +169,31 @@ def locs_to_events_to_picasso(localizations_file,
                                   ignore_index=True)
     helper.dataframe_to_picasso(events, localizations_file,
                                 extension='_locs_to_events')
+
+def avg_photon_weighted(localizations, column):
+    '''
+
+    Parameters
+    ----------
+    localizations : localizations where one column should be averaged over
+    with photons weight
+    column : column to be averaged, e.g. 'x' or 'lifetime'
+
+    Returns
+    -------
+    average : sum over i: value[i]*photons[i]/total_photons
+
+    '''
+    localizations = localizations.reset_index(drop=True)
+    column_sum = 0
+    total_photons = 0
+    for i in np.arange(len(localizations), dtype=int):
+        loc_photons = localizations.loc[i, 'photons']
+        column_sum += (localizations.loc[i, column] * loc_photons)
+        total_photons += loc_photons
+    average = column_sum/total_photons
+    #print('average value is: ', average)
+    return average
 
         
 def event_average(localizations_file):
