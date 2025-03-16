@@ -5,6 +5,15 @@ import numba
 
 @numba.njit
 def apply_drift_correction(x, y, frames, drift_x, drift_y, num_photons, max_frame_drift):
+    """
+    Numba optimized function that substracts drift and aligns photons with picasso localizations
+
+    Alingment Formula:
+    For 16x Binning: P_c = L_c - (0.5 - (1/(2*Binning))) = L_c - 0.46875
+
+    Reason: If binning 16 individual pixels to a TIF, the first 16 pixel (values 0-15)
+    are binned into the 0 pixel. This means the average value of the 0 pixel is 7.5/16 which is 0.46875
+    """
     undrifted_x = np.empty(num_photons)
     undrifted_y = np.empty(num_photons)
 
@@ -21,6 +30,17 @@ def apply_drift_correction(x, y, frames, drift_x, drift_y, num_photons, max_fram
 
 
 def undrift_photons(photons, drift, offset, int_time=200):
+    """
+    subtracts drift and aligns photons to picasso coordinates
+    Using Numba optimized apply drift correction function
+    Input:
+        photons - pd dataframe with x,y,dt,ms coordinates
+        drift - pd dataframe
+        offset -
+        int_time -
+    Returns:
+        undrifted and aligned photons
+    """
     # Convert DataFrame columns to NumPy arrays
     ms_index = photons['ms'].to_numpy()
     x_photons = photons['x'].to_numpy()

@@ -54,13 +54,9 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                                                     drift, offset,
                                                     box_side_length=box_side_length,
                                                     int_time=int_time)
-        all_events_photons = get_photons.photons_of_many_events(events_group,
-                                                                pick_photons,
-                                                                (box_side_length*1.1)) #use 1.1 to keep homogenous bg for all localizations
-
 
         print('__calibrate_peak__')
-        peak_arrival_time = fitting.calibrate_peak_events(all_events_photons)
+        peak_arrival_time = fitting.calibrate_peak_events(pick_photons)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
 
         locs_group = localizations[(localizations.group == g)]
@@ -71,7 +67,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                              ' events in this group.')
             this_event = events_group.iloc[eve - counter_events]
             this_event_photons = get_photons.crop_event(this_event,
-                                                        all_events_photons,
+                                                        pick_photons,
                                                         box_side_length)
             if eve % 200 == 0: print('200 events fitted. Number of photons',
                                    ' in last fit: ', len(this_event_photons))
@@ -84,7 +80,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                              ' localizations in this group.')
 
             one_loc = locs_group.iloc[i - counter_locs]
-            cylinder_photons = get_photons.crop_loc(one_loc, all_events_photons, offset,
+            cylinder_photons = get_photons.crop_loc(one_loc, pick_photons, offset,
                                                     box_side_length, int_time)
             phot_loc = pd.DataFrame(data=cylinder_photons)
 
@@ -369,7 +365,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
             if i == 0: print('fitting lifetime of ', len(locs_group),
                              ' localizations.')
 
-            phot_loc = get_photons.photons_of_one_localization(
+            phot_loc = get_photons.crop_loc(
                 locs_group.iloc[i - counter],
                 pick_photons, offset,
                 box_side_length, integration_time)
