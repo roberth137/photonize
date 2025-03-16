@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use('Qt5Agg')
-import helper
+from utilities import helper
 import get_photons
 import fitting
 

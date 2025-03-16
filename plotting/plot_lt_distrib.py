@@ -1,7 +1,7 @@
 import os
 import glob
 import matplotlib.pyplot as plt
-import helper  # Make sure your helper module is in the Python path
+from utilities import helper
 
 
 def process_folder(folder):

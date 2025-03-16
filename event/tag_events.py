@@ -10,9 +10,8 @@ This module reads in picasso localizations and tags them with their event
 
 import numpy as np
 import pandas as pd
-import helper
-from numba import njit
-import time
+from utilities import helper
+
 
 def connect_locs_picasso_new(localizations_file, filter_single=True, proximity=2, max_dark_frames=1, suffix=''):
     localizations = helper.process_input(localizations_file, 'locs')

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import helper
+from utilities import helper
 
 filename = 'local/4colors_2/picks_event.hdf5'
 separation_points = [(271, 0.487, 299, 0.590),

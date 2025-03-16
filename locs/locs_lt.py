@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import helper
+from utilities import helper
 import fitting
 import get_photons
 import event

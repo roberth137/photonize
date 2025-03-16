@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from event import tag_events
 from event import event_bounds
-import helper
+from utilities import helper
 from fitting.locs_average import avg_photon_weighted
     
     
@@ -27,7 +27,7 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
         list of Event: List of Event objects.
     """
     # Validate required columns
-    localizations = helper.process_input(localizations_file, 
+    localizations = helper.process_input(localizations_file,
                                          dataset='locs')
     required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
     if not required_columns.issubset(localizations.columns):
@@ -166,7 +166,7 @@ def locs_to_events_to_picasso(localizations_file,
         events = pd.concat([events, event], 
                                   ignore_index=True)
     helper.dataframe_to_picasso(events, localizations_file,
-                              extension='_locs_to_events')
+                                extension='_locs_to_events')
     #return events
 
 

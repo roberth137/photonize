@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-import h5py  # only needed if you want to write files elsewhere
-import helper
+from utilities import helper
 import fitting
 import get_photons
 
