@@ -22,7 +22,13 @@ def localization_precision(sigma, photons, bg, pixel_nm):
     s2 = sigma ** 2
     sa2 = s2 + pixel2 / 12
     variance = sa2 * (16 / 9 + (8 * np.pi * sa2 * bg) / photons) / photons
+    return safe_sqrt(variance)
 
+
+def safe_sqrt(variance):
     with np.errstate(invalid="ignore"):
-        return np.sqrt(variance)
-
+        # This will produce NaN for negative values, instead of throwing a warning
+        result = np.sqrt(variance)
+    # Replace NaNs with 10
+    result = np.nan_to_num(result, nan=100.0)
+    return result

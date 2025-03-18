@@ -10,12 +10,13 @@ event.event_analysis(localizations_file=f'{folder}orig58_pf.hdf5',
                      offset=10,
                      diameter=4.5,
                      int_time=200,
-                     suffix='new_stat_calc',
+                     suffix='_80_more_ms',
                      max_dark_frames=1,
                      proximity=2,
                      filter_single=True,
                      norm_brightness=True,
-                     dt_window=[0,2500])
+                     dt_window=[0,2500],
+                     more_ms=80)
 end_time = time.time()
 print(f"Execution time: {end_time-start_time:.3f} seconds")
 
