@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 
-def compute_bg_map_idw_radius(localizations, radius=3, p=1, grid_size=1):
+def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
     """
     Compute a background (height) map from sparse localization data using inverse distance weighting (IDW)
     over a fixed neighborhood radius.
@@ -38,8 +38,8 @@ def compute_bg_map_idw_radius(localizations, radius=3, p=1, grid_size=1):
     bg = np.asarray(localizations.bg, dtype=np.float64)
 
     # Determine grid extents (use floor for min and ceil for max)
-    min_x, max_x = int(np.floor(x.min())), int(np.ceil(x.max()))
-    min_y, max_y = int(np.floor(y.min())), int(np.ceil(y.max()))
+    min_x, max_x = 0, int(np.ceil(x.max())+2*radius)
+    min_y, max_y = 0, int(np.ceil(y.max())+2*radius)
 
     # Create grid coordinates (assuming grid points are at integer coordinates)
     grid_x = np.arange(min_x, max_x + 1, grid_size)
@@ -82,17 +82,23 @@ def compute_bg_map_idw_radius(localizations, radius=3, p=1, grid_size=1):
 if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as plt
-    filename = 'data/cy'
+    filename = 't/orig58_all_f.hdf5'
     # Example: Create a DataFrame of localization points
-    data = {
-        'x': [10.2, 12.5, 14.8, 16.1, 11.3],
-        'y': [20.5, 21.1, 19.7, 22.2, 20.0],
-        'bg': [100, 150, 120, 130, 110]
-    }
-    localizations = pd.DataFrame(data)
+
+    localizations = pd.read_hdf(filename, key='locs')
 
     # Compute the background map using a radius of 3 pixels.
-    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(localizations, radius=3, p=1, grid_size=1)
+    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(localizations, radius=5, p=1, grid_size=1)
+
+    print(f'type of bg_map: {type(bg_map)}')
+    print(f'shape of bg_map: {bg_map.shape}')
+
+    print(f'type of grid_x: {type(grid_x)}')
+    print(f'shape of grid_x: {grid_x.shape}')
+
+    print(f'type of grid_y: {type(grid_y)}')
+    print(f'shape of grid_y: {grid_y.shape}')
+
 
     # Plot the resulting height map
     plt.figure(figsize=(6, 5))

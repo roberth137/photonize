@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+
+from fitting import normalize_brightness_gaussian
 from utilities import helper
 from event import create_events
 import fitting
@@ -36,7 +38,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
     if norm_brightness:
         print('Normalizing brightness...')
         laser_profile = fitting.get_laser_profile(localizations[::offset])
-        events = normalize_brightness_smooth(events)#, laser_profile)
+        events = fitting.normalize_brightness(events)#normalize_brightness_gaussian(events, laser_profile)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -99,6 +101,7 @@ def events_lt_avg_pos(event_file, photons_file,
     delta_x = np.ones(total_events, dtype=np.float32)
     delta_y = np.ones(total_events, dtype=np.float32)
     phot_no_bg = np.ones(total_events, dtype=np.float32)
+    bg_200ms = np.ones(total_events, dtype=np.float32)
 
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
@@ -110,7 +113,7 @@ def events_lt_avg_pos(event_file, photons_file,
     print('peak arrival time:   ', peak_arrival_time)
     print('start time:          ', start_dt)
 
-    fit_area = 16 * (diameter/2)**2 * np.pi
+    fit_area = (diameter/2)**2 * np.pi
     counter = 0
     groups = set(events['group'])
     # iterating over every pick in file
@@ -199,6 +202,7 @@ def events_lt_avg_pos(event_file, photons_file,
             duration_ms_new[i] = duration_ms
             brightness[i] = total_photons/duration_ms
             bg[i] = num_photons_300_bg*(duration_ms/300)/fit_area
+            bg_200ms[i] = num_photons_300_bg*(200/300)/fit_area
             bg_over_on[i] = len(cylinder_photons)/duration_ms
             delta_x[i] = my_event.x - x_t
             delta_y[i] = my_event.y - y_t
@@ -211,12 +215,14 @@ def events_lt_avg_pos(event_file, photons_file,
                             (8 * np.pi * (4*events.sx)**4 *(bg**2)/(phot_no_bg**2)))/4
     events['lpy'] = np.sqrt(((4*events.sy)**2 +(1/12))/phot_no_bg +
                             (8 * np.pi * (4*events.sy)**4 *(bg**2)/(phot_no_bg**2)))/4
+    events.insert(9, 'bg_picasso', events['bg'])
     events['bg'] = bg.astype(np.float32)
+    events.insert(8, 'bg_200ms', bg_200ms)
     events.insert(12, 'brightness_phot_ms', brightness)
     events.insert(13, 'lifetime_10ps', lifetime)
     events.insert(14, 'duration_ms', duration_ms_new)
-    events.insert(8, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
-    events.insert(9, 'phot_no_bg', phot_no_bg.astype(np.float32))
+    events.insert(21, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
+    events.insert(20, 'phot_no_bg', phot_no_bg.astype(np.float32))
     events.insert(10, 'sdx_n', sdx_n)
     events.insert(11, 'sdy_n', sdy_n)
     events.insert(19, 'bg_over_on', bg_over_on.astype(np.float32))

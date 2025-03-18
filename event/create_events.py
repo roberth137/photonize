@@ -62,7 +62,7 @@ def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, prox
                  'num_frames': (last['frame'] - first['frame']) + 1,
                  'lpx': peak_loc['lpx'],
                  'lpy': peak_loc['lpy'],
-                 'bg': np.mean(eve_group['bg']),
+                 'bg': np.min(eve_group['bg']),
                  'sx': avg_photon_weighted(eve_group, 'sx'),
                  'sy': avg_photon_weighted(eve_group, 'sy'),
                  'group': first['group'],
