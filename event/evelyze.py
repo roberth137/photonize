@@ -84,24 +84,19 @@ def events_lt_avg_pos(event_file, photons_file,
     drift = helper.process_input(drift_file, dataset='drift')
 
     lifetime = np.ones(total_events, dtype=np.float32)
-    lplt = np.ones(total_events, dtype=np.float32)
-    total_photons_lin = np.ones(total_events, dtype=np.float32)
+    total_photons_arr = np.ones(total_events, dtype=np.float32)
     x_position = np.ones(total_events, dtype=np.float32)
     y_position = np.ones(total_events, dtype=np.float32)
     sdx = np.ones(total_events, dtype=np.float32)
     sdy = np.ones(total_events, dtype=np.float32)
-    sdx_n = np.ones(total_events, dtype=np.float32)
-    sdy_n = np.ones(total_events, dtype=np.float32)
-    duration_ms_new = np.ones(total_events, dtype=np.float32)
+    duration_ms_arr = np.ones(total_events, dtype=np.float32)
     start_ms_new = np.ones(total_events, dtype=np.float32)
     end_ms_new = np.ones(total_events, dtype=np.float32)
-    brightness = np.ones(total_events, dtype=np.float32)
-    bg = np.ones(total_events, dtype=np.float32)
     bg_over_on = np.ones(total_events, dtype=np.float32)
     delta_x = np.ones(total_events, dtype=np.float32)
     delta_y = np.ones(total_events, dtype=np.float32)
     phot_no_bg = np.ones(total_events, dtype=np.float32)
-    bg_200ms = np.ones(total_events, dtype=np.float32)
+    bg_200ms_pixel = np.ones(total_events, dtype=np.float32)
 
 
     peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
@@ -193,49 +188,56 @@ def events_lt_avg_pos(event_file, photons_file,
             y_position[i] = y_t
             sdx[i] = sd_x_bg
             sdy[i] = sd_y_bg
-            sdx_n[i] = sd_x_bg/np.sqrt(total_photons)
-            sdy_n[i] = sd_y_bg/np.sqrt(total_photons)
-            total_photons_lin[i] = total_photons
-            phot_no_bg[i] = total_photons - (num_photons_300_bg*(duration_ms/300))
+            total_photons_arr[i] = total_photons
             start_ms_new[i] = start_ms
             end_ms_new[i] = end_ms
-            duration_ms_new[i] = duration_ms
-            brightness[i] = total_photons/duration_ms
-            bg[i] = num_photons_300_bg*(duration_ms/300)/fit_area
-            bg_200ms[i] = num_photons_300_bg*(200/300)/fit_area
-            bg_over_on[i] = len(cylinder_photons)/duration_ms
+            duration_ms_arr[i] = duration_ms
+            bg_200ms_pixel[i] = num_photons_300_bg*(200/300)/fit_area
+            #bg_over_on[i] = len(cylinder_photons)/duration_ms
             delta_x[i] = my_event.x - x_t
             delta_y[i] = my_event.y - y_t
         counter += len(events_group)
 
+    # calculate clipped bg
+    bg_percentile = np.percentile(bg_200ms_pixel, 95)
+    bg_200ms_pixel_capped = np.clip(bg_200ms_pixel, None, bg_percentile)
+
+    squareroot_photons = np.sqrt(total_photons_arr)
+    photons_arr = total_photons_arr - (bg_200ms_pixel*(duration_ms_arr/200)*fit_area)
+
+    sx_arr = np.copy(events.sx)
+    sy_arr = np.copy(events.sy)
+    bg_picasso = np.copy(events.bg)
+
+
     events['x'] = x_position
     events['y'] = y_position
-    events['photons'] = total_photons_lin.astype(np.int32)
-    events['lpx'] = np.sqrt(((4*events.sx)**2 +(1/12))/phot_no_bg +
-                            (8 * np.pi * (4*events.sx)**4 *(bg**2)/(phot_no_bg**2)))/4
-    events['lpy'] = np.sqrt(((4*events.sy)**2 +(1/12))/phot_no_bg +
-                            (8 * np.pi * (4*events.sy)**4 *(bg**2)/(phot_no_bg**2)))/4
-    events.insert(9, 'bg_picasso', events['bg'])
-    events['bg'] = bg.astype(np.float32)
-    events.insert(8, 'bg_200ms', bg_200ms)
-    events.insert(12, 'brightness_phot_ms', brightness)
-    events.insert(13, 'lifetime_10ps', lifetime)
-    events.insert(14, 'duration_ms', duration_ms_new)
-    events.insert(21, 'lplt', (lifetime/total_photons_lin).astype(np.float32))
-    events.insert(20, 'phot_no_bg', phot_no_bg.astype(np.float32))
-    events.insert(10, 'sdx_n', sdx_n)
-    events.insert(11, 'sdy_n', sdy_n)
-    events.insert(19, 'bg_over_on', bg_over_on.astype(np.float32))
-    events.insert(15, 'old_lpx', lpx_arr)
-    events.insert(16, 'old_lpy', lpy_arr)
-    events.insert(17, 'sdx', sdx.astype(np.float32))
-    events.insert(18, 'sdy', sdy.astype(np.float32))
-    #events['lpx'] = sdx_n.astype(np.float32)
-    #events['lpy'] = sdy_n.astype(np.float32)
+    events['photons'] = photons_arr.astype(np.int32)
+    events['bg'] = bg_200ms_pixel_capped*duration_ms_arr/200
+    events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_200ms_pixel_capped, pixel_nm=115)
+    events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_200ms_pixel_capped, pixel_nm=115)
+    events['lifetime_10ps'] = lifetime
+    events['bg_200ms'] = bg_200ms_pixel_capped
+    events['bg_picasso'] = bg_picasso
+    events['brightness_phot_ms'] = photons_arr/duration_ms_arr
+    events['duration_ms'] = duration_ms_arr
+    events['lplt'] = (lifetime/photons_arr).astype(np.float32)
     events['start_ms'] = start_ms_new.astype(np.int32)
     events['end_ms'] = end_ms_new.astype(np.int32)
     events['delta_x'] = delta_x
     events['delta_y'] = delta_y
+    events['bg_over_on'] = bg_over_on.astype(np.float32)
+    events['old_lpx'] = lpx_arr
+    events['old_lpy'] = lpy_arr
+    #events.insert(20, 'phot_no_bg', phot_no_bg.astype(np.float32))
+    #events.insert(10, 'sdx_n', sdx/squareroot_photons)
+    #events.insert(11, 'sdy_n', sdy/squareroot_photons)
+    #events.insert(17, 'sdx', sdx.astype(np.float32))
+    #events.insert(18, 'sdy', sdy.astype(np.float32))
+    #events['start_ms'] = start_ms_new.astype(np.int32)
+    #events['end_ms'] = end_ms_new.astype(np.int32)
+    #events['delta_x'] = delta_x
+    #events['delta_y'] = delta_y
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     if isinstance(event_file, str):
