@@ -35,7 +35,7 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
     # Convert localization data to numpy arrays
     x = np.asarray(localizations.x, dtype=np.float64)
     y = np.asarray(localizations.y, dtype=np.float64)
-    bg = np.asarray(localizations.bg, dtype=np.float64)
+    bg = get_bg(localizations)#np.asarray(localizations.bg, dtype=np.float64)
 
     # Determine grid extents (use floor for min and ceil for max)
     min_x, max_x = 0, int(np.ceil(x.max())+2*radius)
@@ -76,6 +76,16 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
                 bg_map[i, j] = np.nan
 
     return bg_map, grid_x, grid_y
+
+def get_bg(localizations):
+    # Option 1: Check attribute existence:
+    if hasattr(localizations, 'bg_200ms_px') and localizations.bg_200ms_px is not None:
+        bg_array = np.asarray(localizations.bg_200ms_px, dtype=np.float64)
+        print(f'using bg_200ms_px column for normalization')
+    else:
+        bg_array = np.asarray(localizations.bg, dtype=np.float64)
+        print(f'using bg column for normalization')
+    return bg_array
 
 
 # Example usage:
