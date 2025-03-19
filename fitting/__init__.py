@@ -6,7 +6,7 @@ from .fit_lt import (calibrate_peak_events,
 from .fit_pos import (avg_of_roi_cons_bg,
                       event_position_cons_bg,
                       calculate_sd_cons_bg,
-                      localization_precision,
+                      #localization_precision,
                       event_position,
                       avg_of_roi,
                       event_position_mle)

@@ -157,8 +157,8 @@ def events_lt_avg_pos(event_file, photons_file,
             bg_measure_time = (end_ms+more_ms) - (start_ms-more_ms) - duration_ms - 40
 
 
-            print(f'times: {(my_event.end_ms_fr+more_ms)-(my_event.start_ms_fr-more_ms) - duration_ms - ((my_event.end_ms_fr+more_ms) - (my_event.start_ms_fr-more_ms) - duration_ms)}')
-            print(f'photons: {len(cylinder_photons) - len(photons_new_bounds) - num_bg_photons}')
+            #print(f'times: {(my_event.end_ms_fr+more_ms)-(my_event.start_ms_fr-more_ms) - duration_ms - ((my_event.end_ms_fr+more_ms) - (my_event.start_ms_fr-more_ms) - duration_ms)}')
+            #print(f'photons: {len(cylinder_photons) - len(photons_new_bounds) - num_bg_photons}')
 
 
             new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
