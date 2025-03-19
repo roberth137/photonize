@@ -3,14 +3,14 @@ import time
 
 
 start_time = time.time()
-folder = 'data/ml/single/'
-event.event_analysis(localizations_file=f'{folder}cy3_200ms_fp.hdf5',
-                     photons_file=f'{folder}cy3_59_index.hdf5',
-                     drift_file=f'{folder}cy3_200ms_drift.txt',
+folder = 't/'
+event.event_analysis(localizations_file=f'{folder}orig58_all_f.hdf5',
+                     photons_file=f'{folder}orig58_index.hdf5',
+                     drift_file=f'{folder}orig58_drift.txt',
                      offset=10,
                      diameter=4.5,
                      int_time=200,
-                     suffix='_1803',
+                     suffix='_1903',
                      max_dark_frames=1,
                      proximity=2,
                      filter_single=True,
