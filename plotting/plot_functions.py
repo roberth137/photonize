@@ -218,4 +218,4 @@ def hist_x_event(i):
 
 if __name__ == "__main__":
     # Try calling one of your functions to produce the plot:
-    hist_dt_event(1)
+    scatter_event(1)

@@ -1,5 +1,5 @@
 import matplotlib
-matplotlib.use('Qt5Agg')
+#matplotlib.use('Qt5Agg')
 from utilities import helper
 import get_photons
 import fitting

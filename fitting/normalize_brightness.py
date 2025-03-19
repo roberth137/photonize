@@ -76,10 +76,16 @@ def normalize_brightness(events, method='idw'):
 
 
     # Normalize the background and brightness
-    events['bg_norm'] = (events['bg']/norm_values_safe).astype(np.float32) #/ norm_values_safe
+
+    #events['bg_norm'] = (events['bg']/norm_values_safe).astype(np.float32) #/ norm_values_safe
+    #the time scaled bg values should probably not be normalized
+
     events['bg_200ms_px_norm'] = (events['bg_200ms_px']/norm_values_safe).astype(np.float32) #/ norm_values_safe
     events['brightness_norm'] = (events['brightness_phot_ms']/norm_values_safe).astype(np.float32)
     events['lt_over_bright'] = (events['lifetime_10ps']/events['brightness_norm']).astype(np.float32)
+    if hasattr(events, 'bg_picasso'):
+        events['bg_pic_norm'] = (events['bg_picasso']/norm_values_safe).astype(np.float32)
+
 
     return events
 
