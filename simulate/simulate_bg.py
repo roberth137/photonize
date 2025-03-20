@@ -2,35 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_background_single_value(num_pixels=8, binding_time_ms=200, bg_200ms_px=6, subpixel_levels=16):
+def simulate_background_single_value(num_pixels=8, binding_time_ms=200,
+                                     bg_200ms_px=6, subpixel_levels=16):
     """
-    Simulate background events over an 8x8 pixel area using a single random background value for all pixels.
+    Simulate background events over an 8x8 pixel area using a single random
+    background value for all pixels, returning arrays of x_coords, y_coords.
 
-    Parameters:
-        num_pixels (int): Number of pixels along each dimension.
-        binding_time_ms (float): Binding time in ms (200 ms is the reference time).
-        bg_200ms_px (float): background value per pixel per 200 ms
-        subpixel_levels (int): Subpixel resolution (each pixel is divided into subpixel_levels x subpixel_levels bins).
-
-    Returns:
-        x_coords (np.ndarray): X coordinates of background events.
-        y_coords (np.ndarray): Y coordinates of background events.
-        bg_rate (float): The single background rate used for all pixels.
+    Coordinates are mapped into [-4,4) along x and y.
     """
-    # For each pixel, use the same bg_rate to determine the number of events
-    total_area = num_pixels * num_pixels  # 8*8 = 64
-    # Scale by binding_time_ms relative to 200 ms
+    # Total area = num_pixels * num_pixels (64 for 8x8)
+    total_area = num_pixels * num_pixels
+
+    # Compute the expected number of background events, scaling by binding time
     expected_counts = total_area * bg_200ms_px * (binding_time_ms / 200.0)
 
-    # 3) Draw the total number of background events from Poisson
+    # Draw the total number of background events from a Poisson distribution
     num_events = np.random.poisson(expected_counts)
 
-    # 4) Generate subpixel-resolved coordinates uniformly over [0, num_pixels)
-    #    with 1/subpixel_levels discretization
-    x_coords = (np.random.randint(0, num_pixels * subpixel_levels, size=num_events) / subpixel_levels - 4)
-    y_coords = (np.random.randint(0, num_pixels * subpixel_levels, size=num_events) / subpixel_levels - 4)
+    # Randomly assign subpixel coordinates in [0, num_pixels), then shift to [-4,4)
+    x_coords = (np.random.randint(0, num_pixels * subpixel_levels, size=num_events)
+                / subpixel_levels - num_pixels / 2)
+    y_coords = (np.random.randint(0, num_pixels * subpixel_levels, size=num_events)
+                / subpixel_levels - num_pixels / 2)
 
-    return x_coords, y_coords, bg_200ms_px
+    return x_coords, y_coords
 
 
 def plot_background(x_coords, y_coords, num_pixels=8, bg_rate=None):
@@ -61,11 +56,11 @@ if __name__ == '__main__':
     subpixel_levels = 16  # Subpixel resolution: each pixel is divided into 16 parts
 
     # Simulate background events
-    x_coords, y_coords, bg_rate = simulate_background_single_value(num_pixels,
+    x_coords, y_coords = simulate_background_single_value(num_pixels,
                                                                    binding_time_ms,
                                                                    bg_mean,
                                                                    subpixel_levels)
-    print(f"Simulated with a single background rate of: {bg_rate:.2f} counts per pixel (for 200 ms)")
+    print(f"Simulated with a background rate of: {bg_mean:.2f} counts per pixel (for 200 ms)")
 
     # Plot the simulated events
-    plot_background(x_coords, y_coords, num_pixels, bg_rate)
+    plot_background(x_coords, y_coords, num_pixels, bg_mean)
