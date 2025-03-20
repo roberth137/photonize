@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Simulate background events
     x_bg, y_bg = s.simulate_background(s.num_pixels, s.binding_time_ms,
-                                                  s.bg_rate, s.min_cam_binning)
+                                                  s.bg_rate_true, s.min_cam_binning)
 
 
     # Plot both together
