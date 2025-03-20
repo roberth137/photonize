@@ -1,21 +1,48 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import simulate as s
 
 
-def simulate_fluorophore(num_photons=500, sigma=1.1):
+def simulate_fluorophore(num_photons=s.num_photons,
+                         sigma_psf=s.sigma_psf,
+                         camera_error=s.camera_error, # 20 microns error / 600 x magnification / 115nm pixel size
+                         min_binning=s.min_cam_binning):
     """
     Simulate one fluorophore at the origin (0,0),
-    with photon positions sampled from a 2D Gaussian.
+    with photon positions sampled from a 2D Gaussian (sigma_psf).
+    Then apply camera error and quantize to 'min_binning' steps.
 
-    num_photons (int): total number of photons to emit.
-    sigma (float): standard deviation of the 2D Gaussian in pixel units.
+    Parameters
+    ----------
+    num_photons : int
+        Number of photons to emit.
+    sigma_psf : float
+        Standard deviation of the PSF (in pixel units).
+    camera_error : float
+        Additional camera noise (std in pixels).
+    min_binning : float
+        Minimum step size (e.g. 1/16 px).
 
-    Returns:
-        x_fluo (np.ndarray): x-coordinates of emitted photons.
-        y_fluo (np.ndarray): y-coordinates of emitted photons.
+    Returns
+    -------
+    x_fluo : np.ndarray
+        Final x-coordinates of measured photon positions (after error + binning).
+    y_fluo : np.ndarray
+        Final y-coordinates of measured photon positions (after error + binning).
     """
-    x_fluo = np.random.normal(loc=0.0, scale=sigma, size=num_photons)
-    y_fluo = np.random.normal(loc=0.0, scale=sigma, size=num_photons)
+
+    # 1) Ground truth photon positions
+    x_photon = np.random.normal(loc=0.0, scale=sigma_psf, size=num_photons)
+    y_photon = np.random.normal(loc=0.0, scale=sigma_psf, size=num_photons)
+
+    # 2) Add camera error
+    x_with_error = x_photon + np.random.normal(loc=0.0, scale=camera_error, size=num_photons)
+    y_with_error = y_photon + np.random.normal(loc=0.0, scale=camera_error, size=num_photons)
+
+    # 3) Quantize to min_binning
+    x_fluo = np.round(x_with_error / min_binning) * min_binning
+    y_fluo = np.round(y_with_error / min_binning) * min_binning
+
     return x_fluo, y_fluo
 
 
@@ -26,11 +53,11 @@ def plot_fluorophore(x_fluo, y_fluo, num_pixels=8, bg_rate=None):
     plt.figure(figsize=(6, 6))
 
     plt.scatter(x_fluo, y_fluo, s=20, color='red', alpha=0.7,
-                    label='Fluorophore (500 photons)')
+                    label=f'Num fluorophores ({len(x_fluo)})')
 
     plt.xlabel('X coordinate (pixels)')
     plt.ylabel('Y coordinate (pixels)')
-    plt.title('Simulated Background + Single Fluorophore')
+    plt.title('Simulated single fluorophore')
     plt.xlim(-num_pixels / 2, num_pixels / 2)
     plt.ylim(-num_pixels / 2, num_pixels / 2)
     plt.grid(True)
@@ -42,19 +69,15 @@ def plot_fluorophore(x_fluo, y_fluo, num_pixels=8, bg_rate=None):
 
 
 if __name__ == '__main__':
-    # Simulation parameters
-    num_pixels = 8  # 8x8 area => coordinates range from -4 to +4
-    binding_time_ms = 1000  # Binding time in ms (scaled from a 200 ms reference)
-    subpixel_levels = 16  # Subpixel resolution
-    num_photons_fluorophore = 500
-    sigma_fluorophore = 1.1  # Gaussian width (standard deviation)
 
-    # 2) Simulate single fluorophore in the center with 500 photons at sigma=1.1
-    x_fluo, y_fluo = simulate_fluorophore(num_photons=num_photons_fluorophore,
-                                          sigma=sigma_fluorophore)
+    # Simulate single fluorophore in the center with params defined above
+    x_fluo, y_fluo = simulate_fluorophore(num_photons=num_photons,
+                                          sigma_psf=sigma_psf,
+                                          camera_error=camera_error,
+                                          min_binning=min_binning)
 
     # Print stats
-    print(f"Fluorophore: {num_photons_fluorophore} photons, Gaussian sigma={sigma_fluorophore}.")
+    print(f"Fluorophore: {num_photons} photons, s_psf={sigma_psf}.")
 
     # 3) Plot them together
     plot_fluorophore(x_fluo, y_fluo, num_pixels)
