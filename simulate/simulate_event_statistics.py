@@ -122,7 +122,7 @@ def plot_event_histograms(events):
       events (np.ndarray): Structured array with fields
           'binding_time', 'sx', 'sy', 'bg', 'brightness', 'photons'
     """
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    fig, axes = plt.subplots(2, 3, figsize=(9, 6))
     ax = axes.ravel()
 
     ax[0].hist(events['binding_time'], bins=50, color='C0', alpha=0.7)
