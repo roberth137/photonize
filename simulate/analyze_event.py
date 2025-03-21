@@ -168,4 +168,4 @@ if __name__ == '__main__':
 
 
     # Plot both together
-    plot_analysis(x_fluo, y_fluo, x_bg, y_bg, x_ref=0, y_ref=0, diameter=s.fitting_diameter)
+    plot_analysis(x_fluo, y_fluo, x_bg, y_bg, x_ref=1, y_ref=1, diameter=s.fitting_diameter)

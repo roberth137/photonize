@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import simulate as s
 
-
-def simulate_fluorophore(num_photons=s.num_photons,
+def simulate_fluorophore(binding_time=s.binding_time_ms,
+                         brightness=s.brightness,
                          sigma_psf=s.sigma_psf,
                          camera_error=s.camera_error,  # 20 microns error / 600 x magnification / 115nm pixel size
                          subpixel=s.subpixel):
@@ -30,7 +30,7 @@ def simulate_fluorophore(num_photons=s.num_photons,
     y_fluo : np.ndarray
         Final y-coordinates of measured photon positions (after error + binning).
     """
-
+    num_photons = int(binding_time * brightness)
     # 1) Ground truth photon positions
     x_photon = np.random.normal(loc=0.0, scale=sigma_psf, size=num_photons)
     y_photon = np.random.normal(loc=0.0, scale=sigma_psf, size=num_photons)
@@ -71,7 +71,8 @@ def plot_fluorophore(x_fluo, y_fluo, num_pixels=8, bg_rate=None):
 if __name__ == '__main__':
 
     # Simulate single fluorophore in the center with params defined above
-    x_fluo, y_fluo = simulate_fluorophore(num_photons=s.num_photons,
+    x_fluo, y_fluo = simulate_fluorophore(binding_time=s.binding_time_ms,
+                                          brightness=s.brightness,
                                           sigma_psf=s.sigma_psf,
                                           camera_error=s.camera_error,
                                           subpixel=s.subpixel)
