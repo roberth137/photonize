@@ -1,144 +1,91 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
-#np.random.seed(42)  # For reproducibility
+import simulate as s
 
+# Option A: Load event statistics from an HDF5 file
+event_stats = pd.read_hdf('simulate/sim_experiments_stats/2green_conditions.hdf5')
 
-# -------------------------------
-# 1. Simulate event statistics
-# -------------------------------
-def lognormal_params_from_mean_std(mean, std):
-    """
-    Given an arithmetic mean and standard deviation (both > 0),
-    compute the (mu, sigma) parameters for np.random.lognormal.
-    """
-    var = std ** 2
-    factor = 1.0 + var / (mean ** 2)
-    sigma = np.sqrt(np.log(factor))
-    mu = np.log(mean) - 0.5 * sigma ** 2
-    return mu, sigma
+# Option B: Or generate 10000 event statistics instead (uncomment if desired)
+# event_stats = s.simulate_event_stats(n_events=10000)
+# event_stats = pd.DataFrame(event_stats)  # Convert structured array to a DataFrame
 
-
-def simulate_event_stats(n_events=10000):
-    """
-    Simulate n_events directly with distributions that ensure valid values.
-
-    The parameters are set as follows:
-      - binding_time (ms): Lognormal (from mean=700, std=600), then clipped to a minimum of 50 ms
-      - sx: Normal (mean=1.06892, std=0.118329)
-      - sy: Normal (mean=1.084316, std=0.122499)
-      - bg: Normal (mean=3, std=1), clipped to be non-negative
-      - brightness: Lognormal (from mean=0.9, std=0.6), clipped to a minimum of 0.1
-      - photons: Lognormal (from mean=560, std=600), clipped to a minimum of 101
-      - delta_x: Normal (loc=0, scale=0.05)  [for illustration]
-      - delta_y: Normal (loc=0, scale=0.05)  [for illustration]
-
-    Returns:
-      events (np.ndarray): A structured array with fields:
-          'binding_time', 'sx', 'sy', 'bg', 'brightness', 'photons', 'delta_x', 'delta_y'
-    """
-    # Compute parameters for the lognormal distributions
-    binding_mu, binding_sigma = lognormal_params_from_mean_std(700, 600)
-    brightness_mu, brightness_sigma = lognormal_params_from_mean_std(0.9, 0.6)
-    photons_mu, photons_sigma = lognormal_params_from_mean_std(560, 600)
-
-    # Direct simulation of each parameter:
-    binding_time = np.clip(np.random.lognormal(mean=binding_mu,
-                                               sigma=binding_sigma,
-                                               size=n_events), 50, None)
-    sx = np.random.normal(loc=1.06892, scale=0.118329, size=n_events)
-    sy = np.random.normal(loc=1.084316, scale=0.122499, size=n_events)
-    bg = np.clip(np.random.normal(loc=2, scale=1, size=n_events), 0, None)
-    brightness = np.clip(np.random.lognormal(mean=brightness_mu,
-                                             sigma=brightness_sigma,
-                                             size=n_events), 0.1, None)
-    photons = np.clip(np.random.lognormal(mean=photons_mu,
-                                          sigma=photons_sigma,
-                                          size=n_events), 101, None)
-    # For illustration, delta_x and delta_y are simulated as normals
-    delta_x = np.random.normal(loc=0, scale=2, size=n_events)
-    delta_y = np.random.normal(loc=0, scale=2, size=n_events)
-
-    # Create a structured array for clarity
-    dtype = [('binding_time', 'f4'),
-             ('sx', 'f4'),
-             ('sy', 'f4'),
-             ('bg', 'f4'),
-             ('brightness', 'f4'),
-             ('photons', 'f4'),
-             ('delta_x', 'f4'),
-             ('delta_y', 'f4')]
-    events = np.array(list(zip(binding_time, sx, sy, bg, brightness, photons, delta_x, delta_y)),
-                      dtype=dtype)
-    return events
-
-
-# Generate 1000 event statistics
-event_stats = simulate_event_stats(n_events=10000)
-
-# Optionally, you can inspect the first few rows:
 print("First 5 event stats:")
-print(event_stats[:5])
+print(event_stats.head(5))
 
 # -------------------------------
 # 2. Use event stats as parameters for simulation
 # -------------------------------
-# Here we assume that the simulation and fitting functions are defined in a module "simulate"
-# and that the fitting routine "analyze_sim_event" and functions "simulate_fluorophore" and
-# "simulate_background" are available. For this example, we simulate a single fluorophore and
-# background per event and then perform a COM fit with and without background correction.
 
-import simulate as s  # This module should contain simulate_fluorophore, simulate_background, analyze_sim_event
-
-# Preallocate arrays for storing the fitted positions
 n = len(event_stats)
-x_fit_w_bg = np.empty(n)
-y_fit_w_bg = np.empty(n)
-x_fit_pure = np.empty(n)
-y_fit_pure = np.empty(n)
+x_fit_w_bg = np.empty(n, dtype=float)
+y_fit_w_bg = np.empty(n, dtype=float)
+x_fit_pure = np.empty(n, dtype=float)
+y_fit_pure = np.empty(n, dtype=float)
 
-# Loop over each event in our event stats dataset
-for i, event in enumerate(event_stats):
-    # Extract parameters for the event
-    num_photons = int(event['photons'])
+# Iterate over DataFrame rows
+for i, row in event_stats.iterrows():
+    # Extract parameters for the event from the row
+    # If 'photons' is float, we take int(...) for the photon count
+    num_photons = int(row['photons'])
+
     # Use the average of sx and sy as the effective PSF width
-    sigma_psf = (event['sx'] + event['sy']) / 2.0
-    binding_time_ms = event['binding_time']
-    bg_rate_true = event['bg']
+    sigma_psf = (row['sx'] + row['sy']) / 2.0
 
-    # Use the event parameters in the simulation functions:
+    binding_time_ms = row['binding_time']
+    bg_rate_true = row['bg']
+
+    # Simulate fluorophore
     x_fluo, y_fluo = s.simulate_fluorophore(num_photons=num_photons,
                                             sigma_psf=sigma_psf,
                                             camera_error=s.camera_error,
                                             min_cam_binning=s.min_cam_binning)
 
+    # Simulate background
     x_bg, y_bg = s.simulate_background(num_pixels=s.num_pixels,
                                        binding_time_ms=binding_time_ms,
                                        bg_rate_true=bg_rate_true,
                                        min_cam_binning=s.min_cam_binning)
 
     # Perform COM fit without background correction
-    pos_no_bg = s.analyze_sim_event(x_fluo, y_fluo,
-                                    x_bg, y_bg,
-                                    x_entry=s.x_ref, y_entry=s.y_ref,
-                                    diameter=s.fitting_diameter,
-                                    consider_bg=False)
+    pos_no_bg = s.analyze_sim_event(
+        x_fluo, y_fluo,
+        x_bg, y_bg,
+        x_entry=s.x_ref, y_entry=s.y_ref,
+        diameter=s.fitting_diameter,
+        consider_bg=False
+    )
+
     # Perform COM fit with background correction
-    pos_with_bg = s.analyze_sim_event(x_fluo, y_fluo,
-                                      x_bg, y_bg,
-                                      x_entry=s.x_ref, y_entry=s.y_ref,
-                                      diameter=s.fitting_diameter,
-                                      consider_bg=True)
+    pos_with_bg = s.analyze_sim_event(
+        x_fluo, y_fluo,
+        x_bg, y_bg,
+        x_entry=s.x_ref, y_entry=s.y_ref,
+        diameter=s.fitting_diameter,
+        consider_bg=True
+    )
 
     # If no photons were found within the ROI, skip this event.
     if pos_no_bg[0] is None or pos_with_bg[0] is None:
+        x_fit_pure[i], y_fit_pure[i] = np.nan, np.nan
+        x_fit_w_bg[i], y_fit_w_bg[i] = np.nan, np.nan
         continue
 
+    # Store fitted positions
     x_fit_pure[i], y_fit_pure[i] = pos_no_bg
     x_fit_w_bg[i], y_fit_w_bg[i] = pos_with_bg
 
-distance_pure = s.distance_to_point(x_fit_pure, y_fit_pure)
-distance_w_bg = s.distance_to_point(x_fit_w_bg, y_fit_w_bg)
+# After the loop, remove NaNs if any were inserted for skipped events
+valid_mask = ~np.isnan(x_fit_pure) & ~np.isnan(x_fit_w_bg)
+x_fit_pure = x_fit_pure[valid_mask]
+y_fit_pure = y_fit_pure[valid_mask]
+x_fit_w_bg = x_fit_w_bg[valid_mask]
+y_fit_w_bg = y_fit_w_bg[valid_mask]
+
+# Calculate distances from (0, 0) – or use s.x_ref, s.y_ref if needed
+_, _, distance_pure = s.distance_to_point(x_fit_pure, y_fit_pure, x_ref=0, y_ref=0)
+_, _, distance_w_bg = s.distance_to_point(x_fit_w_bg, y_fit_w_bg, x_ref=0, y_ref=0)
 
 # -------------------------------
 # 3. Plot the fitted positions
@@ -146,16 +93,16 @@ distance_w_bg = s.distance_to_point(x_fit_w_bg, y_fit_w_bg)
 plt.figure(figsize=(12, 5))
 
 plt.subplot(1, 2, 1)
-plt.hist(x_fit_w_bg, bins=30, color='purple', alpha=0.7)
-plt.xlabel('Fitted X with bg (pixels)')
+plt.hist(distance_w_bg, bins=30, range=(0, 0.3), color='purple', alpha=0.7)
+plt.xlabel('Error distance (pixels)')
 plt.ylabel('Counts')
-plt.title(f'Error w bg correction (std: {np.std(distance_w_bg):.5f})')
+plt.title(f'Error w/ BG correction (std: {np.std(distance_w_bg):.5f})')
 
 plt.subplot(1, 2, 2)
-plt.hist(x_fit_pure, bins=30, color='green', alpha=0.7)
-plt.xlabel('Fitted X without bg (pixels)')
+plt.hist(distance_pure, bins=30, range=(0, 0.3), color='green', alpha=0.7)
+plt.xlabel('Error distance (pixels)')
 plt.ylabel('Counts')
-plt.title(f'Error without bg correction (std: {np.std(distance_pure):.5f})')
+plt.title(f'Error w/o BG correction (std: {np.std(distance_pure):.5f})')
 
 plt.tight_layout()
 plt.show()
