@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(42)  # For reproducibility
+#np.random.seed(42)  # For reproducibility
 
 
 # -------------------------------
@@ -19,7 +19,7 @@ def lognormal_params_from_mean_std(mean, std):
     return mu, sigma
 
 
-def simulate_event_stats(n_events=1000000):
+def simulate_event_stats(n_events=10000):
     """
     Simulate n_events directly with distributions that ensure valid values.
 
@@ -48,7 +48,7 @@ def simulate_event_stats(n_events=1000000):
                                                size=n_events), 50, None)
     sx = np.random.normal(loc=1.06892, scale=0.118329, size=n_events)
     sy = np.random.normal(loc=1.084316, scale=0.122499, size=n_events)
-    bg = np.clip(np.random.normal(loc=3, scale=1, size=n_events), 0, None)
+    bg = np.clip(np.random.normal(loc=2, scale=1, size=n_events), 0, None)
     brightness = np.clip(np.random.lognormal(mean=brightness_mu,
                                              sigma=brightness_sigma,
                                              size=n_events), 0.1, None)
@@ -56,8 +56,8 @@ def simulate_event_stats(n_events=1000000):
                                           sigma=photons_sigma,
                                           size=n_events), 101, None)
     # For illustration, delta_x and delta_y are simulated as normals
-    delta_x = np.random.normal(loc=0, scale=0.05, size=n_events)
-    delta_y = np.random.normal(loc=0, scale=0.05, size=n_events)
+    delta_x = np.random.normal(loc=0, scale=2, size=n_events)
+    delta_y = np.random.normal(loc=0, scale=2, size=n_events)
 
     # Create a structured array for clarity
     dtype = [('binding_time', 'f4'),
@@ -101,7 +101,7 @@ y_fit_pure = np.empty(n)
 for i, event in enumerate(event_stats):
     # Extract parameters for the event
     num_photons = int(event['photons'])
-    # Use the average of sx and sy as the effective PSF width (you can choose differently)
+    # Use the average of sx and sy as the effective PSF width
     sigma_psf = (event['sx'] + event['sy']) / 2.0
     binding_time_ms = event['binding_time']
     bg_rate_true = event['bg']
@@ -137,6 +137,9 @@ for i, event in enumerate(event_stats):
     x_fit_pure[i], y_fit_pure[i] = pos_no_bg
     x_fit_w_bg[i], y_fit_w_bg[i] = pos_with_bg
 
+distance_pure = s.distance_to_point(x_fit_pure, y_fit_pure)
+distance_w_bg = s.distance_to_point(x_fit_w_bg, y_fit_w_bg)
+
 # -------------------------------
 # 3. Plot the fitted positions
 # -------------------------------
@@ -146,13 +149,13 @@ plt.subplot(1, 2, 1)
 plt.hist(x_fit_w_bg, bins=30, color='purple', alpha=0.7)
 plt.xlabel('Fitted X with bg (pixels)')
 plt.ylabel('Counts')
-plt.title(f'Error w bg correction (std: {np.std(x_fit_w_bg)})')
+plt.title(f'Error w bg correction (std: {np.std(distance_w_bg):.5f})')
 
 plt.subplot(1, 2, 2)
 plt.hist(x_fit_pure, bins=30, color='green', alpha=0.7)
 plt.xlabel('Fitted X without bg (pixels)')
 plt.ylabel('Counts')
-plt.title(f'Error without bg correction (std: {np.std(x_fit_pure)})')
+plt.title(f'Error without bg correction (std: {np.std(distance_pure):.5f})')
 
 plt.tight_layout()
 plt.show()

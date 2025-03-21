@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+np.random.seed(42)  # sets the global seed
 
 def lognormal_params_from_mean_std(mean, std):
     """
@@ -14,7 +15,7 @@ def lognormal_params_from_mean_std(mean, std):
     return mu, sigma
 
 
-def simulate_event_stats(n_events=1000):
+def simulate_event_stats(n_events=1000000):
     """
     Simulate n_events directly with distributions that ensure valid values.
 
@@ -25,10 +26,12 @@ def simulate_event_stats(n_events=1000):
       - bg: Normal (mean=3, std=1), clipped to be non-negative
       - brightness: Lognormal (from mean=0.9, std=0.6), clipped to a minimum of 0.1
       - photons: Lognormal (from mean=560, std=600), clipped to a minimum of 101
+      - delta_x: Lognormal (from mean=1.219247e6, std=7.297928e5), clipped to a minimum of 145
+      - delta_y: Normal (mean=0.000737, std=0.04155), clipped to the range [-0.326751, 0.36564]
 
     Returns:
       events (np.ndarray): A structured array with fields:
-          'binding_time', 'sx', 'sy', 'bg', 'brightness', 'photons'
+          'binding_time', 'sx', 'sy', 'bg', 'brightness', 'photons', 'delta_x', 'delta_y'
     """
     # Compute parameters for the lognormal distributions
     binding_mu, binding_sigma = lognormal_params_from_mean_std(700, 600)
@@ -48,6 +51,9 @@ def simulate_event_stats(n_events=1000):
     photons = np.clip(np.random.lognormal(mean=photons_mu,
                                           sigma=photons_sigma,
                                           size=n_events), 101, None)
+    # Simulate delta_x and _y using a lognormal distribution.
+    delta_x = np.random.normal(loc=0, scale=0.05,size=n_events)
+    delta_y = np.random.normal(loc=0, scale=0.05,size=n_events)
 
     # Create a structured array for clarity
     dtype = [('binding_time', 'f4'),
@@ -55,8 +61,11 @@ def simulate_event_stats(n_events=1000):
              ('sy', 'f4'),
              ('bg', 'f4'),
              ('brightness', 'f4'),
-             ('photons', 'f4')]
-    events = np.array(list(zip(binding_time, sx, sy, bg, brightness, photons)), dtype=dtype)
+             ('photons', 'f4'),
+             ('delta_x', 'f4'),
+             ('delta_y', 'f4')]
+    events = np.array(list(zip(binding_time, sx, sy, bg, brightness, photons, delta_x, delta_y)),
+                      dtype=dtype)
     return events
 
 
@@ -64,7 +73,7 @@ def plot_event_histograms(events):
     """
     Plot histograms for each event parameter.
     """
-    fig, axes = plt.subplots(2, 3, figsize=(12, 8))
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
     ax = axes.ravel()
 
     ax[0].hist(events['binding_time'], bins=50, alpha=0.7)
@@ -85,12 +94,18 @@ def plot_event_histograms(events):
     ax[5].hist(events['photons'], bins=50, alpha=0.7)
     ax[5].set_title("Photons")
 
+    ax[6].hist(events['delta_x'], bins=50, alpha=0.7)
+    ax[6].set_title("Delta X")
+
+    ax[7].hist(events['delta_y'], bins=50, alpha=0.7)
+    ax[7].set_title("Delta Y")
+
     plt.tight_layout()
     plt.show()
 
 
 if __name__ == '__main__':
-    events = simulate_event_stats(n_events=1000)
+    events = simulate_event_stats(n_events=10000)
 
     print(f"Simulated {len(events)} events:")
     print("Means:")
@@ -100,6 +115,9 @@ if __name__ == '__main__':
     print(" Background (bg):  ", np.mean(events['bg']))
     print(" Brightness:       ", np.mean(events['brightness']))
     print(" Photons:          ", np.mean(events['photons']))
+    print(" Delta X:          ", np.mean(events['delta_x']))
+    print(" Delta Y:          ", np.mean(events['delta_y']))
 
     # Plot histograms of the event parameters
     plot_event_histograms(events)
+
