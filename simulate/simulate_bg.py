@@ -5,7 +5,7 @@ import simulate as s
 def simulate_background(num_pixels=s.num_pixels,
                         binding_time_ms=s.binding_time_ms,
                         bg_rate_true=s.bg_rate_true,
-                        min_cam_binning=s.min_cam_binning):
+                        subpixel=s.subpixel):
     """
     Simulate background events over an 8x8 pixel area using a single random
     background value for all pixels, returning arrays of x_coords, y_coords.
@@ -22,10 +22,10 @@ def simulate_background(num_pixels=s.num_pixels,
     num_events = np.random.poisson(expected_counts)
 
     # Randomly assign subpixel coordinates in [0, num_pixels), then shift to [-4,4)
-    x_coords = (np.random.randint(0, num_pixels / min_cam_binning, size=num_events)
-                * min_cam_binning - num_pixels / 2)
-    y_coords = (np.random.randint(0, num_pixels / min_cam_binning, size=num_events)
-                * min_cam_binning - num_pixels / 2)
+    x_coords = (np.random.randint(0, num_pixels * subpixel, size=num_events)
+                / subpixel - num_pixels / 2)
+    y_coords = (np.random.randint(0, num_pixels * subpixel, size=num_events)
+                / subpixel - num_pixels / 2)
 
     return x_coords, y_coords
 
@@ -50,9 +50,9 @@ def plot_background(x_coords, y_coords,
 if __name__ == '__main__':
     # Simulate background events
     x_coords, y_coords = simulate_background(num_pixels=s.num_pixels,
-                                            binding_time_ms=s.binding_time_ms,
-                                            bg_rate_true=s.bg_rate_true,
-                                            min_cam_binning=s.min_cam_binning)
+                                             binding_time_ms=s.binding_time_ms,
+                                             bg_rate_true=s.bg_rate_true,
+                                             subpixel=s.subpixel)
     print(f"Simulated with a background rate of: {s.bg_rate_true:.2f} counts per pixel (for 200 ms)")
 
     # Plot the simulated events

@@ -1,9 +1,9 @@
 import simulate as s
-from fitting import event_position
 from fitting import localization
 import numpy as np
 import matplotlib.pyplot as plt
 
+np.random.seed(42)
 
 def analyze_sim_event(x_fluo, y_fluo,
                   x_bg, y_bg, 
@@ -36,16 +36,13 @@ def analyze_sim_event(x_fluo, y_fluo,
     """
     import numpy as np  # Ensure numpy is imported
 
-    # Define ROI radius from the diameter
-    radius = diameter / 2.0
-
     bg_count = bg_rate_meas * (s.binding_time_ms/200) * s.fit_area
 
     x_all = np.concatenate([x_fluo, x_bg])
     y_all = np.concatenate([y_fluo, y_bg])
 
     # Select events within the ROI using the distance_to_point function
-    x_roi, y_roi, _ = distance_to_point(x_all, y_all, x_entry, y_entry, max_dist=radius)
+    x_roi, y_roi, _ = distance_to_point(x_all, y_all, x_entry, y_entry, max_dist=diameter / 2.0)
 
     # Check if there are any events in the ROI
     if len(x_roi) == 0:
@@ -63,7 +60,7 @@ def analyze_sim_event(x_fluo, y_fluo,
     return x_fit, y_fit
 
 
-def distance_to_point(x, y, x_ref=s.x_ref, y_ref=s.y_ref, max_dist=s.max_dist):
+def distance_to_point(x, y, x_ref=s.x_ref, y_ref=s.y_ref, max_dist=None):
     """
     Calculate the distance from each (x[i], y[i]) to the given point.
 
@@ -97,8 +94,6 @@ def distance_to_point(x, y, x_ref=s.x_ref, y_ref=s.y_ref, max_dist=s.max_dist):
 def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
                   x_ref=s.x_ref, y_ref=s.y_ref,
                   diameter=s.fitting_diameter,
-                  bg_rate_meas=s.bg_rate_meas,
-                  bg_rate_true=s.bg_rate_true,
                   num_pixels=s.num_pixels):
     """
     Plot the background events (blue) together with the simulated fluorophore (red)
@@ -106,11 +101,6 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
     """
     plt.figure(figsize=(6, 6))
 
-    all_x = np.append(x_fluo, x_bg)
-    all_y = np.append(y_fluo, y_bg)
-
-    x_cons, y_cons, _ = s.distance_to_point(all_x, all_y,0, 0, max_dist=s.max_dist)
-    x_bg_cons, y_bg_cons, _ = s.distance_to_point(x_bg, y_bg, 0,0, max_dist=s.max_dist)
 
     x_fit, y_fit = analyze_sim_event(x_fluo, y_fluo,
                                      x_bg, y_bg,
@@ -122,6 +112,12 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
                                      x_ref, y_ref,
                                      diameter,
                                      consider_bg=True)
+
+    all_x = np.append(x_fluo, x_bg)
+    all_y = np.append(y_fluo, y_bg)
+
+    x_cons, y_cons, _ = s.distance_to_point(all_x, all_y, 0, 0, max_dist=s.max_dist)
+    x_bg_cons, y_bg_cons, _ = s.distance_to_point(x_bg, y_bg, 0, 0, max_dist=s.max_dist)
 
     # Plot background events
     plt.scatter(x_bg, y_bg, s=10, color='blue', alpha=0.4, label='bg photons')
@@ -168,8 +164,8 @@ if __name__ == '__main__':
 
     # Simulate background events
     x_bg, y_bg = s.simulate_background(s.num_pixels, s.binding_time_ms,
-                                                  s.bg_rate_true, s.min_cam_binning)
+                                       s.bg_rate_true, s.subpixel)
 
 
     # Plot both together
-    plot_analysis(x_fluo, y_fluo, x_bg, y_bg)
+    plot_analysis(x_fluo, y_fluo, x_bg, y_bg, x_ref=0, y_ref=0, diameter=s.fitting_diameter)

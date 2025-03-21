@@ -174,15 +174,15 @@ if __name__ == '__main__':
     # Plot histograms of the event parameters
     plot_event_histograms(df_events)
 
-    # Optionally, save a larger dataset
-    #save_simulate_events(
-    #    '2green_conditions.hdf5',
-    #    n_events=100000,
-    #    binding_mean=s.binding_time_mean, binding_std=s.binding_time_std,
-    #    brightness_mean=s.brightness_mean, brightness_std=s.brightness_std,
-    #    sx_mean=s.sx_mean, sx_std=s.sx_std,
-    #    sy_mean=s.sy_mean, sy_std=s.sy_std,
-    #    bg_mean=s.bg_rate_true_mean, bg_std=s.bg_rate_true_std,
-    #    delta_x_mean=s.delta_x_mean, delta_x_std=s.delta_x_std,
-    #    delta_y_mean=s.delta_y_mean, delta_y_std=s.delta_y_std
-    #)
+    #save_dataset
+    save_simulate_events(
+        '2green_test.hdf5',
+        n_events=1000,
+        binding_mean=s.binding_time_mean, binding_std=s.binding_time_std,
+        brightness_mean=s.brightness_mean, brightness_std=s.brightness_std,
+        sx_mean=s.sx_mean, sx_std=s.sx_std,
+        sy_mean=s.sy_mean, sy_std=s.sy_std,
+        bg_mean=s.bg_rate_true_mean, bg_std=s.bg_rate_true_std,
+        delta_x_mean=s.delta_x_mean, delta_x_std=s.delta_x_std,
+        delta_y_mean=s.delta_y_mean, delta_y_std=s.delta_y_std
+    )

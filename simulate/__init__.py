@@ -7,8 +7,8 @@ brightness = 1 # Fluorophore brightness in photons/ms
 bg_rate_true = 2 # True background counts in photons/pixel/200ms
 bg_rate_meas = 2 # Measured background value for fitting
 sigma_psf = 1.1  # Gaussian width (standard deviation)
-camera_error = 2#0.29 # Camera error when assigning pixels
-min_cam_binning = 1/16 # Smallest unit camera can theoretically resolve (12 bit ~ 4096 pixel)
+camera_error = 0.29 # 0.29 # Camera error when assigning pixels
+subpixel = 32 # Smallest division unit camera can theoretically resolve (12 bit ~ 4096 pixel corresponding to 256 pixel -> 4096 / 256 = 16)
 fitting_diameter = 4# diameter considered for fitting
 max_dist = fitting_diameter/2 # radius from point of interest to be considered
 x_ref, y_ref = 0, 0
@@ -28,7 +28,7 @@ num_photons = brightness * binding_time_ms
 fit_area = max_dist**2 * np.pi
 
 __all__ = ["num_pixels", "binding_time_ms", "brightness", "bg_rate_true", "bg_rate_meas",
-           "sigma_psf", "camera_error", "min_cam_binning", "fitting_diameter",
+           "sigma_psf", "camera_error", "subpixel", "fitting_diameter",
            "num_photons", "max_dist", "x_ref", "y_ref", "fit_area",
            "binding_time_mean", "binding_time_std",
            "sx_mean", "sx_std",

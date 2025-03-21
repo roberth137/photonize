@@ -110,12 +110,12 @@ for i, event in enumerate(event_stats):
     x_fluo, y_fluo = s.simulate_fluorophore(num_photons=num_photons,
                                             sigma_psf=sigma_psf,
                                             camera_error=s.camera_error,
-                                            min_cam_binning=s.min_cam_binning)
+                                            min_cam_binning=s.subpixel)
 
     x_bg, y_bg = s.simulate_background(num_pixels=s.num_pixels,
                                        binding_time_ms=binding_time_ms,
                                        bg_rate_true=bg_rate_true,
-                                       min_cam_binning=s.min_cam_binning)
+                                       subpixel=s.subpixel)
 
     # Perform COM fit without background correction
     pos_no_bg = s.analyze_sim_event(x_fluo, y_fluo,

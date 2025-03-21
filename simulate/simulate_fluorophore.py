@@ -5,8 +5,8 @@ import simulate as s
 
 def simulate_fluorophore(num_photons=s.num_photons,
                          sigma_psf=s.sigma_psf,
-                         camera_error=s.camera_error, # 20 microns error / 600 x magnification / 115nm pixel size
-                         min_cam_binning=s.min_cam_binning):
+                         camera_error=s.camera_error,  # 20 microns error / 600 x magnification / 115nm pixel size
+                         subpixel=s.subpixel):
     """
     Simulate one fluorophore at the origin (0,0),
     with photon positions sampled from a 2D Gaussian (sigma_psf).
@@ -20,8 +20,8 @@ def simulate_fluorophore(num_photons=s.num_photons,
         Standard deviation of the PSF (in pixel units).
     camera_error : float
         Additional camera noise (std in pixels).
-    min_binning : float
-        Minimum step size (e.g. 1/16 px).
+    subpixel : float
+        Minimum subpixel units of camera
 
     Returns
     -------
@@ -39,9 +39,9 @@ def simulate_fluorophore(num_photons=s.num_photons,
     x_with_error = x_photon + np.random.normal(loc=0.0, scale=camera_error, size=num_photons)
     y_with_error = y_photon + np.random.normal(loc=0.0, scale=camera_error, size=num_photons)
 
-    # 3) Quantize to min_binning
-    x_fluo = np.round(x_with_error / min_cam_binning) * min_cam_binning
-    y_fluo = np.round(y_with_error / min_cam_binning) * min_cam_binning
+    # 3) Quantize to subpixels
+    x_fluo = np.round(x_with_error * subpixel) / subpixel
+    y_fluo = np.round(y_with_error * subpixel) / subpixel
 
     return x_fluo, y_fluo
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     x_fluo, y_fluo = simulate_fluorophore(num_photons=s.num_photons,
                                           sigma_psf=s.sigma_psf,
                                           camera_error=s.camera_error,
-                                          min_cam_binning=s.min_cam_binning)
+                                          subpixel=s.subpixel)
 
     # Print stats
     print(f"Fluorophore: {s.num_photons} photons, s_psf={s.sigma_psf}.")
