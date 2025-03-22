@@ -5,6 +5,8 @@ import fitting
 import ruptures as rpt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import plotting_2 as _p
+plt.ion() # turn off interactive mode
+
 
 
 #def hist_ms_event(i):
@@ -177,7 +179,7 @@ def scatter_event(i):
     plt.yscale("log")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')  # Adjust the legend position if needed
-    plt.show()
+    #plt.show()
 
 
 def hist_dt_event(i):

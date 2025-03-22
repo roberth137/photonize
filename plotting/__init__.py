@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Qt5Agg') # for command line plotting
 from utilities import helper
 import get_photons
 import fitting
@@ -41,3 +43,4 @@ __all__ = ["events",
 
 # Make plotting functions available (after making data available, otherwise circular import)
 from plotting.plot_ms_trace import hist_ms_event
+from plotting.plot_dt import hist_dt_event

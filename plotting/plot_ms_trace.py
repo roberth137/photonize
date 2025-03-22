@@ -1,5 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
+plt.ion() # turn on interactive mode
+import numpy as np
 import ruptures as rpt
 import get_photons
 import fitting
@@ -66,10 +67,11 @@ def hist_ms_event(i):
     plt.xlabel("ms of arrival")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')
-
-    plt.show()
-
+    #plt.savefig(f"hist_event_{i}.png")
 
 if __name__ == "__main__":
     # Plot the histogram for the first event in _p.group_events
+    plt.ioff()
     hist_ms_event(1)
+    plt.show(block=True)
+

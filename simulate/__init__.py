@@ -23,3 +23,4 @@ from simulate.analyze_event import distance_to_point, analyze_sim_event
 from simulate.simulate_bg import simulate_background
 from simulate.simulate_fluorophore import simulate_fluorophore
 from simulate.simulate_event_statistics import simulate_event_stats
+from simulate.plot_event import plot_event

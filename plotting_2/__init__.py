@@ -1,5 +1,5 @@
-#import matplotlib
-#matplotlib.use('Qt5Agg')
+import matplotlib
+matplotlib.use('Qt5Agg')
 from utilities import helper
 import get_photons
 import fitting
@@ -47,4 +47,3 @@ from plotting_2.plot_functions import (plot_all_dt,
                                        hist_dt_event,
                                        hist_x_event,
                                        hist_noise_dt_event)
-from plotting_2.plot_ms_trace import hist_ms_event
