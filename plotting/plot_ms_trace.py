@@ -7,6 +7,7 @@ import fitting
 import plotting as _p
 
 
+
 def hist_ms_event(i):
     """
     Plots the histogram for the i-th event in group_events.
