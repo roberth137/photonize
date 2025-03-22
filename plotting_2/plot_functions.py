@@ -8,47 +8,6 @@ import plotting_2 as _p
 plt.ion() # turn off interactive mode
 
 
-
-#def hist_ms_event(i):
-#    this_event = _p.group_events.iloc[i]
-#
-#    this_event_photons = get_photons.crop_event(this_event,
-#                                                _p.pick_photons,
-#                                                _p.diameter,
-#                                                400)
-#    bin_size = 10
-#    bins = np.arange(min(this_event_photons.ms), max(this_event_photons.ms) + bin_size, bin_size)
-#    counts, _ = np.histogram(this_event_photons, bins=bins)
-#    smoothed_counts_2 = lee_filter_1d(counts, 5)
-#    plt.figure(figsize=(8, 6))
-#    #plt.bar(bins[:-1], smoothed_counts_0, width=bin_size, color='red', alpha=0.5)
-#    plt.bar(bins[:-1], counts, width=bin_size, color='blue', alpha=0.5)
-#    plt.bar(bins[:-1], smoothed_counts_2, width=bin_size, color='orange', alpha=0.5)
-
-    # Fit a step function using change point detection
-#    model = "l2"  # Least squares cost function
-#    algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_2)
-#    change_points = algo.predict(n_bkps=2)  # Detect 2 change points (for on and off)
-#    change_points_trans = np.array(change_points)
-#    change_points_trans[0] = (change_points_trans[0] - 1.5)*bin_size + bins[0]
-#    change_points_trans[1] = (change_points_trans[1] + 0.5)*bin_size + bins[0]
-
-
-#    #plt.plot([], [], ' ', label=f'Total number of photons: {len(this_event_photons)}')
-#    plt.plot([], [], ' ', label=f'duration_ms: {this_event.end_ms-this_event.start_ms}')
-#    plt.plot([], [], ' ', label=f'number_photons: {len(this_event_photons)}')
-#    #plt.plot([], [], ' ', label=f'brightness: {this_event.brightness:.3f}')
-#    plt.plot([], [], ' ', label=f'Lifetime: {this_event.lifetime:.3f}')
-#    plt.axvline(this_event.start_ms+30, color='red')
-#    plt.axvline(this_event.end_ms-30, color='red')
-    #plt.axvline(change_points_trans[0], color='green')
-    #plt.axvline(change_points_trans[1], color='green')
-#    plt.title("Histogram of ms")
-#    plt.xlabel("ms of arrival")
-#    plt.grid(True, linestyle='--', alpha=0.6)
-#    plt.legend(loc='upper left')  # Adjust the legend position if needed
-#    plt.show()
-
 def hist_noise_dt_event(i):
     this_event = _p.group_events.iloc[i]
 
