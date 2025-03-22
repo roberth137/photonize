@@ -8,7 +8,7 @@ np.random.seed(42)
 def analyze_sim_event(x_fluo, y_fluo,
                   x_bg, y_bg, 
                   x_entry, y_entry,
-                  bg_rate_meas=s.bg_rate_meas,
+                  bg_rate=s.bg_rate,
                   diameter = s.fitting_diameter,
                   consider_bg=False):
     """
@@ -36,7 +36,7 @@ def analyze_sim_event(x_fluo, y_fluo,
     """
     import numpy as np  # Ensure numpy is imported
 
-    bg_count = bg_rate_meas * (s.binding_time_ms/200) * s.fit_area
+    bg_count = bg_rate * (s.binding_time_ms/200) * s.fit_area
 
     x_all = np.concatenate([x_fluo, x_bg])
     y_all = np.concatenate([y_fluo, y_bg])
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
     # Simulate background events
     x_bg, y_bg = s.simulate_background(s.num_pixels, s.binding_time_ms,
-                                       s.bg_rate_true, s.subpixel)
+                                       s.bg_rate, s.subpixel)
 
 
     # Plot both together

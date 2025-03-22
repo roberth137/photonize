@@ -21,7 +21,9 @@ def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
     x_fit_pure = np.empty(n, dtype=float)
     y_fit_pure = np.empty(n, dtype=float)
 
-    print(event_stats)  # Optional: inspect the DataFrame
+    print("First 5 event stats:")
+    pd.set_option('display.max_columns', None)
+    print(event_stats.head(5))
 
     # Iterate over DataFrame rows
     for i, row in event_stats.iterrows():
@@ -44,7 +46,7 @@ def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
         x_bg, y_bg = s.simulate_background(
             num_pixels=s.num_pixels,
             binding_time_ms=binding_time,
-            bg_rate_true=bg_rate,
+            bg_rate=bg_rate,
             subpixel=s.subpixel
         )
 
@@ -74,6 +76,11 @@ def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
     _, _, distance_pure = s.distance_to_point(x_fit_pure, y_fit_pure, x_ref=0, y_ref=0)
     _, _, distance_w_bg = s.distance_to_point(x_fit_w_bg, y_fit_w_bg, x_ref=0, y_ref=0)
 
+    indices = np.where(distance_w_bg > 20)[0].astype(np.int32)
+    print(indices)
+    for i in indices:
+        print(event_stats.iloc[i])
+
     return distance_pure, distance_w_bg
 
 
@@ -91,7 +98,10 @@ def plot_results(distance_pure, distance_w_bg):
         Error distances with background correction.
     """
     # Compute a common upper bound for the histogram range
-    hist_dist_bound = (np.max(distance_pure) + np.max(distance_w_bg)) / 2
+    hist_dist_bound = 1#(np.max(distance_pure) + np.max(distance_w_bg)) / 2f
+    print(f'Max dist with bg: {max(distance_w_bg)}')
+    print(f'Max dist pure: {max(distance_pure)}')
+
 
     # Create the plot
     plt.figure(figsize=(12, 5))
@@ -116,13 +126,11 @@ def plot_results(distance_pure, distance_w_bg):
 if __name__ == '__main__':
     # Option A: Load event statistics from an HDF5 file
     #event_stats = pd.read_hdf('simulate/sim_experiments_stats/2green_test.hdf5')
-    diameter = 7
+    diameter = 4
     # Option B: Or generate 10000 event statistics instead (uncomment if desired)
     event_stats = s.simulate_event_stats(n_events=10000)
     event_stats = pd.DataFrame(event_stats)  # Convert structured array to a DataFrame
 
-    print("First 5 event stats:")
-    print(event_stats.head(5))
 
     dist_pure, dist_w_bg = simulate_and_fit_events(event_stats, diameter)
 

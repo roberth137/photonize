@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import simulate_events as sim
 
 def main():
     filename = "simulate/sim_experiments_stats/2green_conditions.hdf5"
-    diameter = 5
+    diameter = 4
     # 1. Obtain event parameters from a file or generate them.
     #    Example: read from HDF5 file
     event_stats = pd.read_hdf(filename)
