@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 def localization_precision(sigma, photons, bg, pixel_nm):
     """

@@ -22,7 +22,7 @@ def negative_log_likelihood(params, x_photons, y_photons):
     return -np.sum(np.log(model + 1e-9))
 
 
-def event_position_mle(x_photons, y_photons, return_sd=True):
+def localize_mle(x_photons, y_photons, return_sd=True):
     """
     Perform MLE fitting to estimate event position (x, y) and standard deviations (sigma_x, sigma_y).
 

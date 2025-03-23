@@ -1,6 +1,6 @@
 import numpy as np
-from fitting.illumination import compute_bg_map_idw_radius
 import utilities
+from fitting.illumination.inverse_distance_bg import compute_bg_map_idw_radius
 
 def normalize_brightness(events, method='idw'):
     """
@@ -15,7 +15,7 @@ def normalize_brightness(events, method='idw'):
     #select method logic
     #if method=='idw':
 
-    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(events, 5, 1, 1)
+    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(events, radius=5, p=1, grid_size=1)
 
     print(f'mean bg values: {np.mean(events.bg)}')
 
@@ -93,17 +93,17 @@ if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    filename = 't/orig58_pf_event_80more.hdf5'
+    filename = 't/orig58_pf_event.hdf5'
     # Example: Create a DataFrame of localization points
 
     events = pd.read_hdf(filename, key='locs')
 
-    # Compute the background map using a radius of 3 pixels.
-    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(events, radius=5, p=1, grid_size=1)
-
     events = normalize_brightness(events)
 
     utilities.dataframe_to_picasso(events, filename, '_main_norm_bright')
+
+    # Compute the background map using a radius of 3 pixels.
+    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(events, radius=5, p=1, grid_size=1)
 
     plt.figure(figsize=(6, 5))
     plt.imshow(bg_map, origin='lower', extent=(grid_x[0], grid_x[-1], grid_y[0], grid_y[-1]),

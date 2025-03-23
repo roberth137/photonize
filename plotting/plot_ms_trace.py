@@ -20,7 +20,6 @@ def hist_ms_event(i):
     # Extract relevant values
     start_ms = this_event["start_ms"]
     end_ms = this_event["end_ms"]
-    lifetime = this_event["lifetime"]
 
     # Simulate or retrieve photons for this event
     this_event_photons = get_photons.crop_event(
@@ -60,10 +59,10 @@ def hist_ms_event(i):
     duration_ms = end_ms - start_ms
     plt.plot([], [], ' ', label=f'duration_ms: {duration_ms}')
     plt.plot([], [], ' ', label=f'number_photons: {len(this_event_photons)}')
-    plt.plot([], [], ' ', label=f'Lifetime: {lifetime:.3f}')
+    #plt.plot([], [], ' ', label=f'Lifetime: {lifetime:.3f}')
 
-    plt.axvline(start_ms+30, color='red')
-    plt.axvline(end_ms-30, color='red')
+    plt.axvline(start_ms, color='red')
+    plt.axvline(end_ms, color='red')
 
     plt.title("Histogram of ms")
     plt.xlabel("ms of arrival")

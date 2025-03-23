@@ -1,13 +1,10 @@
 import numpy as np
 import pandas as pd
-
-from fitting import normalize_brightness_gaussian
 from utilities import helper
 from event import create_events
 import fitting
 import get_photons
 import time
-from fitting.illumination.calculate_bg import normalize_brightness_smooth
 
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
