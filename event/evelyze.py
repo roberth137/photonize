@@ -101,7 +101,7 @@ def events_lt_avg_pos(event_file, photons_file,
     bg_200ms_pixel = np.ones(total_events, dtype=np.float32)
 
 
-    peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
+    peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
     start_dt = peak_arrival_time-0
     arrival_time['start'] = start_dt
 

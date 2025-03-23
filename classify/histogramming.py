@@ -39,7 +39,7 @@ def create_histogram_dataframe(input_events, input_photons, drift_file,
     drift = helper.process_input(drift_file, 'drift')
 
     # Calibrate and define bins for the histograms
-    peak_arrival_time = fitting.calibrate_peak_events(photons[:1000000])
+    peak_arrival_time = fitting.calibrate_peak_arrival(photons[:1000000])
     max_dt = max(photons[:1000000].dt)
     bins = np.arange(peak_arrival_time, max_dt, bin_size)
     print(f'peak arrival time: {peak_arrival_time}')

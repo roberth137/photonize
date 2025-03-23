@@ -56,7 +56,7 @@ def locs_eve_lt_com_40(localizations_file, photons_file,
                                                     int_time=int_time)
 
         print('__calibrate_peak__')
-        peak_arrival_time = fitting.calibrate_peak_events(pick_photons)
+        peak_arrival_time = fitting.calibrate_peak_arrival(pick_photons)
         print('peak arrival time is: ', peak_arrival_time, '_________________')
 
         locs_group = localizations[(localizations.group == g)]
@@ -186,7 +186,7 @@ def locs_lt_avg_pos_40(localizations_file, photons_file,
                                         drift, offset,
                                         box_side_length, integration_time)
 
-        peak_arrival_time = fitting.calibrate_peak_events(pick_photons)
+        peak_arrival_time = fitting.calibrate_peak_arrival(pick_photons)
         # iterating over every localization in pick
         for i in range(counter, counter + len(locs_group)):
             if i == 0: print('fitting lifetime of ', len(locs_group),
@@ -287,7 +287,7 @@ def locs_lt_40(localizations_file, photons_file,
                                         drift, offset,
                                         box_side_length, integration_time)
 
-        peak_arrival_time = fitting.calibrate_peak_events(pick_photons)
+        peak_arrival_time = fitting.calibrate_peak_arrival(pick_photons)
         # iterating over every localization in pick
         for i in range(counter, counter + len(locs_group)):
             if i == 0: print('fitting lifetime of ', len(locs_group),
@@ -357,7 +357,7 @@ def locs_lt_to_picasso_40(localizations_file, photons_file,
             drift, offset,
             box_side_length, integration_time)
 
-        peak_arrival_time = fitting.calibrate_peak_events(pick_photons)
+        peak_arrival_time = fitting.calibrate_peak_arrival(pick_photons)
 
         # iterating over every localization in pick
         for i in range(counter, counter + len(locs_group)):
