@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Qt5Agg') # for command line plotting
 import matplotlib.pyplot as plt
 plt.ion() # turn on interactive mode
 import get_photons

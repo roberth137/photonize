@@ -1,6 +1,8 @@
-import numpy as np
+import matplotlib
+matplotlib.use('Qt5Agg') # for command line plotting
 import matplotlib.pyplot as plt
 plt.ion() # turn on interactive mode
+import numpy as np
 import get_photons
 import plotting as _p
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes

@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use('Qt5Agg') # for command line plotting
 from utilities import helper
 import get_photons
 import fitting
@@ -9,7 +7,7 @@ events_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_event_leg
 photons_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
 drift_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
 diameter = 4.5
-pick_group = 1
+pick_group = 7
 more_ms = 400
 
 # Loading data to memory
@@ -22,7 +20,7 @@ drift = helper.process_input(drift_filename, 'drift')
 group_events = events[events.group == pick_group]
 group_events.reset_index(drop=True, inplace=True)
 
-peak_arrival_time = fitting.calibrate_peak_events(photons[:500000])
+peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
 pick_photons = get_photons.get_pick_photons(group_events,
                                             photons,
                                             drift,
@@ -42,5 +40,5 @@ __all__ = ["events",
            "peak_arrival_time"]
 
 # Make plotting functions available (after making data available, otherwise circular import)
-from plotting.plot_ms_trace import hist_ms_event
+from plotting.plot_ms_trace import hist_ms_event, hist_idw_ms_event
 from plotting.plot_dt import hist_dt_event
