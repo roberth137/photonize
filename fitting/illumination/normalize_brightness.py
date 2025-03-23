@@ -2,9 +2,9 @@ import numpy as np
 import utilities
 from fitting.illumination.inverse_distance_bg import compute_bg_map_idw_radius
 
-def normalize_brightness(events, method='idw'):
+def normalize_brightness(events):
     """
-    Normalizes brightness and bg of events using bg data.
+    Normalizes brightness and bg of events using bg data. Uses inverse distance weighting
 
     Input:
         - events, pd DataFrame with column "bg"
@@ -12,8 +12,6 @@ def normalize_brightness(events, method='idw'):
     Output:
         - events with additional columns: 'bg_norm', 'bright_norm', 'lt_over_bright'
     """
-    #select method logic
-    #if method=='idw':
 
     bg_map, grid_x, grid_y = compute_bg_map_idw_radius(events, radius=5, p=1, grid_size=1)
 
@@ -27,60 +25,15 @@ def normalize_brightness(events, method='idw'):
     px_x = np.clip(px_x, 0, max_x - 1)
     px_y = np.clip(px_y, 0, max_y - 1)
 
-    # Extract normalization values from the smoothed background map
+    # Extract normalization values from the smoothed X/Y inverted background map
     norm_values = bg_map[px_y, px_x]
 
     # Prevent division by zero by replacing any zeros with 1 (or handle as appropriate)
     norm_values_safe = np.where(norm_values == 0, 1, norm_values)
 
-    print(f'max values bg_map: {np.nanmax(bg_map)}')
-
-    num_non_nans = np.count_nonzero(~np.isnan(bg_map))
-
-    print("Number of non-NaN values:", num_non_nans)
-
-    mask = ~np.isnan(bg_map)
-
-    # get indices
-    indices = np.argwhere(mask)
-    print(indices.shape)
-    print(f'min max indices first {min(indices[:,0])},{max(indices[:,0])}')
-    print(f'min max indices second {min(indices[:,1])},{max(indices[:,1])}')
-
-
-    print("Indices of non-NaN values:")
-    i=0
-    for idx in indices:
-        if i > 100:
-            break
-        i += 1
-        print(tuple(idx))
-
-
-
-    print(f'px_x\n{px_x[:10]}')
-    print(f'px_y\n{px_y[:10]}')
-    print(f'printing first bg_maps')
-    for i in range(20):
-        print(bg_map[px_y[i], px_x[i]])
-        print(px_y[i], px_x[i])
-
-    print(f'bg map: {bg_map}')
-    print(f'shape bg_map: {bg_map.shape}')
-    print(f'type of bg_map: {type(bg_map)}')
-    print(f'shape of bg_map: {bg_map.shape}')
-    print(f'type of grid_x: {type(grid_x)}')
-    print(f'shape of grid_x: {grid_x.shape}')
-    print(f'type of grid_y: {type(grid_y)}')
-    print(f'shape of grid_y: {grid_y.shape}')
-
-
     # Normalize the background and brightness
 
-    #events['bg_norm'] = (events['bg']/norm_values_safe).astype(np.float32) #/ norm_values_safe
-    #the time scaled bg values should probably not be normalized
-
-    events['bg_200ms_px_norm'] = (events['bg_200ms_px']/norm_values_safe).astype(np.float32) #/ norm_values_safe
+    events['bg_200ms_px_norm'] = (events['bg_200ms_px']/norm_values_safe).astype(np.float32)
     events['brightness_norm'] = (events['brightness_phot_ms']/norm_values_safe).astype(np.float32)
     events['lt_over_bright'] = (events['lifetime_10ps']/events['brightness_norm']).astype(np.float32)
     if hasattr(events, 'bg_picasso'):

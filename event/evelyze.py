@@ -36,8 +36,7 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
                                dt_window=dt_window, more_ms=more_ms, **kwargs)
     if norm_brightness:
         print('Normalizing brightness...')
-        laser_profile = fitting.get_laser_profile(localizations[::offset])
-        events = fitting.normalize_brightness(events)#normalize_brightness_gaussian(events, laser_profile)
+        events = fitting.normalize_brightness(events)
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -138,9 +137,7 @@ def events_lt_avg_pos(event_file, photons_file,
                                                       diameter,
                                                       more_ms=more_ms)
 
-            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons,
-                                                                    10,
-                                                                    5)
+            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons)
 
             #filter photons according to new bounds
             num_bg_photons = len(cylinder_photons[(cylinder_photons.ms > (my_event.start_ms_fr-more_ms))

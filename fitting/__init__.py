@@ -5,7 +5,8 @@
 #                     mle_exponential_lifetime)
 #from .fit_pos import (localize_com)
 from .localization import localize_com, com_position
-from .fit_on_off import (lee_filter_1d, get_on_off_dur)
+#from .fit_on_off import (lee_filter_1d, get_on_off_dur)
+from .on_off import lee_filter_1d, get_on_off_dur
 from .illumination import normalize_brightness
 from .localization import (localize_com, localize_mle,
                           localization_precision)
