@@ -16,7 +16,7 @@ def scatter_event(i):
     prev_y = this_event.y
     x_array = this_event_photons['x'].to_numpy()
     y_array = this_event_photons['y'].to_numpy()
-    new_x, new_y, sx, sy = fitting.event_position(x_array, y_array, False)
+    new_x, new_y, sx, sy = fitting.localize_com(x_array, y_array, False)
     plt.figure(figsize=(8, 8))
     scatter = plt.scatter(this_event_photons['x'],
                           this_event_photons['y'],

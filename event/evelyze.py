@@ -175,9 +175,9 @@ def events_lt_avg_pos(event_file, photons_file,
                       ' in phot_event: ', len(phot_event))
             x_arr = phot_event['x'].to_numpy()
             y_arr = phot_event['y'].to_numpy()
-            x_t, y_t, sd_x_bg, sd_y_bg = fitting.event_position(x_arr,
-                                                                y_arr,
-                                                                return_sd=True)
+            x_t, y_t, sd_x_bg, sd_y_bg = fitting.localize_com(x_arr,
+                                                              y_arr,
+                                                              return_sd=True)
 
             #calculate photon distances from new center for better lifetime determination:
             phot_x = np.copy(phot_event.x)

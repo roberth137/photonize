@@ -2,7 +2,7 @@ import numpy as np
 import numba
 
 #@numba.njit
-def event_position(x_photons, y_photons, return_sd=True):
+def localize_com(x_photons, y_photons, return_sd=True):
     #fit_area = np.pi * ((diameter / 2) ** 2)
     total_photons = len(x_photons)
 

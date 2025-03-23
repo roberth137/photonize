@@ -69,7 +69,7 @@ def hist_ms_event(i):
     plt.xlabel("ms of arrival")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')
-    #plt.savefig(f"hist_event_{i}.png")
+    plt.savefig(f"hist_event_{i}.png")
 
 def hist_idw_ms_event(i):
     """
@@ -116,8 +116,6 @@ def hist_idw_ms_event(i):
 
     # Compute weighted quantiles (here using the 10th and 90th percentiles as on/off times)
     ms_values = np.array(this_event_photons.ms)
-    on_time = weighted_quantile(ms_values, 0.1, weights)
-    off_time = weighted_quantile(ms_values, 0.9, weights)
 
     # Plot the weighted histogram and its smoothed version.
     plt.figure(figsize=(8, 6))
@@ -134,43 +132,12 @@ def hist_idw_ms_event(i):
     plt.axvline(start_ms, color='red', linestyle='--', label=f'start_ms: {start_ms}')
     plt.axvline(end_ms, color='red', linestyle='--', label=f'end_ms: {end_ms}')
 
-    # Mark the weighted on/off times
-    plt.axvline(on_time, color='green', linestyle='-', label='On time (10th percentile)')
-    plt.axvline(off_time, color='blue', linestyle='-', label='Off time (90th percentile)')
 
     plt.title("Histogram of ms (with IDW on/off times)")
     plt.xlabel("ms of arrival")
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(loc='upper left')
     #plt.show()
-
-
-def weighted_quantile(values, quantile, weights, eps=1e-6):
-    """
-    Compute the weighted quantile of the given 1D array.
-
-    :param values: Array of values (or Pandas Series).
-    :param quantile: Quantile to compute (e.g. 0.1 for the 10th percentile).
-    :param weights: Weights corresponding to each value (or Pandas Series).
-    :param eps: A small value added to the denominator to avoid division by zero.
-    :return: The weighted quantile value.
-    """
-
-    # Convert to NumPy arrays so that np.argsort and indexing work as expected.
-    values_array = np.asarray(values)
-    weights_array = np.asarray(weights)
-
-    # Sort by the values
-    sorter = np.argsort(values_array)
-    values_sorted = values_array[sorter]
-    weights_sorted = weights_array[sorter]
-
-    # Normalize cumulative weights
-    cum_weights = np.cumsum(weights_sorted)
-    norm_cum_weights = cum_weights / (cum_weights[-1] + eps)
-
-    # Interpolate to get the quantile value
-    return np.interp(quantile, norm_cum_weights, values_sorted)
 
 
 if __name__ == "__main__":

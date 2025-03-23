@@ -28,6 +28,6 @@ def calibrate_peak_arrival(event_photons):
     min_dt = np.min(event_photons.dt)
     max_dt = np.max(event_photons.dt)
     counts, bins = np.histogram(event_photons.dt, bins=np.arange(min_dt, max_dt))
-    print(f'len photons for calib_peak: {len(event_photons)}'
-          f'min_dt: {min_dt}, max_dt: {max_dt}')
+    print(f'len photons for calib_peak: {len(event_photons)}\n'
+          f'photons min_dt: {min_dt}, max_dt: {max_dt}')
     return np.argmax(counts)
