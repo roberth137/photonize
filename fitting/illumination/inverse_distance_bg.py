@@ -2,18 +2,18 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 
-def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
+def local_brightness_map(events, radius=10, p=1, grid_size=1):
     """
     Compute a background (height) map from sparse localization data using inverse distance weighting (IDW)
     over a fixed neighborhood radius.
 
-    For every grid pixel (with spacing defined by grid_size), this function finds all localization points
-    within the given radius (in pixel units) and computes the weighted average of their bg values, where the
+    For every grid pixel (with spacing defined by grid_size), this function finds all events
+    within the given radius (in pixel units) and computes the weighted average of their brightness values, where the
     weight for each point is 1/(distance**p).
 
     Parameters
     ----------
-    localizations : DataFrame or object with attributes 'x', 'y', and 'bg'
+    events : DataFrame or object with attributes 'x', 'y', and 'brightness_phot_ms'
         Sparse data points with x and y coordinates and corresponding background values.
     radius : float, optional
         The radius (in same units as x and y, e.g. pixels) within which to consider points.
@@ -33,13 +33,13 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
         The y coordinates corresponding to the grid.
     """
     # Convert localization data to numpy arrays
-    x = np.asarray(localizations.x, dtype=np.float64)
-    y = np.asarray(localizations.y, dtype=np.float64)
-    bg = get_bg(localizations)#np.asarray(localizations.bg, dtype=np.float64)
+    x = np.asarray(events.x, dtype=np.float64)
+    y = np.asarray(events.y, dtype=np.float64)
+    brightness_array = np.asarray(events.brightness_phot_ms, dtype=np.float64)
 
     # Determine grid extents (use floor for min and ceil for max)
-    min_x, max_x = 0, int(np.ceil(x.max())+2*radius)
-    min_y, max_y = 0, int(np.ceil(y.max())+2*radius)
+    min_x, max_x = 0, 256#int(np.ceil(x.max())+2*radius)
+    min_y, max_y = 0, 256#int(np.ceil(y.max())+2*radius)
 
     # Create grid coordinates (assuming grid points are at integer coordinates)
     grid_x = np.arange(min_x, max_x + 1, grid_size)
@@ -51,7 +51,7 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
     tree = cKDTree(points)
 
     # Initialize the background map
-    bg_map = np.zeros_like(X, dtype=np.float64)
+    brightness_map = np.zeros_like(X, dtype=np.float64)
 
     # Loop over every grid pixel and evaluate all points within the given radius.
     for i in range(X.shape[0]):
@@ -64,44 +64,30 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
                 distances = np.sqrt((x[indices] - grid_point[0]) ** 2 + (y[indices] - grid_point[1]) ** 2)
                 # If one or more localizations fall exactly on the grid point, use their background value(s) directly.
                 if np.any(distances == 0):
-                    bg_map[i, j] = np.mean(bg[indices][distances == 0])
+                    brightness_map[i, j] = np.mean(brightness_array[indices][distances == 0])
                 else:
                     # Compute weights as 1/(distance**p)
                     weights = 1 / (distances ** p)
-                    weighted_bg = np.sum(bg[indices] * weights)
+                    weighted_brightness = np.sum(brightness_array[indices] * weights)
                     sum_weights = np.sum(weights)
-                    bg_map[i, j] = weighted_bg / sum_weights
+                    brightness_map[i, j] = weighted_brightness / sum_weights
             else:
                 # If no localization points are found within the radius, assign a NaN (or set to 0 as desired)
-                bg_map[i, j] = np.nan
-            bg_map_x_y = bg_map#.T
+                brightness_map[i, j] = 0.01
 
-    return bg_map_x_y, grid_x, grid_y
-
-def get_bg(localizations):
-    # Option 1: Check attribute existence:
-    if hasattr(localizations, 'brightness_phot_ms') and localizations.brightness_phot_ms is not None:
-        bg_array = np.asarray(localizations.brightness_phot_ms, dtype=np.float64)
-    elif hasattr(localizations, 'bg_picasso') and localizations.bg_picasso is not None:
-        bg_array = np.asarray(localizations.bg_picasso, dtype=np.float64)
-        print(f'using bg_picasso column for normalization')
-    else:
-        bg_array = np.asarray(localizations.bg, dtype=np.float64)
-        print(f'using bg column for normalization')
-    return bg_array
+    return brightness_map, grid_x, grid_y
 
 
 # Example usage:
 if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as plt
-    filename = 't/orig58_pf.hdf5'
-    # Example: Create a DataFrame of localization points
+    filename = 't/orig58_all_f_event_bright_norm.hdf5'
 
-    localizations = pd.read_hdf(filename, key='locs')
+    events = pd.read_hdf(filename, key='locs')
 
     # Compute the background map using a radius of 3 pixels.
-    bg_map, grid_x, grid_y = compute_bg_map_idw_radius(localizations, radius=5, p=1, grid_size=1)
+    bg_map, grid_x, grid_y = local_brightness_map(events, radius=5, p=0.5, grid_size=1)
 
     print(f'type of bg_map: {type(bg_map)}')
     print(f'shape of bg_map: {bg_map.shape}')
@@ -114,7 +100,7 @@ if __name__ == "__main__":
 
 
     # Plot the resulting height map
-    plt.figure(figsize=(6, 5))
+    plt.figure(figsize=(10, 8))
     plt.imshow(bg_map, origin='lower', extent=(grid_x[0], grid_x[-1], grid_y[0], grid_y[-1]),
                cmap='viridis', interpolation='nearest')
     plt.colorbar(label='Background intensity')

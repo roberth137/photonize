@@ -15,26 +15,29 @@ def event_analysis(localizations_file, photons_file, drift_file, offset,
 
     """
     print('Starting event analysis: ...')
+    # 1) read in files
     localizations = helper.process_input(localizations_file,
                                          dataset='locs')
-    # first localizations to events
+    photons = helper.process_input(photons_file, dataset='photons')
+    drift = helper.process_input(drift_file, dataset='drift')
+    # 2) create preliminary events by linking localizations
     events = create_events.locs_to_events(localizations,
                                           offset=offset,
                                           int_time=int_time,
                                           max_dark_frames=max_dark_frames,
                                           proximity=proximity,
                                           filter_single=filter_single)
-    # read in photons and drift
-    photons = helper.process_input(photons_file, dataset='photons')
-    drift = helper.process_input(drift_file, dataset='drift')
+    # 3) analyze events in main loop (localization+lifetime+brightness)
     arrival_time = {}
     events = events_lt_avg_pos(events, photons, drift,
                                offset, diameter=diameter,
                                int_time=int_time, arrival_time=arrival_time,
                                dt_window=dt_window, more_ms=more_ms, **kwargs)
+    # 4) normalize brightness if applicable
     if norm_brightness:
         print('Normalizing brightness...')
         events = fitting.normalize_brightness(events)
+    # 5) save events
     file_extension = '_event'+suffix
     message = helper.create_append_message(function='Evelyze',
                                            localizations_file=localizations_file,
@@ -73,12 +76,11 @@ def events_lt_avg_pos(event_file, photons_file,
     """
     # read in files
     events = helper.process_input(event_file, dataset='locs')
-    total_events = len(events)
     photons = helper.process_input(photons_file, dataset='photons')
-    print(f'starting events_lt_avg_pos... ')
-    print(len(photons), ' photons and ', total_events,
-          'events read in')
     drift = helper.process_input(drift_file, dataset='drift')
+    total_events = len(events)
+    print(f'starting events_lt_avg_pos... \n')
+    print(f'{len(photons)} photons and {total_events} events read in')
 
     #define arrays to store data
     lifetime = np.ones(total_events, dtype=np.float32)
@@ -96,11 +98,9 @@ def events_lt_avg_pos(event_file, photons_file,
 
 
     peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
-    start_dt = peak_arrival_time-0
-    arrival_time['start'] = start_dt
-
+    arrival_time['start'] = peak_arrival_time
     print('peak arrival time:   ', peak_arrival_time)
-    print('start time:          ', start_dt)
+    if dt_window: print(f'considering photons with dt in {dt_window}')
 
     fit_area = (diameter/2)**2 * np.pi
     counter = 0
@@ -116,7 +116,6 @@ def events_lt_avg_pos(event_file, photons_file,
         if dt_window:
             pick_photons = pick_photons[(pick_photons.dt>dt_window[0])&
                                         (pick_photons.dt<dt_window[1])]
-        #print(f'only considering events with dt < 1700')
 
         # iterating over every event in pick
         for i in range(counter, counter + len(events_group)):
@@ -127,9 +126,10 @@ def events_lt_avg_pos(event_file, photons_file,
                                                       diameter,
                                                       more_ms=more_ms)
 
-            result = analyze_event(cylinder_photons, start_dt, diameter)
+            result = analyze_event(cylinder_photons, peak_arrival_time, diameter)
             x_position[i] = result.x_fit#x_t
             y_position[i] = result.y_fit#y_t
+            lifetime[i] = result.lifetime
             #sdx[i] = sd_x
             #sdy[i] = sd_y
             total_photons_arr[i] = result.num_photons#total_photons
@@ -157,10 +157,6 @@ def events_lt_avg_pos(event_file, photons_file,
     lpx_arr = np.copy(events.lpx)
     lpy_arr = np.copy(events.lpy)
     bg_picasso = np.copy(events.bg)
-
-    print(f'length total_photons {len(total_photons_arr)}'
-          f'length bg_picasso: {len(bg_picasso)}'
-          f'lenght duration_ms {len(duration_ms_arr)}')
 
     photons_arr = total_photons_arr - (bg_picasso * duration_ms_arr/200 * fit_area)
 

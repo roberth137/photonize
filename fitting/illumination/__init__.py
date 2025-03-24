@@ -1,2 +1,2 @@
-from .inverse_distance_bg import compute_bg_map_idw_radius
+from .inverse_distance_bg import local_brightness_map
 from .normalize_brightness import normalize_brightness
