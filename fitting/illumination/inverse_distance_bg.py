@@ -80,8 +80,10 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
 
 def get_bg(localizations):
     # Option 1: Check attribute existence:
-    if hasattr(localizations, 'bg_picasso') and localizations.bg_200ms_px is not None:
-        bg_array = np.asarray(localizations.bg_200ms_px, dtype=np.float64)
+    if hasattr(localizations, 'brightness_phot_ms') and localizations.brightness_phot_ms is not None:
+        bg_array = np.asarray(localizations.brightness_phot_ms, dtype=np.float64)
+    elif hasattr(localizations, 'bg_picasso') and localizations.bg_picasso is not None:
+        bg_array = np.asarray(localizations.bg_picasso, dtype=np.float64)
         print(f'using bg_picasso column for normalization')
     else:
         bg_array = np.asarray(localizations.bg, dtype=np.float64)

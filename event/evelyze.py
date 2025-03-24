@@ -130,57 +130,57 @@ def events_lt_avg_pos(event_file, photons_file,
 
             #######################################################################
 
-            start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons)
+            #start_ms , end_ms, duration_ms = fitting.get_on_off_dur(cylinder_photons)
 
             #filter photons according to new bounds
-            num_bg_photons = len(cylinder_photons[(cylinder_photons.ms > (my_event.start_ms_fr-more_ms))
-                                              &(cylinder_photons.ms < (start_ms-20))
-                                              |(cylinder_photons.ms < (my_event.end_ms_fr+more_ms))
-                                              &(cylinder_photons.ms > (end_ms+20))])
+            #num_bg_photons = len(cylinder_photons[(cylinder_photons.ms > (my_event.start_ms_fr-more_ms))
+            #                                  &(cylinder_photons.ms < (start_ms-20))
+            #                                  |(cylinder_photons.ms < (my_event.end_ms_fr+more_ms))
+            #                                  &(cylinder_photons.ms > (end_ms+20))])
 
-            photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
-                                                  & (cylinder_photons.ms <= end_ms)]
+            #photons_new_bounds = cylinder_photons[(cylinder_photons.ms >= start_ms)
+            #                                      & (cylinder_photons.ms <= end_ms)]
 
-            bg_measure_time = (end_ms+more_ms) - (start_ms-more_ms) - duration_ms - 40
+            #bg_measure_time = (end_ms+more_ms) - (start_ms-more_ms) - duration_ms - 40
 
-            new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
-            this_eve = new_eve.iloc[0]
-            photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
+            #new_eve = pd.DataFrame([{'start_ms': start_ms, 'end_ms': end_ms, 'x': my_event.x, 'y': my_event.y}])
+            #this_eve = new_eve.iloc[0]
+            #photons_new_bounds = get_photons.crop_event(this_eve, pick_photons, diameter)
 
-            total_photons = len(photons_new_bounds)
-            phot_event = pd.DataFrame(data=photons_new_bounds)
+            #total_photons = len(photons_new_bounds)
+            #phot_event = pd.DataFrame(data=photons_new_bounds)
 
-            x_arr = phot_event['x'].to_numpy()
-            y_arr = phot_event['y'].to_numpy()
-            x_t, y_t, sd_x, sd_y = fitting.localize_com(x_arr,
-                                                              y_arr,
-                                                              return_sd=True)
+            #x_arr = phot_event['x'].to_numpy()
+            #y_arr = phot_event['y'].to_numpy()
+            #x_t, y_t, sd_x, sd_y = fitting.localize_com(x_arr,
+            #                                                  y_arr,
+            #                                                  return_sd=True)
             #calculate photon distances from new center for better lifetime determination:
-            phot_x = np.copy(phot_event.x)
-            phot_y = np.copy(phot_event.y)
-            phot_x -= x_t
-            phot_y -= y_t
-            dist = np.sqrt((phot_x**2 + phot_y**2))
-            phot_event['distance'] = dist
-            arrival_times = phot_event['dt'].to_numpy()
-            distance = phot_event['distance'].to_numpy()
+            #phot_x = np.copy(phot_event.x)
+            #phot_y = np.copy(phot_event.y)
+            #phot_x -= x_t
+            #phot_y -= y_t
+            #dist = np.sqrt((phot_x**2 + phot_y**2))
+            #phot_event['distance'] = dist
+            #arrival_times = phot_event['dt'].to_numpy()
+            #distance = phot_event['distance'].to_numpy()
 
-            lifetime[i] = fitting.avg_lifetime_weighted(arrival_times,
-                                                           distance,
-                                                           start_dt,
-                                                           diameter)
+            #lifetime[i] = fitting.avg_lifetime_weighted(arrival_times,
+            #                                               distance,
+            #                                               start_dt,
+            #                                               diameter)
 
             result = analyze_event(cylinder_photons, start_dt, diameter)
             #########################################################
             x_position[i] = result.x_fit#x_t
             y_position[i] = result.y_fit#y_t
-            sdx[i] = sd_x
-            sdy[i] = sd_y
+            #sdx[i] = sd_x
+            #sdy[i] = sd_y
             total_photons_arr[i] = result.num_photons#total_photons
             start_ms_new[i] = result.start_ms#start_ms
             end_ms_new[i] = result.end_ms#end_ms
             duration_ms_arr[i] = result.duration_ms#duration_ms
-            bg_200ms_pixel[i] = num_bg_photons*(200/bg_measure_time)/fit_area
+            #bg_200ms_pixel[i] = num_bg_photons*(200/bg_measure_time)/fit_area
             #bg_over_on[i] = len(cylinder_photons)/duration_ms
             delta_x[i] = my_event.x - result.x_fit#x_t
             delta_y[i] = my_event.y - result.y_fit#y_t
@@ -190,18 +190,18 @@ def events_lt_avg_pos(event_file, photons_file,
                       ' events:')
             if i == 0:
                 print('FIRST fitted. Number of photons',
-                      ' in phot_event: ', len(phot_event))
+                      ' in phot_event: ', result.num_photons)
             elif i % 200 == 0:
                 print('200 fitted. Number of photons',
-                      ' in phot_event: ', len(phot_event))
+                      ' in phot_event: ', result.num_photons)
         counter += len(events_group)
 
     # calculate clipped bg
-    bg_percentile = np.percentile(bg_200ms_pixel, 95)
-    bg_200ms_pixel_capped = np.clip(bg_200ms_pixel, None, bg_percentile)
+    #bg_percentile = np.percentile(bg_200ms_pixel, 95)
+    #bg_200ms_pixel_capped = np.clip(bg_200ms_pixel, None, bg_percentile)
 
-    squareroot_photons = np.sqrt(total_photons_arr)
-    photons_arr = total_photons_arr - (bg_200ms_pixel*(duration_ms_arr/200)*fit_area)
+    #squareroot_photons = np.sqrt(total_photons_arr)
+    #photons_arr = total_photons_arr - (bg_200ms_pixel*(duration_ms_arr/200)*fit_area)
 
     sx_arr = np.copy(events.sx)
     sy_arr = np.copy(events.sy)
@@ -209,15 +209,20 @@ def events_lt_avg_pos(event_file, photons_file,
     lpy_arr = np.copy(events.lpy)
     bg_picasso = np.copy(events.bg)
 
+    print(f'length total_photons {len(total_photons_arr)}'
+          f'length bg_picasso: {len(bg_picasso)}'
+          f'lenght duration_ms {len(duration_ms_arr)}')
+
+    photons_arr = total_photons_arr - (bg_picasso * duration_ms_arr/200 * fit_area)
 
     events['x'] = x_position
     events['y'] = y_position
-    events['photons'] = photons_arr.astype(np.int32)
-    events['bg'] = bg_200ms_pixel_capped*duration_ms_arr/200
-    events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_200ms_pixel_capped, pixel_nm=115)
-    events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_200ms_pixel_capped, pixel_nm=115)
+    events['photons'] = photons_arr.astype(np.float32)
+    events['bg'] = bg_picasso*duration_ms_arr/200
+    events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
+    events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
     events['lifetime_10ps'] = lifetime.astype(np.float32)
-    events['bg_200ms_px'] = bg_200ms_pixel_capped.astype(np.float32)
+    #events['bg_200ms_px'] = bg_200ms_pixel_capped.astype(np.float32)
     events['bg_picasso'] = bg_picasso.astype(np.float32)
     events['brightness_phot_ms'] = (photons_arr/duration_ms_arr).astype(np.float32)
     events['duration_ms'] = duration_ms_arr.astype(np.float32)
