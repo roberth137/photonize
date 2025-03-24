@@ -4,7 +4,7 @@ import time
 
 start_time = time.time()
 folder = 't/'
-event.event_analysis(localizations_file=f'{folder}orig58_all_f.hdf5',
+event.event_analysis(localizations_file=f'{folder}orig58_pf.hdf5',
                      photons_file=f'{folder}orig58_index.hdf5',
                      drift_file=f'{folder}orig58_drift.txt',
                      offset=10,
