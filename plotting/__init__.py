@@ -7,7 +7,7 @@ events_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_pf_event.hdf
 photons_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_index.hdf5'
 drift_filename = '/Users/roberthollmann/Desktop/resi-flim/t/orig58_drift.txt'
 diameter = 4.5
-pick_group = 0
+pick_group = 4
 more_ms = 400
 
 # Loading data to memory

@@ -35,7 +35,7 @@ def avg_lifetime(loc_photons, peak):
     return lifetime
 
 
-def avg_lifetime_weighted(dt, distance, peak, diameter, base=0.2, distance_weight=0.8):
+def avg_lifetime_weighted(dt, distance, peak, diameter, base_weight=0.5, distance_weight=0.5):
     """
     Compute a weighted average lifetime using a quadratic distance-based weighting scheme.
 
@@ -83,7 +83,7 @@ def avg_lifetime_weighted(dt, distance, peak, diameter, base=0.2, distance_weigh
         if dt[i] > peak:  # Only consider photons arriving after the peak
             ap_dt = dt[i] - peak
             # Quadratic weighting factor with a baseline offset
-            ap_weight = base + distance_weight * (1 - (distance[i] / (radius ** 2)))
+            ap_weight = base_weight + distance_weight * (1 - (distance[i]**2 / radius**2))
             weighted_sum += ap_dt * ap_weight
             weight_total += ap_weight
 

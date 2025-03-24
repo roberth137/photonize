@@ -25,7 +25,8 @@ def normalize_brightness(events):
     px_x = np.clip(px_x, 0, max_x - 1)
     px_y = np.clip(px_y, 0, max_y - 1)
 
-    # Extract normalization values from the smoothed X/Y inverted background map
+    # bg_map takes first y then x coordinate... careful!
+    # Extract normalization values from the smoothed background map
     norm_values = bg_map[px_y, px_x]
 
     # Prevent division by zero by replacing any zeros with 1 (or handle as appropriate)

@@ -3,7 +3,6 @@ matplotlib.use('Qt5Agg') # for command line plotting
 import matplotlib.pyplot as plt
 plt.ion() # turn on interactive mode
 import numpy as np
-import ruptures as rpt
 import get_photons
 import fitting
 import plotting as _p
@@ -46,22 +45,12 @@ def hist_ms_event(i):
     # Smoothed histogram
     plt.bar(bins[:-1], smoothed_counts_2, width=bin_size, alpha=0.5)
 
-    # Fit a step function using change point detection
-    #model = "l2"
-    #algo = rpt.Binseg(model=model, min_size=1, jump=1).fit(smoothed_counts_2)
-    #change_points = algo.predict(n_bkps=2)  # for 2 change points
-    #change_points_trans = np.array(change_points, dtype=float)
-
-    ## Shift change points to match bin centers, approximate
-    #change_points_trans[0] = (change_points_trans[0] - 1.5) * bin_size + bins[0]
-    #change_points_trans[1] = (change_points_trans[1] + 0.5) * bin_size + bins[0]
-
     # Annotate the plot
     duration_ms = end_ms - start_ms
     plt.plot([], [], ' ', label=f'duration_ms: {duration_ms}')
     plt.plot([], [], ' ', label=f'number_photons: {len(this_event_photons)}')
     if "lifetime_10ps" in this_event:
-        plt.plot([], [], ' ', label=f'Lifetime: {this_event["lifetime"]:.3f}')
+        plt.plot([], [], ' ', label=f'Lifetime: {this_event["lifetime_10ps"]:.3f}')
 
     plt.axvline(start_ms, color='red')
     plt.axvline(end_ms, color='red')
@@ -141,6 +130,6 @@ if __name__ == "__main__":
     # Plot the histogram for the first event in _p.group_events
     plt.ioff()
     #hist_ms_event(1)
-    hist_idw_ms_event(3)
+    hist_ms_event(3)
     plt.show(block=True)
 

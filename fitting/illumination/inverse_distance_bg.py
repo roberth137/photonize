@@ -74,14 +74,15 @@ def compute_bg_map_idw_radius(localizations, radius=10, p=1, grid_size=1):
             else:
                 # If no localization points are found within the radius, assign a NaN (or set to 0 as desired)
                 bg_map[i, j] = np.nan
+            bg_map_x_y = bg_map#.T
 
-    return bg_map, grid_x, grid_y
+    return bg_map_x_y, grid_x, grid_y
 
 def get_bg(localizations):
     # Option 1: Check attribute existence:
-    if hasattr(localizations, 'bg_200ms_px') and localizations.bg_200ms_px is not None:
+    if hasattr(localizations, 'bg_picasso') and localizations.bg_200ms_px is not None:
         bg_array = np.asarray(localizations.bg_200ms_px, dtype=np.float64)
-        print(f'using bg_200ms_px column for normalization')
+        print(f'using bg_picasso column for normalization')
     else:
         bg_array = np.asarray(localizations.bg, dtype=np.float64)
         print(f'using bg column for normalization')
@@ -92,7 +93,7 @@ def get_bg(localizations):
 if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as plt
-    filename = 't/orig58_all_f.hdf5'
+    filename = 't/orig58_pf.hdf5'
     # Example: Create a DataFrame of localization points
 
     localizations = pd.read_hdf(filename, key='locs')

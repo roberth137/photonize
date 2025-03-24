@@ -23,6 +23,7 @@ def localize_com(x_photons, y_photons, return_sd=True):
                 sd_x,
                 sd_y)
 
+
 #@numba.njit
 def calculate_sd(photon_positions, mean_position, total_photons):
     return np.sqrt(np.sum((photon_positions - mean_position) ** 2) / total_photons)
