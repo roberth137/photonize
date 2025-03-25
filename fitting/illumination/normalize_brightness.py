@@ -33,10 +33,12 @@ def normalize_brightness(events):
     norm_values_safe = np.where(norm_values == 0, 1, norm_values)
 
     # Normalize the background and brightness
-    if hasattr(events, 'bg_picasso'):
-        events['bg_pic_norm'] = (events['bg_picasso']/norm_values_safe).astype(np.float32)
     if hasattr(events, 'brightness_phot_ms'):
-        events['brightness_norm'] = (events['brightness_phot_ms'] / norm_values_safe).astype(np.float32)
+        brightness_arr = events.brightness_phot_ms
+        brightness_idx = events.columns.get_loc('brightness_phot_ms')
+        events.insert(brightness_idx, 'brightness_norm', (events['brightness_phot_ms'] / norm_values_safe).astype(np.float32))
+        events.drop(columns='brightness_phot_ms', inplace=True)
+        events['brightness_phot_ms'] = brightness_arr.astype(np.float32)
         if hasattr(events, 'lifetime_10ps'):
             events['lt_over_bright'] = (events['lifetime_10ps'] / events['brightness_norm']).astype(np.float32)
             print('normalized brightness and bg')

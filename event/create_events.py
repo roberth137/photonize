@@ -107,14 +107,14 @@ def locs_to_events(
             'lpy': np.float32(peak_loc['lpy']),
             'sx': np.float32(sx_weighted),
             'sy': np.float32(sy_weighted),
-            'net_gradient': np.float32(peak_loc.get('net_gradient', np.nan)),
-            'ellipticity': np.float32(peak_loc.get('ellipticity', np.nan)),
+            'group': first_loc.get('group', np.nan),
+            'num_frames': np.uint32((last_loc['frame'] - first_loc['frame']) + 1),
             'start_frame': np.uint32(first_loc['frame']),
             'end_frame': np.uint32(last_loc['frame']),
+            'net_gradient': np.float32(peak_loc.get('net_gradient', np.nan)),
+            'ellipticity': np.float32(peak_loc.get('ellipticity', np.nan)),
             'start_ms_fr': np.float32(start_ms),
             'end_ms_fr': np.float32(end_ms),
-            'num_frames': np.uint32((last_loc['frame'] - first_loc['frame']) + 1),
-            'group': first_loc.get('group', np.nan),
         }
         event_records.append(event_data)
 
