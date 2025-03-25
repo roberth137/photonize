@@ -28,6 +28,6 @@ def safe_sqrt(variance):
     with np.errstate(invalid="ignore"):
         # This will produce NaN for negative values, instead of throwing a warning
         result = np.sqrt(variance)
-    # Replace NaNs with 10
+    # Replace NaNs with 100
     result = np.nan_to_num(result, nan=100.0)
     return result

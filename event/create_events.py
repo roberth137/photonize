@@ -11,92 +11,119 @@ import pandas as pd
 import numpy as np
 from event import link_locs
 from utilities import helper
-    
+from typing import Union
 
-def locs_to_events(localizations_file, offset, int_time, max_dark_frames=1, proximity=2, filter_single=True):
+
+def locs_to_events(
+        localizations_file: Union[str, pd.DataFrame],
+        offset: float,
+        int_time: float,
+        max_dark_frames: int = 1,
+        proximity: float = 2,
+        filter_single: bool = True
+) -> pd.DataFrame:
     """
-    Connects a DataFrame of Localization to Events (linked Locs)
-    Input:
-        localizations: rendered, filtered, picked
-        offset: offset used for frame video
-        int_time:
-        max_dark_frames: Number of frames where no loc is found that can be skipped
-        proximity: max distance between adjacent locs, in units of lpx+lpy
-        filter_single: Filters single localizaitions that cant be connected to an event
+    Connects a DataFrame of localizations to events (linked localizations) and
+    computes event-level summary metrics.
 
-    Returns:
-        list of Event: List of Event objects.
+    Parameters
+    ----------
+    localizations_file : Union[str, pd.DataFrame]
+        Either the path to a file containing localizations or a DataFrame itself.
+        Must contain the columns: {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy'}.
+    offset : float
+        The offset used for scaling the 'frame' column into real time (often used when frames start at 0).
+    int_time : float
+        The integration time per frame (e.g., in milliseconds).
+    max_dark_frames : int, optional
+        Number of consecutive frames without any localization that can be skipped
+        when linking localizations. Default is 1.
+    proximity : float, optional
+        Maximum distance (in units of lpx + lpy) between adjacent localizations
+        to be considered part of the same event. Default is 2.
+    filter_single : bool, optional
+        Whether to filter out (exclude) single localizations that cannot be connected
+        to an event. Default is True.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame of computed events with columns such as:
+        ['event', 'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', 'sx', 'sy',
+         'start_frame', 'end_frame', 'start_ms_fr', 'end_ms_fr', 'num_frames',
+         'net_gradient', 'ellipticity', 'group'].
     """
-    # Validate required columns
-    localizations = helper.process_input(localizations_file,
-                                         dataset='locs')
-    required_columns = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy', }
-    if not required_columns.issubset(localizations.columns):
-        raise ValueError(f"DataFrame must contain columns: {required_columns}")
+    # --- STEP 1: Load and validate the input DataFrame ---
+    localizations = helper.process_input(localizations_file, dataset='locs')
+    required_cols = {'frame', 'x', 'y', 'photons', 'bg', 'lpx', 'lpy'}
+    missing = required_cols - set(localizations.columns)
+    if missing:
+        raise ValueError(f"DataFrame is missing required columns: {missing}")
 
-    # Tag localizations with event number and group them
-    localizations_eve = link_locs.link_locs_by_group(localizations,
-                                                         max_dark_frames=max_dark_frames,
-                                                         proximity=proximity,
-                                                         filter_single=filter_single)
+    # --- STEP 2: Link localizations into events ---
+    # The link_locs_by_group function must add an 'event' column indicating the event ID
+    localizations_eve = link_locs.link_locs_by_group(
+        localizations,
+        max_dark_frames=max_dark_frames,
+        proximity=proximity,
+        filter_single=filter_single
+    )
+
+    # --- STEP 3: Build event-level records ---
+    event_records = []
     grouped = localizations_eve.groupby('event')
-    events = pd.DataFrame()
-    
-    for event, eve_group in grouped:
+
+    for event_id, eve_group in grouped:
+        # Make sure indexing is clean
         eve_group = eve_group.reset_index(drop=True)
 
-        # Compute event properties
-        first = eve_group.iloc[0]
-        last = eve_group.iloc[-1]
-        
-        peak_loc = eve_group.iloc[eve_group['photons'].idxmax()]
-        start_ms_fr = (first.frame/offset)*int_time
-        end_ms_fr = (last.frame/offset + 1)*int_time
-        event_data = {'frame': peak_loc['frame'],
-                 'event': first['event'], 
-                 'x': avg_photon_weighted(eve_group, 'x'),
-                 'y': avg_photon_weighted(eve_group, 'y'),
-                 'photons': peak_loc['photons'],
-                 'start_ms_fr': start_ms_fr,
-                 'end_ms_fr': end_ms_fr,
-                 'num_frames': (last['frame'] - first['frame']) + 1,
-                 'lpx': peak_loc['lpx'],
-                 'lpy': peak_loc['lpy'],
-                 'bg': np.mean(eve_group['bg']),
-                 'sx': avg_photon_weighted(eve_group, 'sx'),
-                 'sy': avg_photon_weighted(eve_group, 'sy'),
-                 'group': first['group'],
-                 'net_gradient': peak_loc['net_gradient'],
-                 'ellipticity': peak_loc['ellipticity'],
-                 'start_frame': first['frame'],
-                 'end_frame': last['frame']
-                 }
-        event = pd.DataFrame(event_data, index=[0])
-        events = pd.concat([events, event], 
-                                  ignore_index=True)
-    events = events.astype({'frame': 'uint32',
-                            'event': 'uint32',
-                            'x': 'float32',
-                            'y': 'float32',
-                            'photons': 'float32',
-                            'start_ms_fr': 'float32',
-                            'end_ms_fr': 'float32',
-                            'lpx': 'float32',
-                            'lpy': 'float32',
-                            'num_frames': 'uint32',
-                            'start_frame': 'uint32',
-                            'end_frame': 'uint32',
-                            'bg': 'float32',
-                            'sx': 'float32',
-                            'sy': 'float32',
-                            'net_gradient': 'float32',
-                            'ellipticity': 'float32'})
+        # Basic references
+        first_loc = eve_group.iloc[0]
+        last_loc = eve_group.iloc[-1]
 
-    print('Linked ', len(localizations), ' locs to ', 
-          len(events), 'events.')
+        # Identify the peak localization (max photons)
+        peak_idx = eve_group['photons'].idxmax()
+        peak_loc = eve_group.loc[peak_idx]
+
+        # Compute weighted means (assuming you have an avg_photon_weighted function)
+        x_weighted = avg_photon_weighted(eve_group, 'x')
+        y_weighted = avg_photon_weighted(eve_group, 'y')
+        sx_weighted = avg_photon_weighted(eve_group, 'sx')
+        sy_weighted = avg_photon_weighted(eve_group, 'sy')
+
+        # Convert frames to time (ms) - adjust by offset
+        start_ms = (first_loc.frame / offset) * int_time
+        end_ms = ((last_loc.frame / offset) + 1) * int_time
+
+        # Accumulate event data in a dict
+        event_data = {
+            'event': np.uint32(first_loc['event']),
+            'frame': np.uint32(peak_loc['frame']),
+            'x': np.float32(x_weighted),
+            'y': np.float32(y_weighted),
+            'photons': np.float32(peak_loc['photons']),
+            'bg': np.float32(eve_group['bg'].mean()),
+            'lpx': np.float32(peak_loc['lpx']),
+            'lpy': np.float32(peak_loc['lpy']),
+            'sx': np.float32(sx_weighted),
+            'sy': np.float32(sy_weighted),
+            'net_gradient': np.float32(peak_loc.get('net_gradient', np.nan)),
+            'ellipticity': np.float32(peak_loc.get('ellipticity', np.nan)),
+            'start_frame': np.uint32(first_loc['frame']),
+            'end_frame': np.uint32(last_loc['frame']),
+            'start_ms_fr': np.float32(start_ms),
+            'end_ms_fr': np.float32(end_ms),
+            'num_frames': np.uint32((last_loc['frame'] - first_loc['frame']) + 1),
+            'group': first_loc.get('group', np.nan),
+        }
+        event_records.append(event_data)
+
+    # --- STEP 4: Build the events DataFrame ---
+    events = pd.DataFrame(event_records)
+
+    # --- STEP 5: Final print and return ---
+    print(f"Linked {len(localizations)} locs to {len(events)} events.")
     return events
-
-   
 
 def locs_to_events_to_picasso(localizations_file, 
                               offset, box_side_length, int_time):

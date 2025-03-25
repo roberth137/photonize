@@ -5,7 +5,6 @@ from event import create_events
 import fitting
 import get_photons
 from fitting import analyze_event
-import logging
 from typing import Optional, Dict, Tuple, Any
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
@@ -89,8 +88,7 @@ def events_lt_avg_pos(event_file: str,
     Returns:
         A pandas DataFrame of events tagged with lifetime and fitted with average x, y positions.
     """
-    logger = logging.getLogger(__name__)
-    logger.info("Starting events_lt_avg_pos...")
+    print("Starting events_lt_avg_pos...")
 
     # Ensure mutable default is not reused
     if arrival_time is None:
@@ -101,7 +99,7 @@ def events_lt_avg_pos(event_file: str,
     photons = helper.process_input(photons_file, dataset='photons')
     drift = helper.process_input(drift_file, dataset='drift')
     total_events = len(events)
-    logger.info(f"{len(photons)} photons and {total_events} events read in")
+    print(f"{len(photons)} photons and {total_events} events read in")
 
     # Preallocate arrays using np.empty (assumes all values will be assigned)
     lifetime = np.empty(total_events, dtype=np.float32)
@@ -115,14 +113,13 @@ def events_lt_avg_pos(event_file: str,
     end_ms_new = np.empty(total_events, dtype=np.float32)
     delta_x = np.empty(total_events, dtype=np.float32)
     delta_y = np.empty(total_events, dtype=np.float32)
-    bg_200ms_pixel = np.empty(total_events, dtype=np.float32)  # Not updated in this version
 
     # Calibrate peak arrival time from a subset of photons
     peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
     arrival_time['start'] = peak_arrival_time
-    logger.info(f"Peak arrival time: {peak_arrival_time}")
+    print(f"Peak arrival time: {peak_arrival_time}")
     if dt_window:
-        logger.info(f"Considering photons with dt in {dt_window}")
+        print(f"Considering photons with dt in {dt_window}")
 
     # Calculate area for photon fitting (could be named constant)
     fit_area = (diameter / 2) ** 2 * np.pi
@@ -171,8 +168,6 @@ def events_lt_avg_pos(event_file: str,
     # Update events DataFrame with computed values
     sx_arr = events['sx'].to_numpy()
     sy_arr = events['sy'].to_numpy()
-    lpx_arr = events['lpx'].to_numpy()
-    lpy_arr = events['lpy'].to_numpy()
     bg_picasso = events['bg'].to_numpy()
 
     # Adjust total photon count using background correction
@@ -181,22 +176,18 @@ def events_lt_avg_pos(event_file: str,
     events['x'] = x_position
     events['y'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
-    events['bg'] = bg_picasso * duration_ms_arr / 200
+    events['duration_ms'] = duration_ms_arr.astype(np.float32)
+    events['lifetime_10ps'] = lifetime.astype(np.float32)
+    events['brightness_phot_ms'] = (photons_arr / duration_ms_arr).astype(np.float32)
+    events['bg'] = bg_picasso# * duration_ms_arr / 200
     events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
     events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
-    events['lifetime_10ps'] = lifetime.astype(np.float32)
-    events['bg_picasso'] = bg_picasso.astype(np.float32)
-    events['brightness_phot_ms'] = (photons_arr / duration_ms_arr).astype(np.float32)
-    events['duration_ms'] = duration_ms_arr.astype(np.float32)
-    events['lplt'] = (lifetime / photons_arr).astype(np.float32)
+    #events['bg_picasso'] = bg_picasso.astype(np.float32)
+    #events['brightness_phot_ms'] = (photons_arr / duration_ms_arr).astype(np.float32)
     events['start_ms'] = start_ms_new.astype(np.int32)
     events['end_ms'] = end_ms_new.astype(np.int32)
     events['delta_x'] = delta_x.astype(np.float32)
     events['delta_y'] = delta_y.astype(np.float32)
-    # If needed, compute bg_over_on; here it is left as is because bg_200ms_pixel wasn't updated
-    #events['bg_over_on'] = (bg_200ms_pixel / duration_ms_arr).astype(np.float32)
-    events['old_lpx'] = lpx_arr.astype(np.float32)
-    events['old_lpy'] = lpy_arr.astype(np.float32)
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     # Save to picasso file if event_file is provided as a string
@@ -205,6 +196,9 @@ def events_lt_avg_pos(event_file: str,
 
     print(f"_______________FINISHED: {len(events)} events analysed!_______________")
     return events
+
+
+
 
 
 def events_lt_avg_pos_old(event_file, photons_file,
@@ -276,19 +270,19 @@ def events_lt_avg_pos_old(event_file, photons_file,
                                                       more_ms=more_ms)
 
             result = analyze_event(cylinder_photons, peak_arrival_time, diameter)
-            x_position[i] = result.x_fit#x_t
-            y_position[i] = result.y_fit#y_t
+            x_position[i] = result.x_fit
+            y_position[i] = result.y_fit
             lifetime[i] = result.lifetime
             #sdx[i] = sd_x
             #sdy[i] = sd_y
-            total_photons_arr[i] = result.num_photons#total_photons
-            start_ms_new[i] = result.start_ms#start_ms
-            end_ms_new[i] = result.end_ms#end_ms
-            duration_ms_arr[i] = result.duration_ms#duration_ms
+            total_photons_arr[i] = result.num_photons
+            start_ms_new[i] = result.start_ms
+            end_ms_new[i] = result.end_ms
+            duration_ms_arr[i] = result.duration_ms
             #bg_200ms_pixel[i] = num_bg_photons*(200/bg_measure_time)/fit_area
             #bg_over_on[i] = len(cylinder_photons)/duration_ms
-            delta_x[i] = my_event.x - result.x_fit#x_t
-            delta_y[i] = my_event.y - result.y_fit#y_t
+            delta_x[i] = my_event.x - result.x_fit
+            delta_y[i] = my_event.y - result.y_fit
             # console printing
             if (i - counter) == 0:
                 print('fitting lifetime of ', len(events_group),
@@ -303,8 +297,6 @@ def events_lt_avg_pos_old(event_file, photons_file,
 
     sx_arr = np.copy(events.sx)
     sy_arr = np.copy(events.sy)
-    lpx_arr = np.copy(events.lpx)
-    lpy_arr = np.copy(events.lpy)
     bg_picasso = np.copy(events.bg)
 
     photons_arr = total_photons_arr - (bg_picasso * duration_ms_arr/200 * fit_area)
@@ -312,22 +304,17 @@ def events_lt_avg_pos_old(event_file, photons_file,
     events['x'] = x_position
     events['y'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
+    events['duration_ms'] = duration_ms_arr.astype(np.float32)
+    events['lifetime_10ps'] = lifetime.astype(np.float32)
     events['bg'] = bg_picasso*duration_ms_arr/200
     events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
     events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
-    events['lifetime_10ps'] = lifetime.astype(np.float32)
-    #events['bg_200ms_px'] = bg_200ms_pixel_capped.astype(np.float32)
     events['bg_picasso'] = bg_picasso.astype(np.float32)
     events['brightness_phot_ms'] = (photons_arr/duration_ms_arr).astype(np.float32)
-    events['duration_ms'] = duration_ms_arr.astype(np.float32)
-    events['lplt'] = (lifetime/photons_arr).astype(np.float32)
     events['start_ms'] = start_ms_new.astype(np.int32)
     events['end_ms'] = end_ms_new.astype(np.int32)
     events['delta_x'] = delta_x.astype(np.float32)
     events['delta_y'] = delta_y.astype(np.float32)
-    events['bg_over_on'] = bg_200ms_pixel/duration_ms_arr.astype(np.float32)
-    events['old_lpx'] = lpx_arr.astype(np.float32)
-    events['old_lpy'] = lpy_arr.astype(np.float32)
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     if isinstance(event_file, str):
