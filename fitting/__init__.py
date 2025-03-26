@@ -8,4 +8,4 @@ from .lifetime import (avg_lifetime,
                        calibrate_peak_arrival,
                        fit_lifetime_LQ,
                        fit_lifetime_mle)
-from .analyze_event import analyze_event
+from .fit_event import fit_event

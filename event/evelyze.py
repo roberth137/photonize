@@ -4,7 +4,7 @@ from utilities import helper
 from event import create_events
 import fitting
 import get_photons
-from fitting import analyze_event
+from fitting import fit_event
 from typing import Optional, Dict, Tuple, Any
 
 def event_analysis(localizations_file, photons_file, drift_file, offset,
@@ -149,7 +149,7 @@ def events_lt_avg_pos(event_file: str,
             cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter, more_ms=more_ms)
 
             # Analyze the event using a helper function (assumed to return an object with attributes)
-            result = analyze_event(cylinder_photons, peak_arrival_time, diameter)
+            result = fit_event(cylinder_photons, peak_arrival_time, diameter)
 
             # Store computed values
             x_position[idx] = result.x_fit

@@ -1,3 +1,5 @@
+# This is the main function for analysing a single event
+
 import numpy as np
 from fitting.on_off import get_on_off_dur
 from fitting.localization import localize_com
@@ -11,7 +13,7 @@ EventResult = namedtuple('EventResult', [
     'num_photons'
 ])
 
-def analyze_event(photons, dt_peak, diameter):
+def fit_event(photons, dt_peak, diameter):
     """
     Analyze a single photon event.
 
