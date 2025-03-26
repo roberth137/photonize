@@ -48,14 +48,13 @@ if __name__ == "__main__":
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    filename = 't/orig58_pf_event_bright_norm.hdf5'
+    filename = 't/orig58_pf_event.hdf5'
     # Example: Create a DataFrame of localization points
 
     events = pd.read_hdf(filename, key='locs')
 
-    events = normalize_brightness(events)
-
-    utilities.dataframe_to_picasso(events, filename, '_main_norm_bright')
+    #events = normalize_brightness(events)
+    #utilities.dataframe_to_picasso(events, filename, '_main_norm_bright')
 
     # Compute the background map using a radius of 3 pixels.
     bg_map, grid_x, grid_y = local_brightness_map(events, radius=5, p=1, grid_size=1)

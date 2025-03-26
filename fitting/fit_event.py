@@ -1,6 +1,8 @@
 # This is the main function for analysing a single event
 
 import numpy as np
+import pandas as pd
+
 from fitting.on_off import get_on_off_dur
 from fitting.localization import localize_com
 from fitting.lifetime import avg_lifetime_weighted
@@ -62,69 +64,89 @@ def fit_event(photons, dt_peak, diameter):
     )
 
 
-def simulate_event_ms_trace(seed=42, bg_rate=3, diameter=4.5, dur_all=400, dur_eve=300, brightness_eve=2):
+def simulate_event(seed=42,
+                   bg_200ms_px=3,
+                   dur_all=400,
+                   dur_eve=300,
+                   sx=1.1,
+                   lifetime=350,
+                   peak_dt=80,
+                   brightness_eve=2,
+                   size_px=8):
     """
-    Simulates a time trace (ms) with two components:
-      - Background: uniformly distributed over 0 to dur_all.
-      - Event: uniformly distributed over the central window (event_start to event_end).
+    Simulates a time trace with background and event photons, returned as a sorted DataFrame.
     """
     np.random.seed(seed)
-    # ROI area as given: (diameter/2)*pi which for diameter=4.5 gives 2.25*pi.
-    area = (diameter / 2) * np.pi
-    bg_photon_rate = bg_rate * area  # photons / 200ms over the ROI
 
-    # 1. Simulate background photons
-    n_bg_expected = int((dur_all / 200) * bg_photon_rate)
-    bg_arrival_times = np.sort(np.random.uniform(0, dur_all, size=n_bg_expected))
+    total_area = size_px**2
+    n_bg_photons_total = int(bg_200ms_px * total_area * (dur_all / 200))
+    n_eve_total = int(dur_eve * brightness_eve)
 
-    # 2. Simulate event photons
-    event_start = (dur_all - dur_eve) / 2  # for dur_all=400 & dur_eve=300, event_start=50ms
-    event_end = event_start + dur_eve  # event_end=350ms
-    n_eve_expected = int(dur_eve * brightness_eve)
-    event_arrival_times = np.sort(np.random.uniform(event_start, event_end, size=n_eve_expected))
+    # 1. Background photons
+    bg_ms = np.sort(np.random.uniform(0, dur_all, size=n_bg_photons_total))
+    bg_x = np.random.uniform(low=0, high=size_px, size=n_bg_photons_total) - (size_px / 2)
+    bg_y = np.random.uniform(low=0, high=size_px, size=n_bg_photons_total) - (size_px / 2)
+    bg_dt = np.clip(np.random.exponential(scale=lifetime, size=n_bg_photons_total) + peak_dt, 0, 2500)
 
-    # Combine background and event arrival times
-    all_arrival_times = np.sort(np.concatenate([bg_arrival_times, event_arrival_times]))
-    return all_arrival_times
+    # 2. Event photons
+    event_start = (dur_all - dur_eve) / 2
+    event_end = event_start + dur_eve
+
+    event_ms = np.sort(np.random.uniform(event_start, event_end, size=n_eve_total))
+    event_x = np.random.normal(loc=0, scale=sx, size=n_eve_total)
+    event_y = np.random.normal(loc=0, scale=sx, size=n_eve_total)
+    event_dt = np.clip(np.random.exponential(scale=lifetime, size=n_eve_total) + peak_dt, 0, 2500)
+
+    # Combine into a DataFrame
+    photons_bg = pd.DataFrame({
+        'x': bg_x,
+        'y': bg_y,
+        'dt': bg_dt,
+        'ms': bg_ms
+    })
+    photons_eve = pd.DataFrame({
+        'x': event_x,
+        'y': event_y,
+        'dt': event_dt,
+        'ms': event_ms
+    })
+
+    # Sort by time (ms)
+    #photons = photons.sort_values(by='ms').reset_index(drop=True)
+
+    return photons_eve, photons_bg, peak_dt
 
 #test
 
 if __name__ == "__main__":
     print('main loop')
     # 1. Generate ms time stamps using the simulation function
-    ms_times = simulate_event_ms_trace(
+    photons_eve, photons_bg, peak_dt = simulate_event(
         seed=42,
-        bg_rate=3,
-        diameter=4.5,
+        bg_200ms_px=3,
         dur_all=400,
         dur_eve=300,
         brightness_eve=2  # 2 photons per ms during the event
     )
 
-    num_photons = len(ms_times)
+    print(photons_eve)
+    print('______________________________________________')
+    print(photons_bg)
+    diameter=4.5
 
-    # 2. Generate spatial coordinates (x,y) for each photon.
-    #    Each coordinate is normally distributed with mean 0 and std dev 1.1 (in pixels).
-    x_coords = np.random.normal(loc=0, scale=1.1, size=num_photons)
-    y_coords = np.random.normal(loc=0, scale=1.1, size=num_photons)
+    all_photons = pd.concat([photons_eve, photons_bg])
+    all_photons['distance'] = np.sqrt((all_photons.x**2) + (all_photons.y**2))
+    roi_photons = all_photons[all_photons['distance'] < diameter/2]
 
-    # 3. Generate dt values: Exponentially distributed (decay parameter 280), shifted by 80 and capped at 2500.
-    dt_vals = 80 + np.random.exponential(scale=280, size=num_photons)
-    dt_vals = np.minimum(dt_vals, 2500)
+    result = fit_event(roi_photons, peak_dt, diameter=diameter)
 
-    # Create a dictionary for the simulated photon data.
-    photons = {
-        'x': x_coords,
-        'y': y_coords,
-        'dt': dt_vals,
-        'ms': ms_times
-    }
+    print(result)
+    num_photons = len(roi_photons)
 
-    # --- Plotting ---
 
     # Plot 1: Scatter plot of photon positions over an 8x8 pixel area centered at (0,0)
     plt.figure(figsize=(6, 6))
-    plt.scatter(photons['x'], photons['y'], alpha=0.7, label='Photon positions')
+    plt.scatter(roi_photons['x'], roi_photons['y'], alpha=0.7, label='Photon positions')
     plt.scatter([0], [0], color='red', marker='x', s=100, label='Fluorophore (0,0)')
     plt.xlim(-4, 4)
     plt.ylim(-4, 4)
@@ -137,7 +159,7 @@ if __name__ == "__main__":
 
     # Plot 2: ms time trace (showing photon arrival times)
     plt.figure(figsize=(8, 4))
-    plt.scatter(photons['ms'], np.ones_like(photons['ms']), marker='|', color='blue')
+    plt.scatter(roi_photons['ms'], np.ones_like(roi_photons['ms']), marker='|', color='blue')
     plt.xlabel('Time (ms)')
     plt.yticks([])  # Hide y-axis ticks
     plt.title('Photon Arrival Times')

@@ -19,7 +19,7 @@ __all__ = (["num_pixels", "binding_time_ms", "brightness", "bg_rate",
            "sigma_psf", "camera_error", "subpixel", "fitting_diameter",
            "num_photons", "max_dist", "x_ref", "y_ref", "fit_area"])
 
-from simulate.analyze_event import distance_to_point, analyze_sim_event
+from simulate.analyze_sim_event import distance_to_point, analyze_sim_event
 from simulate.simulate_bg import simulate_background
 from simulate.simulate_fluorophore import simulate_fluorophore
 from simulate.simulate_event_statistics import simulate_event_stats
