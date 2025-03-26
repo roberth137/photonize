@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 
 def min_max_box(localizations, box_side_length=0):
-    '''
+    """
     Returns x, y, boundaries + box
     for a set of localizations as pd dataframe
-    '''
+    """
     min_x = min(localizations.x) - (box_side_length / 2)
     max_x = max(localizations.x) + (box_side_length / 2)
     min_y = min(localizations.y) - (box_side_length / 2)
@@ -25,11 +25,11 @@ def spatial_boundaries(event, diameter):
 
 def loc_boundaries(localization, offset,
                    diameter, integration_time):
-    '''
+    """
     Returns boundaries in x, y, ms of a single localization (pd Series)
     as a rectangular box
 
-    '''
+    """
 
     x_min = localization.x - (diameter / 2)
     x_max = x_min + diameter

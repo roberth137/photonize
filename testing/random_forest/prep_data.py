@@ -27,7 +27,7 @@ events = helper.process_input(input_events, 'locs')
 photons = helper.process_input(input_photons, 'photons')
 drift = helper.process_input(drift_file, 'drift')
 
-peak_arrival_time = fitting.calibrate_peak_events(photons[:1000000])
+peak_arrival_time = fitting.calibrate_peak_arrival(photons[:1000000])
 max_dt = max(photons[:1000000].dt)
 
 #events = events[events.group == 0]

@@ -63,6 +63,8 @@ def dataframe_to_picasso(dataframe, filename, extension=None, yaml_dump=None):
     hf.close()
     print('\ndataframe succesfully saved in picasso format.')
 
+
+
 def process_input(input_data, dataset):
     """
     Processes the input to determine if it is a filename or a pandas DataFrame.
