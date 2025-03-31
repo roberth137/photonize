@@ -12,7 +12,6 @@ bg_rate_mean, bg_rate_std = 4, 1.6
 delta_x_mean, delta_x_std = 0, 0.1
 delta_y_mean, delta_y_std = 0, 0.1
 
-
 def lognormal_params_from_mean_std(mean, std):
     """
     Given an arithmetic mean and standard deviation (both > 0),
@@ -25,7 +24,8 @@ def lognormal_params_from_mean_std(mean, std):
     return mu, sigma
 
 
-def simulate_event_stats(n_events=10000,
+def simulate_event_stats(seed=42,
+                         n_events=10000,
                          binding_mean=binding_time_mean, binding_std=binding_time_std,
                          brightness_mean=brightness_mean, brightness_std=brightness_std,
                          sx_mean=sx_mean, sx_std=sx_std,
@@ -53,6 +53,7 @@ def simulate_event_stats(n_events=10000,
           ['binding_time', 'sx', 'sy', 'bg', 'brightness',
            'photons', 'delta_x', 'delta_y']
     """
+    np.random.seed(seed=seed)
     # 1) Compute lognormal parameters
     binding_mu, binding_sigma = lognormal_params_from_mean_std(binding_mean, binding_std)
     brightness_mu, brightness_sigma = lognormal_params_from_mean_std(brightness_mean, brightness_std)
@@ -85,7 +86,8 @@ def simulate_event_stats(n_events=10000,
     return df
 
 
-def save_simulate_events(filename, n_events=10000,
+def save_simulate_events(filename,
+                         seed, n_events=10000,
                          binding_mean=binding_time_mean, binding_std=binding_time_std,
                          brightness_mean=brightness_mean, brightness_std=brightness_std,
                          sx_mean=sx_mean, sx_std=sx_mean,
@@ -109,10 +111,8 @@ def save_simulate_events(filename, n_events=10000,
     -----
     An HDF5 file with a single key ("events") containing a pandas DataFrame.
     """
-
     # Simulate the event stats (pandas DataFrame)
-    df_events = simulate_event_stats(
-        n_events,
+    df_events = simulate_event_stats(seed, n_events,
         binding_mean, binding_std,
         brightness_mean, brightness_std,
         sx_mean, sx_std,
@@ -163,10 +163,21 @@ def plot_event_histograms(df):
 
 
 if __name__ == '__main__':
-    np.random.seed(42)  # sets the global seed
+    random_seed = 42
+    n_events = 100000
+
+    # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
+    binding_time_mean, binding_time_std = 400, 300  # in ms
+    sx_mean, sx_std = 1.07, 0.13
+    sy_mean, sy_std = 1.07, 0.13
+    brightness_mean, brightness_std = 0.92, 0.6
+    bg_rate_mean, bg_rate_std = 4, 1.6
+    delta_x_mean, delta_x_std = 0, 0.1
+    delta_y_mean, delta_y_std = 0, 0.1
 
     # Generate a small dataset of 10,000 events
-    df_events = simulate_event_stats(n_events=10000)
+    df_events = simulate_event_stats(seed=random_seed,
+                                     n_events=n_events)
 
     print(f"Simulated {len(df_events)} events.")
     print("Means:")
@@ -183,14 +194,15 @@ if __name__ == '__main__':
     plot_event_histograms(df_events)
 
     #save_dataset
-    # save_simulate_events(
-    #     '2green_conditions.hdf5',
-    #     n_events=1000,
-    #     binding_mean=binding_time_mean, binding_std=binding_time_std,
-    #     brightness_mean=brightness_mean, brightness_std=brightness_std,
-    #     sx_mean=sx_mean, sx_std=sx_std,
-    #     sy_mean=sy_mean, sy_std=sy_std,
-    #     bg_mean=bg_rate_mean, bg_std=bg_rate_std,
-    #     delta_x_mean=delta_x_mean, delta_x_std=delta_x_std,
-    #     delta_y_mean=delta_y_mean, delta_y_std=delta_y_std
-    # )
+    save_simulate_events(
+        '2green_delta_is_0p1.hdf5',
+        seed=42,
+        n_events=n_events,
+        binding_mean=binding_time_mean, binding_std=binding_time_std,
+        brightness_mean=brightness_mean, brightness_std=brightness_std,
+        sx_mean=sx_mean, sx_std=sx_std,
+        sy_mean=sy_mean, sy_std=sy_std,
+        bg_mean=bg_rate_mean, bg_std=bg_rate_std,
+        delta_x_mean=delta_x_mean, delta_x_std=delta_x_std,
+        delta_y_mean=delta_y_mean, delta_y_std=delta_y_std
+    )

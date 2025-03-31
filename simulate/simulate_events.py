@@ -5,7 +5,7 @@ import simulate as s
 
 
 
-def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
+def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter, random_seed=42):
     """
     Given a DataFrame of event parameters, simulate fluorophore + background for each event,
     perform fits (with and without background), and return:
@@ -13,6 +13,7 @@ def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
       x_fit_w_bg, y_fit_w_bg    -> Fitted positions w/ background correction
       distance_pure, distance_w_bg -> Distances of fitted positions from (0, 0)
     """
+    np.random.seed(random_seed)
 
     # Preallocate arrays for storing the fitted positions
     n = len(event_stats)
@@ -84,6 +85,56 @@ def simulate_and_fit_events(event_stats, diameter=s.fitting_diameter):
     return distance_pure, distance_w_bg
 
 
+def freedman_diaconis_bins(data, data_range=None):
+    """
+    Calculate the optimal number of bins for a histogram using the Freedman-Diaconis rule.
+
+    Parameters
+    ----------
+    data : array-like
+        The data to be histogrammed.
+    data_range : (float, float) or None
+        If not None, a 2-tuple specifying the lower and upper range of the bins.
+        If None, it uses the actual min and max of the data.
+
+    Returns
+    -------
+    bins : int
+        The number of bins to use.
+    """
+    data = np.asarray(data)
+    n = len(data)
+
+    # Edge case: if there's no data or only one point, default to 1 bin
+    if n <= 1:
+        return 1
+
+    # Compute the interquartile range (IQR)
+    q75, q25 = np.percentile(data, [75, 25])
+    iqr = q75 - q25
+
+    # Freedman-Diaconis bin width
+    bin_width = 2.0 * iqr / np.cbrt(n)
+
+    # Edge case: if the IQR is zero (all data points are identical), fallback to 1 bin
+    if bin_width <= 0:
+        return 1
+
+    # Determine the actual data range to cover
+    if data_range is None:
+        data_min = data.min()
+        data_max = data.max()
+    else:
+        data_min, data_max = data_range
+
+    # Compute number of bins based on Freedman-Diaconis bin width
+    data_span = data_max - data_min
+    bins = int(np.ceil(data_span / bin_width))
+
+    # At least 1 bin
+    return max(bins, 1)
+
+
 def plot_results(distance_pure, distance_w_bg):
     """
     Plot two histograms:
@@ -97,25 +148,34 @@ def plot_results(distance_pure, distance_w_bg):
     distance_w_bg : array-like
         Error distances with background correction.
     """
-    # Compute a common upper bound for the histogram range
-    hist_dist_bound = 1#(np.max(distance_pure) + np.max(distance_w_bg)) / 2f
-    print(f'Max dist with bg: {max(distance_w_bg)}')
-    print(f'Max dist pure: {max(distance_pure)}')
+    # Combine both datasets to figure out a common x-range and bin size
+    combined_data = np.concatenate((distance_pure, distance_w_bg))
 
+    # Compute the global min and max to limit the x-axis dynamically
+    x_min = 0#np.min(combined_data)
+    x_max = 0.5#np.max(combined_data)
+
+    # Calculate the number of bins using Freedman–Diaconis for the combined data
+    fd_bins = freedman_diaconis_bins(combined_data, data_range=(x_min, x_max))
+
+    print(f"Global min: {x_min:.5f}, Global max: {x_max:.5f}")
+    print(f"FD bins: {fd_bins}")
+    print(f"Max dist (with BG): {max(distance_w_bg):.5f}")
+    print(f"Max dist (pure): {max(distance_pure):.5f}")
 
     # Create the plot
     plt.figure(figsize=(12, 5))
 
     # Left subplot: with background
     plt.subplot(1, 2, 1)
-    plt.hist(distance_w_bg, bins=30, range=(0, hist_dist_bound), color='purple', alpha=0.7)
+    plt.hist(distance_w_bg, bins=fd_bins, range=(x_min, x_max), color='purple', alpha=0.7)
     plt.xlabel('Error distance (pixels)')
     plt.ylabel('Counts')
     plt.title(f'Error w/ BG correction (mean: {np.mean(distance_w_bg):.5f})')
 
     # Right subplot: without background
     plt.subplot(1, 2, 2)
-    plt.hist(distance_pure, bins=30, range=(0, hist_dist_bound), color='green', alpha=0.7)
+    plt.hist(distance_pure, bins=fd_bins, range=(x_min, x_max), color='green', alpha=0.7)
     plt.xlabel('Error distance (pixels)')
     plt.ylabel('Counts')
     plt.title(f'Error w/o BG correction (mean: {np.mean(distance_pure):.5f})')
