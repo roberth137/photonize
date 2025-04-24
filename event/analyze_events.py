@@ -91,11 +91,23 @@ def events_lt_pos(event_file: str,
 
         # Iterate over each event in the current group
         for i, my_event in events_group.iterrows():
+
+            fitting_diameter = 4.5
+            box_side_length = 5
+
             # Crop the relevant photons for this event
             cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter, more_ms=more_ms)
 
-            # Analyze the event using a helper function (assumed to return an object with attributes)
+            # Analyze the event using a helper function
             result = fit_event(cylinder_photons, peak_arrival_time, diameter)
+
+            # insert 5 pixel photons return
+            spot = get_photons.extract_spot_histogram(pick_photons,
+                                          my_event,
+                                          box_side_length,
+                                          result.start_ms,
+                                          result.end_ms)
+            print(spot)
 
             # Store computed values
             x_position[idx] = result.x_fit
