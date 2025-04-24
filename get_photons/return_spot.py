@@ -45,4 +45,4 @@ def extract_spot_histogram(pick_photons, event, box_side_length, t0, t1):
     )
 
     # H[i,j] is the count in pixel (xedges[i] ≤ x < xedges[i+1], same for y)
-    return H.astype(int)
+    return H.astype(np.float32), xedges[0].astype(np.float32), yedges[0].astype(np.float32)

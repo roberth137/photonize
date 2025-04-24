@@ -3,7 +3,7 @@ import pandas as pd
 from utilities import helper
 import fitting
 import get_photons
-from fitting import fit_event
+from fitting import fit_event, fit_mle_picasso
 from typing import Optional, Dict, Tuple, Any
 
 def events_lt_pos(event_file: str,
@@ -102,16 +102,19 @@ def events_lt_pos(event_file: str,
             result = fit_event(cylinder_photons, peak_arrival_time, diameter)
 
             # insert 5 pixel photons return
-            spot = get_photons.extract_spot_histogram(pick_photons,
+            spot, x0, y0 = get_photons.extract_spot_histogram(pick_photons,
                                           my_event,
                                           box_side_length,
                                           result.start_ms,
                                           result.end_ms)
-            print(spot)
+
+            mle_result = fit_mle_picasso(spots=spot, box_size=box_side_length)
+
+            print(mle_result)
 
             # Store computed values
-            x_position[idx] = result.x_fit
-            y_position[idx] = result.y_fit
+            x_position[idx] = x0 + mle_result['x_rel']#result.x_fit
+            y_position[idx] = y0 + mle_result['y_rel']#result.y_fit
             lifetime[idx] = result.lifetime
             total_photons_arr[idx] = result.num_photons
             start_ms_new[idx] = result.start_ms
