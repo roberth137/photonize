@@ -4,7 +4,7 @@ from picasso import gaussmle
 def fit_mle_picasso(spots, box_size, method="sigma", eps=1e-3, max_it=100):
     """
     Fit sub-pixel positions for a list of extracted spot patches using Picasso's gaussmle,
-    returning coordinates relative to the patch origin (pixel (0,0) at its top-left corner).
+    returning coordinates relative to the patch origin corner (-0.5, -0.5)! top-left corner of (0,0) spot-pixel.
 
     Parameters
     ----------
@@ -55,8 +55,8 @@ def fit_mle_picasso(spots, box_size, method="sigma", eps=1e-3, max_it=100):
         crlb = CRLBs[i]
 
         # Sub-pixel position relative to top-left corner
-        x_rel = float(theta[0])
-        y_rel = float(theta[1])
+        x_rel = float(theta[0]) + 0.5
+        y_rel = float(theta[1]) + 0.5
 
         photons = float(theta[2])
         bg = float(theta[3])
