@@ -2,7 +2,8 @@ from .localization import localize_com, com_position
 from .on_off import lee_filter_1d, get_on_off_dur
 from .illumination import normalize_brightness
 from .localization import (localize_com, localize_mle,
-                          localization_precision, fit_mle_picasso)
+                          localization_precision, fit_mle_picasso,
+                           mle_2d_gaussian_with_bg)
 from .lifetime import (avg_lifetime,
                        avg_lifetime_weighted,
                        calibrate_peak_arrival,

@@ -3,7 +3,7 @@ import pandas as pd
 from utilities import helper
 import fitting
 import get_photons
-from fitting import fit_event, fit_mle_picasso
+from fitting import fit_event, fit_mle_picasso, mle_2d_gaussian_with_bg
 from typing import Optional, Dict, Tuple, Any
 
 def events_lt_pos(event_file: str,
@@ -59,6 +59,9 @@ def events_lt_pos(event_file: str,
     end_ms_new = np.empty(total_events, dtype=np.float32)
     delta_x = np.empty(total_events, dtype=np.float32)
     delta_y = np.empty(total_events, dtype=np.float32)
+    x_mle = np.empty(total_events, dtype=np.float32)
+    y_mle = np.empty(total_events, dtype=np.float32)
+    bg_fit = np.empty(total_events, dtype=np.float32)
 
     # Calibrate peak arrival time from a subset of photons
     peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
@@ -102,19 +105,27 @@ def events_lt_pos(event_file: str,
             result = fit_event(cylinder_photons, peak_arrival_time, diameter)
 
             # insert 5 pixel photons return
-            spot, x0, y0 = get_photons.extract_spot_histogram(pick_photons,
-                                          my_event,
-                                          box_side_length,
-                                          result.start_ms,
-                                          result.end_ms)
+            #spot, x0, y0 = get_photons.extract_spot_histogram(pick_photons,
+            #                              my_event,
+            #                              box_side_length,
+            #                              result.start_ms,
+            #                              result.end_ms)
 
-            mle_result = fit_mle_picasso(spots=spot, box_size=box_side_length)
+            photon_coords = cylinder_photons[['x', 'y']].to_numpy()
+
+            mle_result = mle_2d_gaussian_with_bg(coords=photon_coords,
+                                                 approx_mu=(my_event.x, my_event.y),
+                                                 radius=(diameter/2))
 
             print(mle_result)
 
             # Store computed values
-            x_position[idx] = x0 + mle_result['x_rel']#result.x_fit
-            y_position[idx] = y0 + mle_result['y_rel']#result.y_fit
+            x_mle[idx] = mle_result['mu_x']
+            y_mle[idx] = mle_result['mu_y']
+            bg_fit[idx] = 1 - mle_result['f']
+
+            x_position[idx] = result.x_fit
+            y_position[idx] = result.y_fit
             lifetime[idx] = result.lifetime
             total_photons_arr[idx] = result.num_photons
             start_ms_new[idx] = result.start_ms
@@ -133,15 +144,18 @@ def events_lt_pos(event_file: str,
 
     # Adjust total photon count using background correction
     photons_arr = total_photons_arr - (bg_picasso * duration_ms_arr / 200 * fit_area)
+    bg_phot_pic = ((duration_ms_arr / 200) * bg_picasso * (diameter / 2) ** 2 * np.pi)
 
     #frame
     #event
     events['x'] = x_position
+    events.insert(3, 'x_mle', x_mle)
+    events.insert(4, 'y_mle', y_mle)
     events['y'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
-    events.insert(5, 'duration_ms', duration_ms_arr.astype(np.float32))
-    events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
-    events.insert(7, 'brightness_phot_ms', (photons_arr / duration_ms_arr).astype(np.float32))
+    events.insert(6, 'duration_ms', duration_ms_arr.astype(np.float32))
+    #events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
+    events.insert(8, 'brightness_phot_ms', (photons_arr / duration_ms_arr).astype(np.float32))
     events['bg'] = bg_picasso# * duration_ms_arr / 200
     events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
     events['lpy'] = fitting.localization_precision(sigma=sy_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
@@ -149,6 +163,8 @@ def events_lt_pos(event_file: str,
     events['end_ms'] = end_ms_new.astype(np.int32)
     events['delta_x'] = delta_x.astype(np.float32)
     events['delta_y'] = delta_y.astype(np.float32)
+    events['bg_pic'] = 1 - (photons_arr/total_photons_arr)
+    events['bg_fit'] = bg_fit
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     # Save to picasso file if event_file is provided as a string
