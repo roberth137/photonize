@@ -121,5 +121,7 @@ def mle_2d_gaussian_with_bg(coords, approx_mu, radius,
         'sigma_x': sigma_x,
         'sigma_y': sigma_y,
         'f': f,
-        'n_photons': int(N)
+        'tot_photons': int(N),
+        'signal_photons': (N*f),
+        'bg_photons': (N*(1-f))
     }

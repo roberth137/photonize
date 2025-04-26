@@ -62,6 +62,7 @@ def events_lt_pos(event_file: str,
     x_mle = np.empty(total_events, dtype=np.float32)
     y_mle = np.empty(total_events, dtype=np.float32)
     bg_fit = np.empty(total_events, dtype=np.float32)
+    phot_mle = np.empty(total_events, dtype=np.float32)
 
     # Calibrate peak arrival time from a subset of photons
     peak_arrival_time = fitting.calibrate_peak_arrival(photons[:500000])
@@ -122,7 +123,8 @@ def events_lt_pos(event_file: str,
             # Store computed values
             x_mle[idx] = mle_result['mu_x']
             y_mle[idx] = mle_result['mu_y']
-            bg_fit[idx] = 1 - mle_result['f']
+            bg_fit[idx] = (1.0 - mle_result['f'])
+            phot_mle[idx] = mle_result['signal_photons']
 
             x_position[idx] = result.x_fit
             y_position[idx] = result.y_fit
@@ -153,7 +155,8 @@ def events_lt_pos(event_file: str,
     events.insert(4, 'y_mle', y_mle)
     events['y'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
-    events.insert(6, 'duration_ms', duration_ms_arr.astype(np.float32))
+    events.insert(6, 'mle_photons', phot_mle.astype(np.float32))
+    events.insert(7, 'duration_ms', duration_ms_arr.astype(np.float32))
     #events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
     events.insert(8, 'brightness_phot_ms', (photons_arr / duration_ms_arr).astype(np.float32))
     events['bg'] = bg_picasso# * duration_ms_arr / 200
