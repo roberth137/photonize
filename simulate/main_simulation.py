@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import simulate_events as sim
+import simulate_fit_events as sim
 
 def main():
-    filename = "simulate/sim_experiments_stats/2green_delta_is_0p1.hdf5"
+    filename = "simulate/sim_experiments_stats/2green_delta_0p3.hdf5"
     diameter = 5
     random_seed = 42
     # 1. Obtain event parameters from a file or generate them.

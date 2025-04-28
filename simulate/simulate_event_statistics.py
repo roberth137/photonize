@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from numba.core.cgutils import printf
+
 import simulate as s  # Ensure that s has the constants like s.binding_time_mean, s.binding_time_std, etc.
 
 # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
@@ -165,6 +167,8 @@ def plot_event_histograms(df):
 if __name__ == '__main__':
     random_seed = 42
     n_events = 100000
+    save_data = True
+    if save_data: save_name = '2green_delta_0p3.hdf5'
 
     # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
     binding_time_mean, binding_time_std = 400, 300  # in ms
@@ -172,8 +176,8 @@ if __name__ == '__main__':
     sy_mean, sy_std = 1.07, 0.13
     brightness_mean, brightness_std = 0.92, 0.6
     bg_rate_mean, bg_rate_std = 4, 1.6
-    delta_x_mean, delta_x_std = 0, 0.1
-    delta_y_mean, delta_y_std = 0, 0.1
+    delta_x_mean, delta_x_std = 0, 0.3
+    delta_y_mean, delta_y_std = 0, 0.3
 
     # Generate a small dataset of 10,000 events
     df_events = simulate_event_stats(seed=random_seed,
@@ -194,8 +198,9 @@ if __name__ == '__main__':
     plot_event_histograms(df_events)
 
     #save_dataset
-    save_simulate_events(
-        '2green_delta_is_0p1.hdf5',
+    if save_data:
+        save_simulate_events(
+        filename=save_name,
         seed=42,
         n_events=n_events,
         binding_mean=binding_time_mean, binding_std=binding_time_std,
@@ -205,4 +210,4 @@ if __name__ == '__main__':
         bg_mean=bg_rate_mean, bg_std=bg_rate_std,
         delta_x_mean=delta_x_mean, delta_x_std=delta_x_std,
         delta_y_mean=delta_y_mean, delta_y_std=delta_y_std
-    )
+        )

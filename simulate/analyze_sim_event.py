@@ -3,92 +3,67 @@ from fitting import localization
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(42)
 
 def analyze_sim_event(x_fluo, y_fluo,
-                  x_bg, y_bg, 
-                  x_entry, y_entry,
-                  bg_rate=s.bg_rate,
-                  diameter = s.fitting_diameter,
-                  consider_bg=False):
+                      x_bg, y_bg,
+                      x_entry, y_entry,
+                      bg_rate=s.bg_rate,
+                      diameter=s.fitting_diameter,
+                      method='com',
+                      consider_bg=False):
     """
-    Takes signal and background arrays and performs a center-of-mass fit using event_position.
-    A circular region of interest (ROI) around (x_entry, y_entry) with the given diameter is used.
+    Analyze a simulated event using COM or MLE fitting.
 
     Parameters
     ----------
     x_fluo, y_fluo : np.ndarray
-        Arrays of x and y coordinates for the fluorophore (signal) events.
+        Signal photon coordinates.
     x_bg, y_bg : np.ndarray
-        Arrays of x and y coordinates for the background events.
+        Background photon coordinates.
     x_entry, y_entry : float
-        Coordinates for the center of the ROI.
+        Center of ROI.
+    bg_rate : float
+        Background photon rate (for MLE).
     diameter : float
-        The diameter of the ROI (a circle).
-    consider_bg : bool, optional
-        If True, include background events in the analysis. Otherwise, only fluorophore events are considered.
-        Default is False.
+        Diameter of ROI (pixels).
+    consider_bg : bool
+        Whether to account for background photons.
+    method : {'com', 'mle'}
+        Localization method to use.
 
     Returns
     -------
-    x_fit, y_fit, sdx, sdy : tuple of floats
-        The fitted event position and its uncertainties. Returns None if no events are found in the ROI.
+    x_fit, y_fit : tuple of floats
+        Fitted position, or None if no events found.
     """
-    import numpy as np  # Ensure numpy is imported
+    import numpy as np
 
-    bg_count = bg_rate * (s.binding_time_ms/200) * s.fit_area
-
+    # Merge signal and background
     x_all = np.concatenate([x_fluo, x_bg])
     y_all = np.concatenate([y_fluo, y_bg])
 
-    # Select events within the ROI using the distance_to_point function
-    x_roi, y_roi, _ = distance_to_point(x_all, y_all, x_entry, y_entry, max_dist=diameter / 2.0)
-
-    # Check if there are any events in the ROI
+    # Crop to circular ROI
+    x_roi, y_roi, _ = filter_points_by_radius(x_all, y_all, x_entry, y_entry, max_dist=diameter / 2.0)
     if len(x_roi) == 0:
         print("No events found within the ROI.")
         return None
-    if consider_bg:
-        x_fit, y_fit = localization.com_position(x_roi, y_roi,
+
+    method = method.lower()
+    if method == 'com':
+        #bg_count = bg_rate * (s.binding_time_ms / 200) * s.fit_area if consider_bg else None
+        x_fit, y_fit = localization.localize_com(x_roi, y_roi, return_sd=False)
+
+    elif method == 'mle':
+        sigma_psf = (s.sx + s.sy) / 2.0
+        x_fit, y_fit = localization.mle_position(x_roi, y_roi,
                                                  x_entry, y_entry,
-                                                 bg_count)
+                                                 bg_rate=bg_rate if consider_bg else 0,
+                                                 sigma_psf=sigma_psf,
+                                                 diameter=diameter)
     else:
-        x_fit, y_fit = localization.com_position(x_roi, y_roi,
-                                                 x_entry, y_entry,
-                                                 bg_count=None)
+        raise ValueError(f"Unknown method '{method}'. Choose 'com' or 'mle'.")
 
     return x_fit, y_fit
-
-
-def distance_to_point(x, y, x_ref=s.x_ref, y_ref=s.y_ref, max_dist=None):
-    """
-    Calculate the distance from each (x[i], y[i]) to the given point.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        1D array of x-coordinates.
-    y : np.ndarray
-        1D array of y-coordinates.
-    x_ref, y_ref
-        The reference point (x0, y0).
-    max_dist : max_dist to point
-
-    Returns
-    -------
-    x: np.ndarray
-    y: np.ndarray
-
-    dist: 1D array of distances from each (x[i], y[i]) to 'point'.
-    """
-
-    dist = np.sqrt((x - x_ref)**2 + (y - y_ref)**2)
-
-    if max_dist:
-        mask = dist < max_dist
-        return x[mask], y[mask], dist[mask]
-    else:
-        return x, y, dist
 
 
 def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
@@ -101,23 +76,22 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
     """
     plt.figure(figsize=(6, 6))
 
-
     x_fit, y_fit = analyze_sim_event(x_fluo, y_fluo,
                                      x_bg, y_bg,
                                      x_ref, y_ref,
                                      diameter,
                                      consider_bg=False)
     x_fit_w_bg, y_fit_w_bg = analyze_sim_event(x_fluo, y_fluo,
-                                     x_bg, y_bg,
-                                     x_ref, y_ref,
-                                     diameter,
-                                     consider_bg=True)
+                                               x_bg, y_bg,
+                                               x_ref, y_ref,
+                                               diameter,
+                                               consider_bg=True)
 
     all_x = np.append(x_fluo, x_bg)
     all_y = np.append(y_fluo, y_bg)
 
-    x_cons, y_cons, _ = s.distance_to_point(all_x, all_y, 0, 0, max_dist=s.max_dist)
-    x_bg_cons, y_bg_cons, _ = s.distance_to_point(x_bg, y_bg, 0, 0, max_dist=s.max_dist)
+    x_cons, y_cons, _ = s.filter_points_by_radius(all_x, all_y, 0, 0, max_dist=s.max_dist)
+    x_bg_cons, y_bg_cons, _ = s.filter_points_by_radius(x_bg, y_bg, 0, 0, max_dist=s.max_dist)
 
     # Plot background events
     plt.scatter(x_bg, y_bg, s=10, color='blue', alpha=0.4, label='bg photons')
@@ -158,14 +132,12 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
 
 
 if __name__ == '__main__':
-
     # Simulate a single fluorophore event
     x_fluo, y_fluo = s.simulate_fluorophore(int(s.num_photons), sigma_psf=s.sigma_psf)
 
     # Simulate background events
     x_bg, y_bg = s.simulate_background(s.num_pixels, s.binding_time_ms,
                                        s.bg_rate, s.subpixel)
-
 
     # Plot both together
     plot_analysis(x_fluo, y_fluo, x_bg, y_bg, x_ref=0, y_ref=0, diameter=s.fitting_diameter)
