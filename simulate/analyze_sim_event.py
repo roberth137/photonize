@@ -4,15 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def analyze_sim_event(x_fluo, y_fluo,
-                      x_bg, y_bg,
-                      x_entry, y_entry,
-                      bg_rate=s.bg_rate,
-                      diameter=s.fitting_diameter,
-                      method='com',
-                      consider_bg=False):
+def analyze_sim_event(
+    x_fluo, y_fluo,
+    x_bg, y_bg,
+    x_entry, y_entry,
+    bg_rate=s.bg_rate,
+    diameter=s.fitting_diameter,
+    method='com',
+    sigma=None
+):
     """
-    Analyze a simulated event using COM or MLE fitting.
+    Analyze a simulated event using COM, full‐EM MLE, or fixed‐σ fixed‐B MLE.
 
     Parameters
     ----------
@@ -21,55 +23,94 @@ def analyze_sim_event(x_fluo, y_fluo,
     x_bg, y_bg : np.ndarray
         Background photon coordinates.
     x_entry, y_entry : float
-        Center of ROI.
+        Center of ROI (initial guess).
+    sigma : float
+        Known PSF standard deviation (for 'mle_fixed').
     bg_rate : float
-        Background photon rate (for MLE).
+        Background photon rate (unused here, since we count actual bg in ROI).
     diameter : float
         Diameter of ROI (pixels).
-    consider_bg : bool
-        Whether to account for background photons.
-    method : {'com', 'mle'}
-        Localization method to use.
+    method : {'com', 'mle', 'mle_fixed'}
+        'com'       → center‐of‐mass
+        'mle'       → full EM fit (μ, σ, f free)
+        'mle_fixed' → EM fit with σ & B fixed (μ only)
 
     Returns
     -------
-    x_fit, y_fit : tuple of floats
-        Fitted position, or None if no events found.
+    (x_fit, y_fit) : tuple of floats
+        Fitted position, or (None, None) if no photons in ROI.
     """
     import numpy as np
 
-    # Merge signal and background
+    # 1) Merge all photons
     x_all = np.concatenate([x_fluo, x_bg])
     y_all = np.concatenate([y_fluo, y_bg])
 
-    # Crop to circular ROI
-    x_roi, y_roi, _ = filter_points_by_radius(x_all, y_all, x_entry, y_entry, max_dist=diameter / 2.0)
+    # 2) Quick ROI check (any photons at all?)
+    x_roi, y_roi, _ = s.filter_points_by_radius(
+        x_all, y_all,
+        x_entry, y_entry,
+        max_dist=diameter * 0.5
+    )
     if len(x_roi) == 0:
         print("No events found within the ROI.")
-        return None
+        return None, None
 
     method = method.lower()
     if method == 'com':
-        #bg_count = bg_rate * (s.binding_time_ms / 200) * s.fit_area if consider_bg else None
-        x_fit, y_fit = localization.localize_com(x_roi, y_roi, return_sd=False)
+        # center-of-mass on photons in ROI
+        x_fit, y_fit, _, _ = localization.localize_com(
+            x_roi, y_roi,
+            return_sd=False
+        )
 
     elif method == 'mle':
-        sigma_psf = (s.sx + s.sy) / 2.0
-        x_fit, y_fit = localization.mle_position(x_roi, y_roi,
-                                                 x_entry, y_entry,
-                                                 bg_rate=bg_rate if consider_bg else 0,
-                                                 sigma_psf=sigma_psf,
-                                                 diameter=diameter)
+        # full EM: fits μ, σ_x/y, and signal fraction f
+        result = localization.mle_continuous(
+            x_all, y_all,
+            x_entry, y_entry,
+            diameter
+        )
+        x_fit = result['mu_x']
+        y_fit = result['mu_y']
+        print(f"MLE full fit: f={result['f']:.3f}")
+        print(result)
+
+    elif method == 'mle_fixed':
+        # 3) Count background photons inside ROI
+        x_bg_roi, y_bg_roi, _ = s.filter_points_by_radius(
+            x_bg, y_bg,
+            x_entry, y_entry,
+            max_dist=diameter * 0.5
+        )
+        B = len(x_bg_roi)
+
+        # 4) EM with σ and B fixed → only fit μ
+        result = localization.mle_fixed_sigma_bg(
+            x_all, y_all,
+            x_start   = x_entry,
+            y_start   = y_entry,
+            diameter  = diameter,
+            sigma     = sigma,
+            background= B
+        )
+        x_fit = result['mu_x']
+        y_fit = result['mu_y']
+        print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
+
     else:
-        raise ValueError(f"Unknown method '{method}'. Choose 'com' or 'mle'.")
+        raise ValueError(f"Unknown method '{method}'. Choose 'com', 'mle', or 'mle_fixed'.")
 
     return x_fit, y_fit
+
 
 
 def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
                   x_ref=s.x_ref, y_ref=s.y_ref,
                   diameter=s.fitting_diameter,
-                  num_pixels=s.num_pixels):
+                  method='com',
+                  num_pixels=s.num_pixels,
+                  sigma=None):
     """
     Plot the background events (blue) together with the simulated fluorophore (red)
     in the same coordinate space.
@@ -79,47 +120,28 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
     x_fit, y_fit = analyze_sim_event(x_fluo, y_fluo,
                                      x_bg, y_bg,
                                      x_ref, y_ref,
-                                     diameter,
-                                     consider_bg=False)
-    x_fit_w_bg, y_fit_w_bg = analyze_sim_event(x_fluo, y_fluo,
-                                               x_bg, y_bg,
-                                               x_ref, y_ref,
-                                               diameter,
-                                               consider_bg=True)
+                                     diameter=diameter,
+                                     method=method,
+                                     sigma=sigma)
 
     all_x = np.append(x_fluo, x_bg)
     all_y = np.append(y_fluo, y_bg)
 
-    x_cons, y_cons, _ = s.filter_points_by_radius(all_x, all_y, 0, 0, max_dist=s.max_dist)
-    x_bg_cons, y_bg_cons, _ = s.filter_points_by_radius(x_bg, y_bg, 0, 0, max_dist=s.max_dist)
+    x_all_cons, y_all_cons, _ = s.filter_points_by_radius(all_x, all_y, 0, 0, max_dist=(diameter/2))
+    x_fluo_cons, y_fluo_cons, _ = s.filter_points_by_radius(x_fluo, y_fluo, 0, 0, max_dist=(diameter/2))
+    x_bg_cons, y_bg_cons, _ = s.filter_points_by_radius(x_bg, y_bg, 0, 0, max_dist=(diameter/2))
 
     # Plot background events
     plt.scatter(x_bg, y_bg, s=10, color='blue', alpha=0.4, label='bg photons')
     # Plot fluorophore photons
     plt.scatter(x_fluo, y_fluo, s=10, color='red', alpha=0.4,
                 label=f'({s.num_photons} signal photons, σ={s.sigma_psf})')
-    plt.scatter(x_cons, y_cons, s=10, color='red', alpha=1,
-                label=f'Considered for fitting: ({len(x_cons)} photons')
+    plt.scatter(x_all_cons, y_all_cons, s=10, color='red', alpha=1,
+                label=f'Fitting ({len(x_all_cons)}) photons, {len(x_fluo_cons)} signal, {len(x_bg_cons)} bg')
     plt.scatter(x_bg_cons, y_bg_cons, s=10, color='blue', alpha=1,
                 label=f'{len(x_bg_cons)} bg photons considered')
-    plt.scatter(
-        x_fit,
-        y_fit,
-        marker='x',  # Use 'x' to draw a cross
-        s=50,
-        color='purple',
-        alpha=0.7,
-        label=f'Plain COM (x|y): ({x_fit:.4f}|{y_fit:.4f})'
-    )
-    plt.scatter(
-        x_fit,
-        y_fit,
-        marker='x',  # Use 'x' to draw a cross
-        s=50,
-        color='purple',
-        alpha=0.7,
-        label=f'COM cons. bg (x|y): ({x_fit_w_bg:.4f}|{y_fit_w_bg:.4f})'
-    )
+    plt.scatter(x_fit, y_fit, marker='x',  s=50, color='purple', alpha=0.7,
+                label=f'Fitting: {method}, Pos: ({x_fit:.4f}|{y_fit:.4f})')
 
     plt.xlabel('X coordinate (pixels)')
     plt.ylabel('Y coordinate (pixels)')
@@ -132,12 +154,19 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
 
 
 if __name__ == '__main__':
-    # Simulate a single fluorophore event
-    x_fluo, y_fluo = s.simulate_fluorophore(int(s.num_photons), sigma_psf=s.sigma_psf)
+    np.random.seed(42)
+    analysis_method = 'com' #valid are 'com', 'mle', 'mle_fixed'
+    diameter = 5
 
-    # Simulate background events
+    # Simulate single fluorophore
+    x_fluo, y_fluo = s.simulate_fluorophore(int(s.num_photons), sigma_psf=s.sigma_psf)
+    # Simulate background
     x_bg, y_bg = s.simulate_background(s.num_pixels, s.binding_time_ms,
                                        s.bg_rate, s.subpixel)
 
     # Plot both together
-    plot_analysis(x_fluo, y_fluo, x_bg, y_bg, x_ref=0, y_ref=0, diameter=s.fitting_diameter)
+    plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
+                  x_ref=0, y_ref=0,
+                  method=analysis_method,
+                  diameter=diameter,
+                  sigma=s.sigma_psf)

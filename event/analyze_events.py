@@ -3,7 +3,7 @@ import pandas as pd
 from utilities import helper
 import fitting
 import get_photons
-from fitting import fit_event, fit_mle_picasso, mle_2d_gaussian_with_bg
+from fitting import fit_event, fit_mle_picasso, mle_continuous
 from typing import Optional, Dict, Tuple, Any
 
 def events_lt_pos(event_file: str,
@@ -32,7 +32,7 @@ def events_lt_pos(event_file: str,
         **kwargs: Additional keyword arguments.
 
     Returns:
-        A pandas DataFrame of events tagged with lifetime and fitted with average x, y positions.
+        A pandas DataFrame of events tagged with lifetime and fitted with average x_array, y_array positions.
     """
     print("Starting events_lt_avg_pos...")
 
@@ -112,7 +112,7 @@ def events_lt_pos(event_file: str,
             #                              result.start_ms,
             #                              result.end_ms)
 
-            photon_coords = cylinder_photons[['x', 'y']].to_numpy()
+            photon_coords = cylinder_photons[['x_array', 'y_array']].to_numpy()
 
             mle_result = mle_2d_gaussian_with_bg(coords=photon_coords,
                                                  approx_mu=(my_event.x, my_event.y),
@@ -150,10 +150,10 @@ def events_lt_pos(event_file: str,
 
     #frame
     #event
-    events['x'] = x_position
+    events['x_array'] = x_position
     events.insert(3, 'x_mle', x_mle)
     events.insert(4, 'y_mle', y_mle)
-    events['y'] = y_position
+    events['y_array'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
     events.insert(6, 'mle_photons', phot_mle.astype(np.float32))
     events.insert(7, 'duration_ms', duration_ms_arr.astype(np.float32))

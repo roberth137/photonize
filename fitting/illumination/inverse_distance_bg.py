@@ -13,10 +13,10 @@ def local_brightness_map(events, radius=10, p=1, grid_size=1):
 
     Parameters
     ----------
-    events : DataFrame or object with attributes 'x', 'y', and 'brightness_phot_ms'
-        Sparse data points with x and y coordinates and corresponding background values.
+    events : DataFrame or object with attributes 'x_array', 'y_array', and 'brightness_phot_ms'
+        Sparse data points with x_array and y_array coordinates and corresponding background values.
     radius : float, optional
-        The radius (in same units as x and y, e.g. pixels) within which to consider points.
+        The radius (in same units as x_array and y_array, e.g. pixels) within which to consider points.
         Default is 3.
     p : float, optional
         Power parameter for inverse distance weighting. Default is 1.
@@ -28,9 +28,9 @@ def local_brightness_map(events, radius=10, p=1, grid_size=1):
     bg_map : 2D numpy.ndarray
         The computed background height map.
     grid_x : 1D numpy.ndarray
-        The x coordinates corresponding to the grid.
+        The x_array coordinates corresponding to the grid.
     grid_y : 1D numpy.ndarray
-        The y coordinates corresponding to the grid.
+        The y_array coordinates corresponding to the grid.
     """
     # Convert localization data to numpy arrays
     x = np.asarray(events.x, dtype=np.float64)
@@ -38,8 +38,8 @@ def local_brightness_map(events, radius=10, p=1, grid_size=1):
     brightness_array = np.asarray(events.brightness_phot_ms, dtype=np.float64)
 
     # Determine grid extents (use floor for min and ceil for max)
-    min_x, max_x = 0, 256#int(np.ceil(x.max())+2*radius)
-    min_y, max_y = 0, 256#int(np.ceil(y.max())+2*radius)
+    min_x, max_x = 0, 256#int(np.ceil(x_array.max())+2*radius)
+    min_y, max_y = 0, 256#int(np.ceil(y_array.max())+2*radius)
 
     # Create grid coordinates (assuming grid points are at integer coordinates)
     grid_x = np.arange(min_x, max_x + 1, grid_size)

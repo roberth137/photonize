@@ -83,7 +83,7 @@ def process_input(input_data, dataset):
             elif dataset == 'photons':
                 data = pd.read_hdf(input_data, key=dataset)
             elif dataset == 'drift':
-                data = pd.read_csv(input_data, delimiter=' ',names =['x','y']) 
+                data = pd.read_csv(input_data, delimiter=' ',names =['x_array','y_array'])
             return data
         
             #if dataset == 'photons':
@@ -161,7 +161,7 @@ def crop_drift(drift_file):
     Modify a drift file to use only for specific frames
     """
     # Load the data from drift.txt
-    drift_file = pd.read_csv(drift_file, delimiter=' ', names=['x', 'y'])
+    drift_file = pd.read_csv(drift_file, delimiter=' ', names=['x_array', 'y_array'])
 
     # Keep only the first 20,000 rows
     drift_20k = drift_file.iloc[120000:140000]

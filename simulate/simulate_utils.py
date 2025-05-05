@@ -3,24 +3,24 @@ import simulate as s
 
 def filter_points_by_radius(x, y, x_ref=s.x_ref, y_ref=s.y_ref, max_dist=None):
     """
-    Calculate the distance from each (x[i], y[i]) to the given point.
+    Calculate the distance from each (x_array[i], y_array[i]) to the given point.
 
     Parameters
     ----------
     x : np.ndarray
-        1D array of x-coordinates.
+        1D array of x_array-coordinates.
     y : np.ndarray
-        1D array of y-coordinates.
+        1D array of y_array-coordinates.
     x_ref, y_ref
         The reference point (x0, y0).
     max_dist : max_dist to point
 
     Returns
     -------
-    x: np.ndarray
-    y: np.ndarray
+    x_array: np.ndarray
+    y_array: np.ndarray
 
-    dist: 1D array of distances from each (x[i], y[i]) to 'point'.
+    dist: 1D array of distances from each (x_array[i], y_array[i]) to 'point'.
     """
 
     dist = np.sqrt((x - x_ref) ** 2 + (y - y_ref) ** 2)
