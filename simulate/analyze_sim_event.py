@@ -73,8 +73,8 @@ def analyze_sim_event(
         )
         x_fit = result['mu_x']
         y_fit = result['mu_y']
-        print(f"MLE full fit: f={result['f']:.3f}")
-        print(result)
+        #print(f"MLE full fit: f={result['f']:.3f}")
+        #print(result)
 
     elif method == 'mle_fixed':
         # 3) Count background photons inside ROI
@@ -97,6 +97,9 @@ def analyze_sim_event(
         x_fit = result['mu_x']
         y_fit = result['mu_y']
         print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
+
+    elif method == 'pass':
+        x_fit, y_fit = x_entry, y_entry
 
     else:
         raise ValueError(f"Unknown method '{method}'. Choose 'com', 'mle', or 'mle_fixed'.")

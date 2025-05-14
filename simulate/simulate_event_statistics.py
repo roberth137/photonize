@@ -171,17 +171,24 @@ if __name__ == '__main__':
     if save_data: save_name = 'less_photons.hdf5'
 
     # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
-    binding_time_mean, binding_time_std = 300, 300  # in ms
+    binding_time_mean, binding_time_std = 300, 200  # in ms
     sx_mean, sx_std = 1.07, 0.13
     sy_mean, sy_std = 1.07, 0.13
-    brightness_mean, brightness_std = 0.92, 0.6
+    brightness_mean, brightness_std = 0.9, 0.6
     bg_rate_mean, bg_rate_std = 3, 1
-    delta_x_mean, delta_x_std = 0, 0.2
-    delta_y_mean, delta_y_std = 0, 0.2
+    delta_x_mean, delta_x_std = 0, 0.3
+    delta_y_mean, delta_y_std = 0, 0.3
 
     # Generate a dataset of event statistics
     df_events = simulate_event_stats(seed=random_seed,
-                                     n_events=n_events)
+                                     n_events=n_events,
+                                     binding_mean=binding_time_mean, binding_std=binding_time_std,
+                                     brightness_mean=brightness_mean, brightness_std=brightness_std,
+                                     sx_mean=sx_mean, sx_std=sx_std,
+                                     sy_mean=sy_mean, sy_std=sy_std,
+                                     bg_mean=bg_rate_mean, bg_std=bg_rate_std,
+                                     delta_x_mean=delta_x_mean, delta_x_std=delta_x_std,
+                                     delta_y_mean=delta_y_mean, delta_y_std=delta_y_std)
 
     print(f"Simulated {len(df_events)} events.")
     print("Means:")

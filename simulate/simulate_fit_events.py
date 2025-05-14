@@ -42,7 +42,7 @@ def simulate_and_fit_events(
     bg_counts = np.zeros(n, int)
 
     method = method.lower()
-    if method not in ('com', 'mle', 'mle_fixed'):
+    if method not in ('com', 'mle', 'mle_fixed', 'pass'):
         raise ValueError("Method must be one of 'com', 'mle', or 'mle_fixed'.")
 
     for i, row in event_stats.iterrows():
@@ -51,7 +51,7 @@ def simulate_and_fit_events(
         binding_ms = row['binding_time']
         brightness = row['brightness']
         bg_rate    = float(row['bg'])
-        x_ref, y_ref = s.x_ref, s.y_ref
+        x_ref, y_ref = row['delta_x'], row['delta_y']
         radius = diameter / 2.0
 
         # --- simulate signal and background photons ---
