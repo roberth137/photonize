@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Optional
 import warnings
 
 def mle_fixed_sigma_bg(
@@ -10,7 +11,8 @@ def mle_fixed_sigma_bg(
     bg_rate: float,
     binding_time: float,
     max_iter: int = 100,
-    tol: float = 1e-4
+    tol: float = 1e-4,
+    arrival_time: Optional[np.ndarray] = None
 ) -> dict:
     """
     EM-style fit of a 2D Gaussian center with fixed σ and adaptive background handling.
@@ -67,6 +69,7 @@ def mle_fixed_sigma_bg(
     """
     x = np.asarray(x_array, float)
     y = np.asarray(y_array, float)
+    if arrival_time is not None: dt = np.asarray(arrival_time, float)
     radius = diameter / 2.0
 
     for it in range(1, max_iter + 1):
@@ -78,6 +81,7 @@ def mle_fixed_sigma_bg(
         x_in = x[mask]
         y_in = y[mask]
         r_in = r[mask]
+        dt_in = dt[mask]
         N = r_in.size
 
         if N == 0:
@@ -130,11 +134,16 @@ def mle_fixed_sigma_bg(
         x_start, y_start = mu_x_new, mu_y_new
         if shift < tol:
             break
-
-    return {
-        'mu_x': x_start,
-        'mu_y': y_start,
-        'weights': w,
-        'iters': it,
-        'bg_rate': bg_rate
+    #if arrival_time: lifetime = (w * dt).sum() / w_sum
+    result = {
+    'mu_x': x_start,
+    'mu_y': y_start,
+    'weights': w,
+    'iters': it,
+    'bg_rate': bg_rate
     }
+    if arrival_time is not None:
+        lifetime = (w * dt_in).sum() / w_sum
+        result['lifetime'] = lifetime
+
+    return result

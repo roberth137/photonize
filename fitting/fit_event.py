@@ -52,17 +52,19 @@ def fit_event(photons, x_start, y_start, sigma, bg_rate, dt_peak, diameter):
                                             diameter=diameter,
                                             sigma=sigma,
                                             bg_rate=bg_rate,
-                                            binding_time=duration_ms)
+                                            binding_time=duration_ms,
+                                            arrival_time=dt_photons)
     x_fit = result['mu_x']
     y_fit = result['mu_y']
-
+    lifetime = result['lifetime']-dt_peak
+    #print(lifetime)
     # calculate distance from center
-    distances = np.sqrt((x_photons - x_fit) ** 2 + (y_photons - y_fit) ** 2)
+    #distances = np.sqrt((x_photons - x_fit) ** 2 + (y_photons - y_fit) ** 2)
 
     # calculate lifetime using weighted averaging
-    lifetime = avg_lifetime_weighted(
-        dt_photons, distance=distances, peak=dt_peak, diameter=diameter
-    )
+    #lifetime = avg_lifetime_weighted(
+    #    dt_photons, distance=distances, peak=dt_peak, diameter=diameter
+    #)
 
     # pack into a named tuple and return
     return EventResult(

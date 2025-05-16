@@ -150,7 +150,7 @@ def events_lt_pos(event_file: str,
     events['photons'] = photons_arr.astype(np.float32)
     #events.insert(6, 'mle_photons', phot_mle.astype(np.float32))
     events.insert(7, 'duration_ms', duration_ms_arr.astype(np.float32))
-    #events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
+    events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
     events.insert(8, 'brightness_phot_ms', (photons_arr / duration_ms_arr).astype(np.float32))
     events['bg'] = bg_picasso# * duration_ms_arr / 200
     events['lpx'] = fitting.localization_precision(sigma=sx_arr, photons=photons_arr, bg=bg_picasso, pixel_nm=7)
