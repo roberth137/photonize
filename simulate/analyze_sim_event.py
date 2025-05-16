@@ -65,16 +65,21 @@ def analyze_sim_event(
         )
         bg_fit = bg_rate
 
-    elif method == 'mle_once':
-        x_bg_roi, y_bg_roi, _ = s.filter_points_by_radius(
-            x_bg, y_bg,
-            x_entry, y_entry,
-            max_dist=diameter * 0.5
-        )
-        fit_area = np.pi * (diameter / 2) ** 2
+    elif method == 'com_twice':
+        for _ in range(4):
+            x_roi, y_roi, _ = s.filter_points_by_radius(
+                x_all, y_all,
+                x_entry, y_entry,
+                max_dist=diameter * 0.5)
+            x_fit, y_fit, _, _ = localization.localize_com(
+                x_roi, y_roi,
+                return_sd=False
+            )
+            x_entry, y_entry = x_fit, y_fit
+        bg_fit = bg_rate
 
-        B = bg_rate * fit_area * binding_time / 200
-        B_2 = len(x_bg_roi)
+
+    elif method == 'mle_once':
 
         result = localization.mle_fixed_sigma_bg(
             x_all, y_all,
@@ -90,7 +95,7 @@ def analyze_sim_event(
         x_fit = result['mu_x']
         y_fit = result['mu_y']
         bg_fit = result['bg_rate']
-        print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
+        print(f"MLE fixed σ,B: iterations={result['iters']}")
 
     elif method == 'mle':
         # full EM: fits μ, σ_x/y, and signal fraction f
@@ -107,19 +112,6 @@ def analyze_sim_event(
 
 
     elif method == 'mle_fixed':
-        # 3) Count background photons inside ROI
-        x_bg_roi, y_bg_roi, _ = s.filter_points_by_radius(
-            x_bg, y_bg,
-            x_entry, y_entry,
-            max_dist=diameter * 0.5
-        )
-        fit_area = np.pi * (diameter/2)**2
-
-        B = bg_rate * fit_area * binding_time / 200
-        B_2 = len(x_bg_roi)
-
-        print(f'bg_rate vs len(x_bg)" {B, B_2}')
-
         # 4) EM with σ and B fixed → only fit μ
         result = localization.mle_fixed_sigma_bg(
             x_all, y_all,
@@ -133,7 +125,7 @@ def analyze_sim_event(
         x_fit = result['mu_x']
         y_fit = result['mu_y']
         bg_fit = result['bg_rate']
-        print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
+        print(f"MLE fixed σ,B: iterations={result['iters']}")
 
     elif method == 'pass':
         x_fit, y_fit, bg_fit = x_entry, y_entry, bg_rate
@@ -157,7 +149,7 @@ def plot_analysis(x_fluo, y_fluo, x_bg, y_bg,
     """
     plt.figure(figsize=(6, 6))
 
-    x_fit, y_fit = analyze_sim_event(x_fluo, y_fluo,
+    x_fit, y_fit, _ = analyze_sim_event(x_fluo, y_fluo,
                                      x_bg, y_bg,
                                      x_ref, y_ref,
                                      diameter=diameter,

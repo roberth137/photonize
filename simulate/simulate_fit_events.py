@@ -43,7 +43,7 @@ def simulate_and_fit_events(
     bg_counts = np.zeros(n, int)
 
     method = method.lower()
-    if method not in ('com', 'mle', 'mle_fixed', 'mle_once', 'pass'):
+    if method not in ('com', 'mle', 'mle_fixed', 'mle_once', 'pass', 'com_twice'):
         raise ValueError("Method must be one of 'com', 'mle', or 'mle_fixed'.")
 
     for i, row in event_stats.iterrows():
