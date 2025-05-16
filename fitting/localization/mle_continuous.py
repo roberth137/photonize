@@ -1,126 +1,118 @@
 import numpy as np
 
-def mle_continuous(x_array, y_array,
-                   x_start, y_start,
-                   diameter,
-                   isotropic=True,
-                   f_init=0.9,
-                   f_min=0.1,
-                   max_iter=100,
-                   tol=1e-6):
+def mle_continuous(
+    x_array, y_array,
+    x_start, y_start,
+    diameter,
+    bind_time_ms=200,
+    isotropic=True,
+    f_init=0.9,
+    f_min=0.1,
+    max_iter=100,
+    tol=1e-4
+):
     """
-    Fit a 2D Gaussian + uniform background via EM on photon coords within a circle.
+    Fit a 2D Gaussian + uniform background via EM on photon coords,
+    using weights instead of cropping to ROI.
 
-    Parameters
-    ----------
-    x_array, y_array : array-like, shape (N,)
-        Photon coordinates.
-    x_start, y_start : float
-        Initial guess for Gaussian center.
-    diameter : float
-        ROI diameter around approx_mu.
-    isotropic : bool
-        If True, fit one sigma for both axes; else fit sigma_x, sigma_y.
-    f_init : float
-        Initial signal fraction (0<f_init<1).
-    f_min : float
-        Minimum allowed signal fraction.
-    max_iter : int
-        Max EM iterations.
-    tol : float
-        Convergence tolerance on parameter change.
+    Photon coords outside the circular ROI are given zero weight each iteration.
 
-    Returns
-    -------
-    dict with keys
-      mu_x, mu_y       — fitted center
-      sigma_x, sigma_y — fitted widths
-      f                — final signal fraction
-      tot_photons      — N in ROI
-      signal_photons   — f⋅N
-      bg_photons       — (1−f)⋅N
+    Returns:
+      mu_x, mu_y, sigma_x, sigma_y, f,
+      tot_photons (in ROI), signal_photons, bg_photons, bg_rate
     """
-    radius = diameter/2
-    x_array = np.asarray(x_array, float)
-    y_array = np.asarray(y_array, float)
-    if x_array.shape != y_array.shape:
+    # Convert to numpy arrays
+    x = np.asarray(x_array, float)
+    y = np.asarray(y_array, float)
+    if x.shape != y.shape:
         raise ValueError("x_array and y_array must have same shape")
 
+    radius = diameter / 2.0
+    fit_area = np.pi * radius**2
+    N_total = x.size
 
-    # 3) EM loop
+    # Initialize parameters
+    mu_x, mu_y = float(x_start), float(y_start)
+    f = float(f_init)
+
+    # Precompute constant for background pdf inside ROI
+    p_bg_const = 1.0 / fit_area
+
     for _ in range(max_iter):
-        # 1) crop to ROI
-        d2 = (x_array - x_start) ** 2 + (y_array - y_start) ** 2
-        mask = d2 <= radius ** 2
-        x_array = x_array[mask]
-        y_array = y_array[mask]
-        N = x_array.size
-        if N == 0:
+        # 1) compute mask for ROI (weights 1 inside, 0 outside)
+        dx = x - mu_x
+        dy = y - mu_y
+        mask = (dx*dx + dy*dy) <= radius**2
+        N_roi = mask.sum()
+        if N_roi == 0:
             raise ValueError(f"No photons in ROI radius {radius}")
 
-        S = np.pi * radius ** 2  # area for uniform BG
-
-        # 2) init parameters
+        # 2) expectation step: compute responsibilities
+        # Gaussian pdf
+        # ensure sigmas are positive
+        sigma_x = max(1e-12, sigma_x if 'sigma_x' in locals() else np.std(x[mask]))
+        sigma_y = max(1e-12, sigma_y if 'sigma_y' in locals() else np.std(y[mask]))
         if isotropic:
-            # variance across both dims
-            vx = np.var(x_array)
-            vy = np.var(y_array)
-            sigma_x = sigma_y = np.sqrt(0.5 * (vx + vy))
-        else:
-            sigma_x = np.std(x_array)
-            sigma_y = np.std(y_array)
-        f = float(f_init)
+            avg_var = 0.5 * (sigma_x**2 + sigma_y**2)
+            sigma_x = sigma_y = np.sqrt(max(avg_var, 1e-12))
 
+        norm = 2 * np.pi * sigma_x * sigma_y
+        G = np.exp(-0.5*((dx/sigma_x)**2 + (dy/sigma_y)**2)) / norm
 
-        sigma_x = max(sigma_x, 1e-12)
-        sigma_y = max(sigma_y, 1e-12)
+        # Background pdf only inside ROI
+        p_bg = p_bg_const * mask.astype(float)
 
-        # Gaussian PDF at each photon (unnormalized)
-        norm = 2*np.pi*sigma_x*sigma_y
-        exp_x = np.exp(-0.5 * ((x_array - x_start) ** 2) / (sigma_x ** 2))
-        exp_y = np.exp(-0.5 * ((y_array - y_start) ** 2) / (sigma_y ** 2))
-        G = (exp_x * exp_y) / norm
-        p_bg = 1.0 / S
-
-        # responsibility for signal vs bg
-        mix_sig = f * G
-        mix_bg  = (1-f) * p_bg
-        w = mix_sig / (mix_sig + mix_bg)
+        mix_sig = f * G * mask.astype(float)
+        mix_bg = (1 - f) * p_bg
+        denom = mix_sig + mix_bg
+        # responsibilities: avoid division by zero
+        w = np.zeros_like(denom)
+        nonzero = denom > 0
+        w[nonzero] = mix_sig[nonzero] / denom[nonzero]
         W = w.sum()
 
-        # M-step updates
-        mu_x_new = (w * x_array).sum() / W
-        mu_y_new = (w * y_array).sum() / W
+        # 3) maximization step
+        mu_x_new = (w * x).sum() / W
+        mu_y_new = (w * y).sum() / W
 
         if isotropic:
-            var = (w * ((x_array - mu_x_new) ** 2 + (y_array - mu_y_new) ** 2)).sum() / (2 * W)
+            var = (w * (dx**2 + dy**2)).sum() / (2 * W)
             sigma_x_new = sigma_y_new = np.sqrt(max(var, 1e-12))
         else:
-            sigma_x_new = np.sqrt((w * (x_array - mu_x_new) ** 2).sum() / W)
-            sigma_y_new = np.sqrt((w * (y_array - mu_y_new) ** 2).sum() / W)
+            sigma_x_new = np.sqrt((w * dx**2).sum() / W)
+            sigma_y_new = np.sqrt((w * dy**2).sum() / W)
 
-        f_new = max(W/N, f_min)
+        f_new = max(W / N_roi, f_min)
 
         # check convergence
-        if (abs(mu_x_new-x_start)<tol and abs(mu_y_new-y_start)<tol and
-            abs(sigma_x_new-sigma_x)<tol and abs(sigma_y_new-sigma_y)<tol and
-            abs(f_new-f)<tol):
-            x_start, y_start = mu_x_new, mu_y_new
+        if (abs(mu_x_new - mu_x) < tol and
+            abs(mu_y_new - mu_y) < tol and
+            abs(sigma_x_new - sigma_x) < tol and
+            abs(sigma_y_new - sigma_y) < tol and
+            abs(f_new - f) < tol):
+            mu_x, mu_y = mu_x_new, mu_y_new
             sigma_x, sigma_y, f = sigma_x_new, sigma_y_new, f_new
             break
 
-        x_start, y_start = mu_x_new, mu_y_new
+        mu_x, mu_y = mu_x_new, mu_y_new
         sigma_x, sigma_y, f = sigma_x_new, sigma_y_new, f_new
 
+    # compute final counts
+    tot_photons = N_roi
+    signal_photons = W
+    bg_photons = tot_photons - signal_photons
+    bg_rate = bg_photons * (200 / (bind_time_ms * fit_area))
+
     return {
-        'mu_x': x_start,
-        'mu_y': y_start,
+        'mu_x': mu_x,
+        'mu_y': mu_y,
         'sigma_x': sigma_x,
         'sigma_y': sigma_y,
         'f': f,
-        'tot_photons': N,
-        'signal_photons':   N * f,
-        'bg_photons':       N * (1 - f)
+        'tot_photons': tot_photons,
+        'signal_photons': signal_photons,
+        'bg_photons': bg_photons,
+        'bg_rate': bg_rate
     }
 
 

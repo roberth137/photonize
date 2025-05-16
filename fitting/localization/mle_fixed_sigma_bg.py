@@ -5,9 +5,10 @@ def mle_fixed_sigma_bg(
     x_start, y_start,
     diameter,
     sigma,
-    background,
+    bg_rate,
+    binding_time,
     max_iter=100,
-    tol=1e-6
+    tol=1e-4
 ):
     """
     EM‐style iteration to fit only the 2D Gaussian center with fixed σ and background.
@@ -47,15 +48,19 @@ def mle_fixed_sigma_bg(
         r = np.hypot(dx, dy)
         mask = r <= radius
         x_in, y_in, r_in = x[mask], y[mask], r[mask]
+        #print(f'len(x_in): {len(x_in)}')
         N = r_in.size
         if N == 0:
-            raise ValueError(f"No photons within diameter {diameter} of ({x_start},{y_start})")
+            print(f"No photons within diameter {diameter} of ({x_start},{y_start})")
+            break
+            #raise ValueError(f"No photons within diameter {diameter} of ({x_start},{y_start})")
 
         # 2) Compute weights P(signal | r_i)
         # Mixture priors
-        N_sig = N - background
+        N_sig = N - bg_rate*(binding_time/200)*np.pi*radius**2
         P_sig = max(N_sig, 0) / N
         P_bg  = 1 - P_sig
+
 
         # Signal PDF (2D Gaussian)
         f_sig = np.exp(-r_in**2 / (2*sigma**2)) / (2*np.pi*sigma**2)
@@ -79,5 +84,6 @@ def mle_fixed_sigma_bg(
         'mu_x': x_start,
         'mu_y': y_start,
         'weights': w,
-        'iters': it
+        'iters': it,
+        'bg_rate': bg_rate
     }

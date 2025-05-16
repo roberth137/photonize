@@ -5,9 +5,11 @@ import pandas as pd
 
 from fitting.on_off import get_on_off_dur
 from fitting.localization import localize_com
+from fitting.localization import mle_fixed_sigma_bg
 from fitting.lifetime import avg_lifetime_weighted
 from collections import namedtuple
 import matplotlib.pyplot as plt
+
 
 # Define the named tuple once
 EventResult = namedtuple('EventResult', [
@@ -16,7 +18,7 @@ EventResult = namedtuple('EventResult', [
     'num_photons'
 ])
 
-def fit_event(photons, dt_peak, diameter):
+def fit_event(photons, x_start, y_start, sigma, bg_rate, dt_peak, diameter):
     """
     Analyze a single photon event.
 
@@ -31,8 +33,8 @@ def fit_event(photons, dt_peak, diameter):
     # get start and end of event
     start_ms, end_ms, duration_ms = get_on_off_dur(photons)
 
-    # filter photons within the event time window
-    event_photons = photons[(photons.ms >= start_ms) & (photons.ms <= end_ms)]
+    # filter photons within the event time window and after pulse
+    event_photons = photons[(photons.ms >= start_ms) & (photons.ms <= end_ms) & (photons.dt >= dt_peak)]
 
     # extract coordinates and arrival times
     x_photons = np.copy(event_photons.x)
@@ -40,9 +42,19 @@ def fit_event(photons, dt_peak, diameter):
     dt_photons = np.copy(event_photons.dt)
 
     # fit x and y position using center of mass
-    x_fit, y_fit, sdx, sdy = localize_com(
-        event_photons.x, event_photons.y, return_sd=True
-    )
+    #x_fit, y_fit, sdx, sdy = localize_com(
+    #    event_photons.x, event_photons.y, return_sd=True
+    #)
+    result = mle_fixed_sigma_bg(x_photons,
+                                            y_photons,
+                                            x_start=x_start,
+                                            y_start=y_start,
+                                            diameter=diameter,
+                                            sigma=sigma,
+                                            bg_rate=bg_rate,
+                                            binding_time=duration_ms)
+    x_fit = result['mu_x']
+    y_fit = result['mu_y']
 
     # calculate distance from center
     distances = np.sqrt((x_photons - x_fit) ** 2 + (y_photons - y_fit) ** 2)

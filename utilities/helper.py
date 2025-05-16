@@ -83,7 +83,7 @@ def process_input(input_data, dataset):
             elif dataset == 'photons':
                 data = pd.read_hdf(input_data, key=dataset)
             elif dataset == 'drift':
-                data = pd.read_csv(input_data, delimiter=' ',names =['x_array','y_array'])
+                data = pd.read_csv(input_data, delimiter=' ',names =['x','y'])
             return data
         
             #if dataset == 'photons':

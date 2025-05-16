@@ -3,7 +3,6 @@ from fitting import localization
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def analyze_sim_event(
     x_fluo, y_fluo,
     x_bg, y_bg,
@@ -11,7 +10,9 @@ def analyze_sim_event(
     bg_rate=s.bg_rate,
     diameter=s.fitting_diameter,
     method='com',
-    sigma=None
+    sigma=None,
+    binding_time=200,
+    return_bg=False
 ):
     """
     Analyze a simulated event using COM, full‐EM MLE, or fixed‐σ fixed‐B MLE.
@@ -40,7 +41,6 @@ def analyze_sim_event(
     (x_fit, y_fit) : tuple of floats
         Fitted position, or (None, None) if no photons in ROI.
     """
-    import numpy as np
 
     # 1) Merge all photons
     x_all = np.concatenate([x_fluo, x_bg])
@@ -54,7 +54,7 @@ def analyze_sim_event(
     )
     if len(x_roi) == 0:
         print("No events found within the ROI.")
-        return None, None
+        return None, None, None
 
     method = method.lower()
     if method == 'com':
@@ -63,6 +63,34 @@ def analyze_sim_event(
             x_roi, y_roi,
             return_sd=False
         )
+        bg_fit = bg_rate
+
+    elif method == 'mle_once':
+        x_bg_roi, y_bg_roi, _ = s.filter_points_by_radius(
+            x_bg, y_bg,
+            x_entry, y_entry,
+            max_dist=diameter * 0.5
+        )
+        fit_area = np.pi * (diameter / 2) ** 2
+
+        B = bg_rate * fit_area * binding_time / 200
+        B_2 = len(x_bg_roi)
+
+        result = localization.mle_fixed_sigma_bg(
+            x_all, y_all,
+            x_start=x_entry,
+            y_start=y_entry,
+            diameter=diameter,
+            sigma=sigma,
+            bg_rate=bg_rate,
+            binding_time=binding_time,
+            max_iter=1
+
+        )
+        x_fit = result['mu_x']
+        y_fit = result['mu_y']
+        bg_fit = result['bg_rate']
+        print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
 
     elif method == 'mle':
         # full EM: fits μ, σ_x/y, and signal fraction f
@@ -73,8 +101,10 @@ def analyze_sim_event(
         )
         x_fit = result['mu_x']
         y_fit = result['mu_y']
+        bg_fit = result['bg_rate']
         #print(f"MLE full fit: f={result['f']:.3f}")
         #print(result)
+
 
     elif method == 'mle_fixed':
         # 3) Count background photons inside ROI
@@ -83,7 +113,12 @@ def analyze_sim_event(
             x_entry, y_entry,
             max_dist=diameter * 0.5
         )
-        B = len(x_bg_roi)
+        fit_area = np.pi * (diameter/2)**2
+
+        B = bg_rate * fit_area * binding_time / 200
+        B_2 = len(x_bg_roi)
+
+        print(f'bg_rate vs len(x_bg)" {B, B_2}')
 
         # 4) EM with σ and B fixed → only fit μ
         result = localization.mle_fixed_sigma_bg(
@@ -92,19 +127,21 @@ def analyze_sim_event(
             y_start   = y_entry,
             diameter  = diameter,
             sigma     = sigma,
-            background= B
+            bg_rate = bg_rate,
+            binding_time = binding_time
         )
         x_fit = result['mu_x']
         y_fit = result['mu_y']
+        bg_fit = result['bg_rate']
         print(f"MLE fixed σ,B: iterations={result['iters']}, B_used={B}")
 
     elif method == 'pass':
-        x_fit, y_fit = x_entry, y_entry
+        x_fit, y_fit, bg_fit = x_entry, y_entry, bg_rate
 
     else:
-        raise ValueError(f"Unknown method '{method}'. Choose 'com', 'mle', or 'mle_fixed'.")
+        raise ValueError(f"Unknown method '{method}'. Choose 'pass', 'com', 'mle', or 'mle_fixed'.")
 
-    return x_fit, y_fit
+    return x_fit, y_fit, bg_fit
 
 
 

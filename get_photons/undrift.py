@@ -43,15 +43,15 @@ def undrift_photons(photons, drift, offset, int_time=200):
     """
     # Convert DataFrame columns to NumPy arrays
     ms_index = photons['ms'].to_numpy()
-    x_photons = photons['x_array'].to_numpy()
-    y_photons = photons['y_array'].to_numpy()
+    x_photons = photons['x'].to_numpy()
+    y_photons = photons['y'].to_numpy()
 
     # Calculate frame indices for each photon
     frames = np.floor((offset * ms_index) / int_time).astype(np.int32)
 
     # Handle drift arrays
-    drift_x = drift['x_array'].to_numpy()
-    drift_y = drift['y_array'].to_numpy()
+    drift_x = drift['x'].to_numpy()
+    drift_y = drift['y'].to_numpy()
 
     # Get necessary dimensions
     num_photons = len(photons)
@@ -64,8 +64,8 @@ def undrift_photons(photons, drift, offset, int_time=200):
 
     # Create a new DataFrame with undrifted coordinates
     photons_undrifted = pd.DataFrame({
-        'x_array': undrifted_x,
-        'y_array': undrifted_y,
+        'x': undrifted_x,
+        'y': undrifted_y,
         'dt': photons['dt'].to_numpy(),
         'ms': ms_index
     })

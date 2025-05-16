@@ -25,3 +25,4 @@ from simulate.simulate_fluorophore import simulate_fluorophore
 from simulate.simulate_event_statistics import simulate_event_stats
 from simulate.plot_event import plot_event
 from simulate.simulate_utils import filter_points_by_radius, freedman_diaconis_bins
+from simulate.simulate_fit_events import simulate_and_fit_events

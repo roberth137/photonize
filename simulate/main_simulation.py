@@ -42,16 +42,16 @@ def run_simulation(filename, diameters, method, n_events=10000, random_seed=42):
 def main():
     # List your two datasets here
     filenames = [
-        #"simulate/sim_experiments_stats/2green_0p3.hdf5",
-        "simulate/sim_experiments_stats/less_photons.hdf5",
-        #"simulate/sim_experiments_stats/delta_1.hdf5"
+        #"simulate/sim_experiments_stats/dset1.hdf5",
+        #"simulate/sim_experiments_stats/dset2.hdf5",
+        "simulate/sim_experiments_stats/delta0p15.hdf5"
     ]
 
     # Methods to compare
-    methods = ['com', 'mle_fixed', 'mle', 'pass']
+    methods = ['com', 'mle_fixed', 'mle', 'pass', 'mle_once']
 
     # Range of diameters from 3 to 7 in 0.1 steps
-    diameters = np.arange(3.0, 7.0 + 1e-6, 0.1)
+    diameters = np.arange(2.0, 8 + 1e-6, 0.25)
 
     # Simulation settings
     n_events = 100
@@ -64,7 +64,7 @@ def main():
             df = run_simulation(
                 filename,
                 diameters,
-                method,
+                method=method,
                 n_events=n_events,
                 random_seed=random_seed
             )

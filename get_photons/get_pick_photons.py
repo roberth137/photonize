@@ -23,7 +23,11 @@ def get_pick_photons(
     """
     # set dimensions of the region and crop photons
     # -0.46875 because: -> see undrift (pixel conversion)
+    print(type(drift))
+    print(f'drift: {drift}')
     dr_x, dr_y = max(abs(drift.x)), max(abs(drift.y))
+    print(f'drift.x: {drift.x}')
+    print(type(drift))
     min_x, max_x, min_y, max_y = min_max_box(locs_group, diameter + 1)
     #crop photons of area of interest plus drift
     phot_cr = crop_rectangle(photons,

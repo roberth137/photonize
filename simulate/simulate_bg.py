@@ -7,7 +7,7 @@ def simulate_background(num_pixels=s.num_pixels,
                         bg_rate=s.bg_rate,
                         subpixel=s.subpixel):
     """
-    Simulate background events over an 8x8 pixel area using a single random
+    Simulate background events over a 8x8 pixel area using a single random
     background value for all pixels, returning arrays of x_coords, y_coords.
 
     Coordinates are mapped into [-4,4) along x and y.

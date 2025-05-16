@@ -27,6 +27,7 @@ def crop_rectangle(
         pandas.DataFrame
             The subset of photons within the specified ranges.
         """
+    print(f'photons: {photons}')
     mask = ((photons.x >= x_min)
         & (photons.x <= x_max)
         & (photons.y >= y_min)

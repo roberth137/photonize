@@ -1,9 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from numba.core.cgutils import printf
-
-import simulate as s  # Ensure that s has the constants like s.binding_time_mean, s.binding_time_std, etc.
 
 # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
 binding_time_mean, binding_time_std  = 400, 300 # in ms
@@ -63,7 +60,7 @@ def simulate_event_stats(seed=42,
     # 2) Draw from lognormal / normal distributions
     brightness = np.clip(np.random.lognormal(mean=brightness_mu,
                                              sigma=brightness_sigma,
-                                             size=n_events), 0.1, None)
+                                             size=n_events), 0.3, None)
     binding_time = np.clip(np.random.lognormal(mean=binding_mu,
                                                sigma=binding_sigma,
                                                size=n_events), 50, None)
@@ -168,16 +165,16 @@ if __name__ == '__main__':
     random_seed = 42
     n_events = 100000
     save_data = True
-    if save_data: save_name = 'less_photons.hdf5'
+    if save_data: save_name = 'delta0p15bright2.hdf5'
 
     # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
-    binding_time_mean, binding_time_std = 300, 200  # in ms
+    binding_time_mean, binding_time_std = 400, 200  # in ms
     sx_mean, sx_std = 1.07, 0.13
     sy_mean, sy_std = 1.07, 0.13
-    brightness_mean, brightness_std = 0.9, 0.6
+    brightness_mean, brightness_std = 2, 0.6
     bg_rate_mean, bg_rate_std = 3, 1
-    delta_x_mean, delta_x_std = 0, 0.3
-    delta_y_mean, delta_y_std = 0, 0.3
+    delta_x_mean, delta_x_std = 0, 0.15
+    delta_y_mean, delta_y_std = 0, 0.15
 
     # Generate a dataset of event statistics
     df_events = simulate_event_stats(seed=random_seed,

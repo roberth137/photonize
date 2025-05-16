@@ -17,8 +17,8 @@ def normalize_brightness(events):
 
     print(f'mean bg values: {np.mean(events.bg)}')
 
-    px_x = np.round(events['x_array']).astype(int)
-    px_y = np.round(events['y_array']).astype(int)
+    px_x = np.round(events['x']).astype(int)
+    px_y = np.round(events['y']).astype(int)
 
     # In case some events are outside the computed map, clip indices to valid range.
     max_x, max_y = bg_map.shape

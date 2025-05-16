@@ -26,6 +26,7 @@ def evelyze(localizations_file, photons_file, drift_file, offset,
                                           filter_single=filter_single)
     # 3) analyze events in main loop (localization+lifetime+brightness)
     arrival_time = {}
+    print(f'drift: {drift}')
     events = analyze_events.events_lt_pos(events, photons, drift,
                                offset, diameter=diameter,
                                int_time=int_time, arrival_time=arrival_time,

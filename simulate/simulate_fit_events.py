@@ -39,10 +39,11 @@ def simulate_and_fit_events(
     n = len(event_stats)
     x_fit     = np.full(n, np.nan, float)
     y_fit     = np.full(n, np.nan, float)
+    bg_fit     = np.full(n, np.nan, float)
     bg_counts = np.zeros(n, int)
 
     method = method.lower()
-    if method not in ('com', 'mle', 'mle_fixed', 'pass'):
+    if method not in ('com', 'mle', 'mle_fixed', 'mle_once', 'pass'):
         raise ValueError("Method must be one of 'com', 'mle', or 'mle_fixed'.")
 
     for i, row in event_stats.iterrows():
@@ -76,19 +77,20 @@ def simulate_and_fit_events(
         bg_counts[i] = mask_bg.sum()
 
         # --- delegate to analyze_sim_event ---
-        x0, y0 = s.analyze_sim_event(
+        x0, y0, bg0 = s.analyze_sim_event(
             x_fluo, y_fluo,
             x_bg,   y_bg,
             x_entry=x_ref, y_entry=y_ref,
             sigma=sigma_psf,
             bg_rate=bg_rate,
             diameter=diameter,
-            method=method
+            method=method,
+            binding_time=binding_ms
         )
 
-        x_fit[i], y_fit[i] = x0, y0
+        x_fit[i], y_fit[i], bg_fit[i] = x0, y0, bg0
 
-    return x_fit, y_fit, bg_counts
+    return x_fit, y_fit, bg_fit
 
 
 def plot_results(distances: np.ndarray, diameter: int, method: str = 'com'):
@@ -123,8 +125,8 @@ if __name__ == '__main__':
     event_stats = pd.DataFrame(event_stats)
 
     # Choose fitting method and diameter
-    method = 'mle_fixed'  # 'com' , 'mle' , 'mle_fixed'
-    diameter = 5.0
+    method = 'mle'  # 'com' , 'mle' , 'mle_fixed'
+    diameter = 6.0
 
     # Run simulation and fitting
     x_fit, y_fit, bg_rates = simulate_and_fit_events(event_stats, method, diameter)

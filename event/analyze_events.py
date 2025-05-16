@@ -103,7 +103,13 @@ def events_lt_pos(event_file: str,
             cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter, more_ms=more_ms)
 
             # Analyze the event using a helper function
-            result = fit_event(cylinder_photons, peak_arrival_time, diameter)
+            result = fit_event(cylinder_photons,
+                               x_start=my_event.x,
+                               y_start=my_event.y,
+                               sigma=(my_event.sx+my_event.sy)/2,
+                               bg_rate=my_event.bg,
+                               dt_peak=peak_arrival_time,
+                               diameter=diameter)
 
             # insert 5 pixel photons return
             #spot, x0, y0 = get_photons.extract_spot_histogram(pick_photons,
@@ -112,19 +118,6 @@ def events_lt_pos(event_file: str,
             #                              result.start_ms,
             #                              result.end_ms)
 
-            photon_coords = cylinder_photons[['x_array', 'y_array']].to_numpy()
-
-            mle_result = mle_2d_gaussian_with_bg(coords=photon_coords,
-                                                 approx_mu=(my_event.x, my_event.y),
-                                                 radius=(diameter/2))
-
-            print(mle_result)
-
-            # Store computed values
-            x_mle[idx] = mle_result['mu_x']
-            y_mle[idx] = mle_result['mu_y']
-            bg_fit[idx] = (1.0 - mle_result['f'])
-            phot_mle[idx] = mle_result['signal_photons']
 
             x_position[idx] = result.x_fit
             y_position[idx] = result.y_fit
@@ -150,12 +143,12 @@ def events_lt_pos(event_file: str,
 
     #frame
     #event
-    events['x_array'] = x_position
-    events.insert(3, 'x_mle', x_mle)
-    events.insert(4, 'y_mle', y_mle)
-    events['y_array'] = y_position
+    events['x'] = x_position
+    #events.insert(3, 'x_mle', x_mle)
+    #events.insert(4, 'y_mle', y_mle)
+    events['y'] = y_position
     events['photons'] = photons_arr.astype(np.float32)
-    events.insert(6, 'mle_photons', phot_mle.astype(np.float32))
+    #events.insert(6, 'mle_photons', phot_mle.astype(np.float32))
     events.insert(7, 'duration_ms', duration_ms_arr.astype(np.float32))
     #events.insert(6, 'lifetime_10ps', lifetime.astype(np.float32))
     events.insert(8, 'brightness_phot_ms', (photons_arr / duration_ms_arr).astype(np.float32))
@@ -166,8 +159,8 @@ def events_lt_pos(event_file: str,
     events['end_ms'] = end_ms_new.astype(np.int32)
     events['delta_x'] = delta_x.astype(np.float32)
     events['delta_y'] = delta_y.astype(np.float32)
-    events['bg_pic'] = 1 - (photons_arr/total_photons_arr)
-    events['bg_fit'] = bg_fit
+    #events['bg_pic'] = 1 - (photons_arr/total_photons_arr)
+    #events['bg_fit'] = bg_fit
     events.drop(columns=['start_ms_fr', 'end_ms_fr'], inplace=True)
 
     # Save to picasso file if event_file is provided as a string
