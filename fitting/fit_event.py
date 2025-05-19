@@ -6,7 +6,7 @@ import pandas as pd
 from fitting.on_off import get_on_off_dur
 from fitting.localization import localize_com
 from fitting.localization import mle_fixed_sigma_bg
-from fitting.lifetime import avg_lifetime_weighted
+from fitting.lifetime import avg_lifetime_weighted, avg_lifetime
 from collections import namedtuple
 import matplotlib.pyplot as plt
 
@@ -42,9 +42,9 @@ def fit_event(photons, x_start, y_start, sigma, bg_rate, dt_peak, diameter):
     dt_photons = np.copy(event_photons.dt)
 
     # fit x and y position using center of mass
-    #x_fit, y_fit, sdx, sdy = localize_com(
-    #    event_photons.x, event_photons.y, return_sd=True
-    #)
+    x_fit, y_fit, sdx, sdy = localize_com(
+        event_photons.x, event_photons.y, return_sd=True
+    )
     result = mle_fixed_sigma_bg(x_photons,
                                             y_photons,
                                             x_start=x_start,
@@ -59,12 +59,15 @@ def fit_event(photons, x_start, y_start, sigma, bg_rate, dt_peak, diameter):
     lifetime = result['lifetime']-dt_peak
     #print(lifetime)
     # calculate distance from center
-    #distances = np.sqrt((x_photons - x_fit) ** 2 + (y_photons - y_fit) ** 2)
+    distances = np.sqrt((x_photons - x_fit) ** 2 + (y_photons - y_fit) ** 2)
+    mask = distances < diameter
 
     # calculate lifetime using weighted averaging
     #lifetime = avg_lifetime_weighted(
     #    dt_photons, distance=distances, peak=dt_peak, diameter=diameter
     #)
+
+    #lifetime = avg_lifetime(photons, dt_peak)
 
     # pack into a named tuple and return
     return EventResult(

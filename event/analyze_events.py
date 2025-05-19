@@ -84,7 +84,7 @@ def events_lt_pos(event_file: str,
         print(f'{len(events_group)} events in current group.')
         pick_photons = get_photons.get_pick_photons(
             events_group, photons, drift, offset,
-            diameter=diameter, int_time=int_time
+            diameter=(diameter+0.5), int_time=int_time
         )
         print(f"Number of picked photons: {len(pick_photons)}")
 
@@ -100,7 +100,7 @@ def events_lt_pos(event_file: str,
             box_side_length = 5
 
             # Crop the relevant photons for this event
-            cylinder_photons = get_photons.crop_event(my_event, pick_photons, diameter, more_ms=more_ms)
+            cylinder_photons = get_photons.crop_event(my_event, pick_photons, (diameter+0.5), more_ms=more_ms)
 
             # Analyze the event using a helper function
             result = fit_event(cylinder_photons,

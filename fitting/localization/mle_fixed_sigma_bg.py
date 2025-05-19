@@ -71,6 +71,7 @@ def mle_fixed_sigma_bg(
     y = np.asarray(y_array, float)
     if arrival_time is not None: dt = np.asarray(arrival_time, float)
     radius = diameter / 2.0
+    bg_rate = bg_rate * 2
 
     for it in range(1, max_iter + 1):
         # 1) Mask photons inside current ROI
@@ -99,6 +100,7 @@ def mle_fixed_sigma_bg(
                 RuntimeWarning
             )
             bg_rate *= 0.5
+
             expected_bg = bg_rate * (binding_time / 200.0) * np.pi * radius**2
 
         # 3) Mixture priors
@@ -134,6 +136,8 @@ def mle_fixed_sigma_bg(
         x_start, y_start = mu_x_new, mu_y_new
         if shift < tol:
             break
+    # How much is signal:
+    print(f'Signal: {P_sig}, total photons:{N}')
     #if arrival_time: lifetime = (w * dt).sum() / w_sum
     result = {
     'mu_x': x_start,
