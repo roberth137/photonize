@@ -45,17 +45,17 @@ def main():
         #"simulate/sim_experiments_stats/dset1.hdf5",
         #"simulate/sim_experiments_stats/dset2.hdf5",
         #"simulate/sim_experiments_stats/legacy.hdf5",
-        "simulate/sim_experiments_stats/2green_0p3.hdf5"
+        "simulate/sim_experiments_stats/origami.hdf5"
     ]
 
     # Methods to compare
-    methods = ['com', 'mle_fixed', 'mle', 'pass', 'com_twice']
+    methods = ['com', 'mle_fixed', 'mle', 'pass']
 
     # Range of diameters from 3 to 7 in 0.1 steps
     diameters = np.arange(2.0, 8 + 1e-6, 0.25)
 
     # Simulation settings
-    n_events = 100
+    n_events = 1000
     random_seed = 42
 
     # Collect results

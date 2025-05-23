@@ -68,8 +68,8 @@ def simulate_event_stats(seed=42,
     sx = np.random.normal(loc=sx_mean, scale=sx_std, size=n_events)
     sy = np.random.normal(loc=sy_mean, scale=sy_std, size=n_events)
     bg = np.clip(np.random.normal(loc=bg_mean, scale=bg_std, size=n_events), 0, None)
-    delta_x = np.random.normal(loc=delta_x_mean, scale=delta_x_std, size=n_events)
-    delta_y = np.random.normal(loc=delta_y_mean, scale=delta_y_std, size=n_events)
+    delta_x = np.clip(np.random.normal(loc=delta_x_mean, scale=delta_x_std, size=n_events), -0.4, 0.4)
+    delta_y = np.clip(np.random.normal(loc=delta_y_mean, scale=delta_y_std, size=n_events), -0.4, 0.4)
 
     # 3) Build a pandas DataFrame directly
     df = pd.DataFrame({
@@ -165,16 +165,16 @@ if __name__ == '__main__':
     random_seed = 42
     n_events = 100000
     save_data = True
-    if save_data: save_name = 'legacy.hdf5'
+    if save_data: save_name = 'origami.hdf5'
 
     # SET EVENT SIMULATION PARAMETERS (mean, std, even if not gaussian distributed)
     binding_time_mean, binding_time_std = 300, 200  # in ms
     sx_mean, sx_std = 1.07, 0.13
     sy_mean, sy_std = 1.07, 0.13
-    brightness_mean, brightness_std = 2, 0.6
-    bg_rate_mean, bg_rate_std = 2, 1
-    delta_x_mean, delta_x_std = 0, 0.15
-    delta_y_mean, delta_y_std = 0, 0.15
+    brightness_mean, brightness_std = 1.1, 0.6
+    bg_rate_mean, bg_rate_std = 2.5, 1
+    delta_x_mean, delta_x_std = 0, 0.3
+    delta_y_mean, delta_y_std = 0, 0.3
 
     # Generate a dataset of event statistics
     df_events = simulate_event_stats(seed=random_seed,

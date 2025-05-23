@@ -71,7 +71,7 @@ def mle_fixed_sigma_bg(
     y = np.asarray(y_array, float)
     if arrival_time is not None: dt = np.asarray(arrival_time, float)
     radius = diameter / 2.0
-    bg_rate = bg_rate * 2
+    bg_rate = bg_rate
 
     for it in range(1, max_iter + 1):
         # 1) Mask photons inside current ROI
@@ -82,7 +82,7 @@ def mle_fixed_sigma_bg(
         x_in = x[mask]
         y_in = y[mask]
         r_in = r[mask]
-        dt_in = dt[mask]
+        if arrival_time is not None: dt_in = dt[mask]
         N = r_in.size
 
         if N == 0:
